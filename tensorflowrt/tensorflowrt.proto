@@ -16,6 +16,18 @@ syntax = "proto2";
 
 package tfrt_pb;
 
+message input {
+  optional string name = 1 [default = "input"];
+  optional int32 height = 2 [default = 224];
+  optional int32 width = 3 [default = 224];
+}
+
+message output {
+  optional string name = 1 [default = "output"];
+  optional int32 height = 2;
+  optional int32 width = 3;
+}
+
 message tensor {
   enum DataType {
     FLOAT = 0;
@@ -34,4 +46,6 @@ message tensor {
 message network {
   optional string name = 1;
   repeated tensor tensors = 2;
+  optional input input = 3;
+  repeated output outputs = 4;
 }

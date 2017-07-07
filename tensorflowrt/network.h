@@ -48,6 +48,11 @@ public:
 
     /** Load network weights. */
     bool load_weights(std::string filename);
+
+    /** Get the default scope for this network. */
+    tfrt::scope scope(nvinfer1::INetworkDefinition* nv_network) const;
+
+public:
     /** Get a tensor by name. */
     const tfrt_pb::tensor& tensor_by_name(std::string name) const;
     /** Get NV weights by name. */
@@ -61,8 +66,6 @@ public:
     nvinfer1::DataType datatype() const {
         return m_datatype;
     }
-    /** Get the default scope for this network. */
-    tfrt::scope scope(nvinfer1::INetworkDefinition* nv_network) const;
 
 public:
     /** Generate empty weights. */
@@ -71,6 +74,11 @@ public:
     }
     /** Convert TF protobuf tensor to NV weights. */
     static nvinfer1::Weights tensor_to_weights(const tfrt_pb::tensor& tensor);
+
+private:
+    /** Clear out the collections of tensors, to save memory.
+     */
+    void clear_tensors();
 
 private:
     // Network name.

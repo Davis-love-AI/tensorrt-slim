@@ -89,6 +89,10 @@ bool network::load_weights(std::string filename)
     return success;
 }
 
+
+/* ============================================================================
+ * Getters / setters wrapping protobuf methods.
+ * ========================================================================== */
 const tfrt_pb::tensor& network::tensor_by_name(std::string name) const
 {
     // Best search algorithm ever!
@@ -123,6 +127,15 @@ nvinfer1::Weights network::tensor_to_weights(const tfrt_pb::tensor& tensor)
         w.values = nullptr;
     }
     return w;
+}
+
+
+/* ============================================================================
+ * Private tfrt::network methods... Tambouille interne.
+ * ========================================================================== */
+void network::clear_tensors()
+{
+    m_pb_network.clear_tensors();
 }
 
 }
