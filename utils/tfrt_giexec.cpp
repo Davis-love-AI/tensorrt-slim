@@ -20,7 +20,7 @@
 #include <sys/stat.h>
 #include <cmath>
 #include <time.h>
-#include <algorithm>
+// #include <algorithm>
 #include <chrono>
 #include <string.h>
 
@@ -172,8 +172,6 @@ void doInference(ICudaEngine& engine)
 		total /= gParams.avgRuns;
 		std::cout << "Average over " << gParams.avgRuns << " runs is " << total << " ms." << std::endl;
 	}
-
-
 	cudaStreamDestroy(stream);
 	cudaEventDestroy(start);
 	cudaEventDestroy(end);
