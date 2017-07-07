@@ -20,7 +20,6 @@
 
 #include "tensorflowrt.h"
 
-namespace tfrt {
-
-
+namespace tfrt
+{
 }

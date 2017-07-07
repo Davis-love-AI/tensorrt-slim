@@ -12,27 +12,41 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Robik AI Ltd.
 # =========================================================================== */
-#ifndef TENSORFLOW_RT_H
-#define TENSORFLOW_RT_H
+#ifndef TFRT_UTILS_H
+#define TFRT_UTILS_H
 
-#include <gflags/gflags.h>
 #include <glog/logging.h>
-
-#include <cmath>
-#include <string>
-#include <sstream>
-
-// #include <cuda_runtime_api.h>
 #include <NvInfer.h>
 
 #include "tfrt_jetson.h"
-#include "network.h"
-#include "scope.h"
-#include "layers.h"
 
 namespace tfrt
 {
+/* ============================================================================
+ * Dim utils.
+ * ========================================================================== */
+inline int dims_channels(nvinfer1::Dims dims)
+{
+    // Suppose NCHW, CHW or HW format...
+    if(dims.nbDims >= 4) {
+        return dims.d[1];
+    }
+    else if(dims.nbDims == 3) {
+        return dims.d[0];
+    }
+    return 1;
+}
+inline std::string dims_str(nvinfer1::Dims dims)
+{
+    std::ostringstream oss;
+    oss << "[" << dims.d[0];
+    for(int i = 1 ; i < dims.nbDims ; ++i) {
+        oss << ", " << dims.d[i];
+    }
+    oss << "]";
+    return oss.str();
+}
+
 }
 
 #endif
-
