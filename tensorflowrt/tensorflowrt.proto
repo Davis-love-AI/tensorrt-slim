@@ -48,4 +48,5 @@ message network {
   repeated tensor tensors = 2;
   optional input input = 3;
   repeated output outputs = 4;
+
 }

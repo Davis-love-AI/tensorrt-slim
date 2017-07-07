@@ -57,15 +57,10 @@ public:
     const tfrt_pb::tensor& tensor_by_name(std::string name) const;
     /** Get NV weights by name. */
     nvinfer1::Weights weights_by_name(std::string name) const;
-
    /** Get the network name. */
-    std::string name() const {
-        return m_name;
-    }
+    const std::string& name() const;
     /** Get the datatype. */
-    nvinfer1::DataType datatype() const {
-        return m_datatype;
-    }
+    nvinfer1::DataType datatype() const;
 
 public:
     /** Generate empty weights. */

@@ -128,7 +128,17 @@ nvinfer1::Weights network::tensor_to_weights(const tfrt_pb::tensor& tensor)
     }
     return w;
 }
-
+const std::string& network::name() const {
+    return m_pb_network.name();
+}
+nvinfer1::DataType network::datatype() const {
+    // Datatype of the first tensor... UGLY!!!
+    if(m_pb_network.tensors_size()) {
+        auto dt = m_pb_network.tensors(0).datatype();
+        return nvinfer1::DataType(int(dt));
+    }
+    return nvinfer1::DataType::kFLOAT;
+}
 
 /* ============================================================================
  * Private tfrt::network methods... Tambouille interne.
