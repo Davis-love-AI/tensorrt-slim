@@ -53,14 +53,21 @@ public:
     tfrt::scope scope(nvinfer1::INetworkDefinition* nv_network) const;
 
 public:
-    /** Get a tensor by name. */
+    /** Get a tensor by name. Return empty tensor if not found.
+     */
     const tfrt_pb::tensor& tensor_by_name(std::string name) const;
-    /** Get NV weights by name. */
+    /** Get NV weights by name. Return empty weights if not found.
+     */
     nvinfer1::Weights weights_by_name(std::string name) const;
-   /** Get the network name. */
+
     const std::string& name() const;
-    /** Get the datatype. */
     nvinfer1::DataType datatype() const;
+
+    nvinfer1::DimsHW input_shape() const;
+    const std::string& input_name() const;
+    std::vector<nvinfer1::DimsHW> outputs_shape() const;
+    std::vector<std::string> outputs_name() const;
+
 
 public:
     /** Generate empty weights. */

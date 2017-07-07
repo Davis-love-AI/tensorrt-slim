@@ -140,6 +140,33 @@ nvinfer1::DataType network::datatype() const {
     return nvinfer1::DataType::kFLOAT;
 }
 
+nvinfer1::DimsHW network::input_shape() const
+{
+    return nvinfer1::DimsHW{m_pb_network.input().height(), m_pb_network.input().width()};
+}
+const std::string& network::input_name() const
+{
+    return m_pb_network.input().name();
+}
+std::vector<nvinfer1::DimsHW> network::outputs_shape() const
+{
+    std::vector<nvinfer1::DimsHW> v;
+    for(int i = 0 ; i < m_pb_network.outputs_size() ; ++i) {
+        const tfrt_pb::output& output = m_pb_network.outputs(i);
+        v.push_back(nvinfer1::DimsHW{output.height(), output.width()});
+    }
+    return v;
+}
+std::vector<std::string> network::outputs_name() const
+{
+    std::vector<std::string> v;
+    for(int i = 0 ; i < m_pb_network.outputs_size() ; ++i) {
+        const tfrt_pb::output& output = m_pb_network.outputs(i);
+        v.push_back(output.name());
+    }
+    return v;
+}
+
 /* ============================================================================
  * Private tfrt::network methods... Tambouille interne.
  * ========================================================================== */
