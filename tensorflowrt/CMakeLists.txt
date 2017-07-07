@@ -2,17 +2,35 @@
 INCLUDE(FindProtobuf)
 FIND_PACKAGE(Protobuf REQUIRED)
 
-INCLUDE_DIRECTORIES(${PROTOBUF_INCLUDE_DIR})
+# Protobuf generate files...
+message("-- Generating Protobuf source files...")
+include_directories(${PROTOBUF_INCLUDE_DIR})
 PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HEADERS tensorflowrt.proto)
-# Ugly direct generation!
-# execute_process(COMMAND /usr/bin/protoc --cpp_out=./ tensorflowrt.proto
-#                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+# Ugly direct generation! Don't know how to copy headers otherwise
+execute_process(COMMAND protoc --cpp_out=./ tensorflowrt.proto
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-file(GLOB TFRT_SOURCES *.cpp *.cu)
-file(GLOB TFRT_INCLUDES *.h)
-# MESSAGE("TF-RT sources: " ${TFRT_SOURCES})
-MESSAGE("TF-RT protobuf sources: " ${PROTO_SRCS})
+# TF-RT sources.
+FILE(GLOB TFRT_SRCS *.cpp *.cu)
+FILE(GLOB TFRT_HEADERS *.h nets/*.h)
+
+# Some debugging info...
+# MESSAGE("TF-RT sources: " ${TFRT_SRCS})
+# MESSAGE("TF-RT headers: " ${TFRT_HEADERS})
+# MESSAGE("TF-RT headers: " ${CMAKE_CURRENT_BINARY_DIR})
+# MESSAGE("TF-RT headers: " ${CMAKE_CURRENT_SOURCE_DIR})
+# MESSAGE("TF-RT protobuf sources: " ${PROTO_SRCS})
 
 # Build TensorFlowRT
-cuda_add_library(tensorflowrt STATIC ${TFRT_SOURCES} ${PROTO_SRCS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+cuda_add_library(tensorflowrt STATIC ${TFRT_SRCS} ${PROTO_SRCS})
 target_link_libraries(tensorflowrt nvinfer ${PROTOBUF_LIBRARY})
+
+# Copy TF-RT headers
+set(HEADERS_DIRS . nets)
+BUILD_COPY_HEADERS(HEADERS_DIRS)
+
+# foreach(HEADER ${PROTO_HEADERS})
+# 	message("-- Copying ${HEADER}")
+# 	configure_file(${HEADER} ${PROJECT_INCLUDE_DIR} COPYONLY)
+# endforeach(HEADER)

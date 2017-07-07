@@ -21,6 +21,20 @@ set(
 	-gencode arch=compute_62,code=sm_62
 )
 
+# Copy headers to include directory.
+MACRO(BUILD_COPY_HEADERS DIRS_LIST)
+    foreach(HEADER_DIR ${${DIRS_LIST}})
+        message("-- Copying headers from ${HEADER_DIR}")
+	    file(GLOB TMP_TFRT_HEADERS ${HEADER_DIR}/*.h)
+        foreach(HEADER ${TMP_TFRT_HEADERS})
+            message("-- Copying ${HEADER}")
+            set(HEADERS_DIR_BUILD ${PROJECT_INCLUDE_DIR}/${HEADER_DIR})
+            file(MAKE_DIRECTORY ${HEADERS_DIR_BUILD})
+	        configure_file(${HEADER} ${HEADERS_DIR_BUILD} COPYONLY)
+        endforeach(HEADER)
+    endforeach(HEADER_DIR)
+ENDMACRO(BUILD_COPY_HEADERS)
+
 # Setup project output paths
 set(PROJECT_OUTPUT_DIR  ${PROJECT_BINARY_DIR}/${CMAKE_SYSTEM_PROCESSOR})
 set(PROJECT_INCLUDE_DIR ${PROJECT_OUTPUT_DIR}/include)
