@@ -2,6 +2,12 @@
 cmake_minimum_required(VERSION 3.0)
 project(ssd-tensorrt)
 
+# gflags and glog libraries
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+message("-- CMAKE modules path:  ${CMAKE_MODULE_PATH}")
+find_package(glog REQUIRED)
+find_package(gflags REQUIRED)
+
 # TensorRT flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")	# -std=gnu++11
 set(BUILD_DEPS "YES" CACHE BOOL "If YES, will install dependencies into sandbox.  Automatically reset to NO after dependencies are installed.")
@@ -11,7 +17,7 @@ find_package(Qt4 REQUIRED)
 include(${QT_USE_FILE})
 add_definitions(${QT_DEFINITIONS})
 
-# Setup CUDA
+# Set-up CUDA
 find_package(CUDA)
 set(
 	CUDA_NVCC_FLAGS
@@ -56,17 +62,18 @@ include_directories(/usr/lib/x86_64-linux-gnu/glib-2.0/include /usr/lib/x86_64-l
 # Build TensorFlowRT library.
 add_subdirectory(tensorflowrt)
 
-
-# file(GLOB inferenceSources *.cpp *.cu util/*.cpp util/camera/*.cpp util/cuda/*.cu util/display/*.cpp)
-# file(GLOB inferenceIncludes *.h util/*.h util/camera/*.h util/cuda/*.h util/display/*.h)
-
-# cuda_add_library(ssd-tensorrt SHARED ${inferenceSources})
-# target_link_libraries(ssd-tensorrt nvinfer Qt4::QtGui GL GLEW gstreamer-1.0 gstapp-1.0)
+# Build several small utils...
+add_subdirectory(utils)
 
 
-# # transfer all headers to the include directory
+# install
 # foreach(include ${inferenceIncludes})
-# 	message("-- Copying ${include}")
-# 	configure_file(${include} ${PROJECT_INCLUDE_DIR} COPYONLY)
+#     install(FILES "${include}" DESTINATION include/jetson-inference)
 # endforeach()
+
+# # install the shared library
+# install(TARGETS jetson-inference DESTINATION lib/jetson-inference EXPORT jetson-inferenceConfig)
+
+# # install the cmake project, for importing
+# install(EXPORT jetson-inferenceConfig DESTINATION share/jetson-inference/cmake)
 

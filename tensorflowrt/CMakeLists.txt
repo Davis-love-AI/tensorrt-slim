@@ -12,7 +12,7 @@ execute_process(COMMAND protoc --cpp_out=./ tensorflowrt.proto
 
 # TF-RT sources.
 FILE(GLOB TFRT_SRCS *.cpp *.cu)
-FILE(GLOB TFRT_HEADERS *.h nets/*.h)
+FILE(GLOB TFRT_HEADERS *.h)
 
 # Some debugging info...
 # MESSAGE("TF-RT sources: " ${TFRT_SRCS})

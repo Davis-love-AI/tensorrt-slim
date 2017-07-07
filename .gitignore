@@ -11,7 +11,7 @@ __pycache__*
 *pb3.py
 
 # DATA to ignore.
-# data/tfrt
+data/
 # Build directory.
 build/
 

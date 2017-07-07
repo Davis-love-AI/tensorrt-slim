@@ -22,7 +22,7 @@
 #include <string>
 #include <sstream>
 
-#include <cuda_runtime_api.h>
+// #include <cuda_runtime_api.h>
 #include <NvInfer.h>
 
 #include "tfrt_jetson.h"
