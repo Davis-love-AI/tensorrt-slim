@@ -50,10 +50,13 @@ public:
     }
 
 public:
-    /** Get the parent network object.
+    /** Get the parent network objects.
      */
     nvinfer1::INetworkDefinition* network() const {
         return m_nv_network;
+    }
+    const tfrt::network* tfrt_network() const {
+        return m_tf_network;
     }
     /** Get the scope name, as a std::string.
      */

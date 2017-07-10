@@ -72,6 +72,30 @@ protected:
     tfrt::scope  m_scope;
 };
 
+/** Input layer.
+ */
+class input : public layer
+{
+public:
+    input(const tfrt::scope& sc, const std::string& lname="Input") :
+        layer(sc, lname), m_shape{1, 1, 1} {
+    }
+    /** Named parameter: input shape. */
+    input& shape(nvinfer1::DimsCHW shape) {
+        m_shape = shape;
+        return *this;
+    }
+    /** Input construction */
+    virtual nvinfer1::ITensor* operator()() {
+        auto dt = m_scope.tfrt_network()->datatype();
+        auto net = m_scope.network()->addInput(m_scope.name().c_str(), dt, DIMRT(this->m_shape));
+        return net;
+    }
+protected:
+    // Input shape.
+    nvinfer1::DimsCHW  m_shape;
+};
+
 /** Generic 2D operation, with the following common structure:
  * op2d (with padding) -> batch norm/bias -> activation.
  */
