@@ -111,23 +111,21 @@ public:
     /** Convert TF protobuf tensor to NV weights. */
     static nvinfer1::Weights tensor_to_weights(const tfrt_pb::tensor& tensor);
 
-protected:
-    // Protected setters...
-    // void name(std::string name);
+public:
     /** Load weights and configuration from .tfrt file. */
     bool load_weights(const std::string& filename);
     /** Clear out the collections of network weights, to save memory. */
     void clear_weights();
 
-    /** Build the complete network.
-     * To be re-defined in children classes.
+    /** Build the complete network. Input + all layers.
+     * To be re-implemented in children classes.
      */
     virtual nvinfer1::ITensor* build(tfrt::scope sc);
     /** Serialize a network model. If caching=True, try to first load from
      * a cached file. If no file, construct the usual way and save the cache.
      */
     bool serialize_model(const std::string& filename, std::stringstream& model_stream, bool caching=true);
-    /** Build and profile a model
+    /** Build and profile a model.
      */
     bool profile_model(std::stringstream& model_stream);
 
@@ -181,19 +179,9 @@ protected:
     // Profiler and debugging?
     bool  m_enable_profiler;
 	bool  m_enable_debug;
-
     // CUDA input and outputs.
     tfrt::cuda_tensor  m_cuda_input;
     std::vector<tfrt::cuda_tensor>  m_cuda_outputs;
-
-	// uint32_t mWidth;
-	// uint32_t mHeight;
-	// uint32_t mInputSize;
-	// float*   mInputCPU;
-	// float*   mInputCUDA;
-	// uint32_t mMaxBatchSize;
-	// bool	 mEnableFP16;
-	// bool     mOverride16;
 
     // Temporary collection of zero tensors.
     std::vector<tfrt_pb::tensor>  m_zero_tensors;

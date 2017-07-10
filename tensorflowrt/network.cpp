@@ -145,7 +145,7 @@ const tfrt_pb::tensor& network::tensor_by_name(std::string name) const
     for(int i = 0 ; i < m_pb_network->weights_size() ; ++i) {
         const tfrt_pb::tensor& tensor = m_pb_network->weights(i);
         if(tensor.name() == name) {
-            LOG(INFO) << "FOUND tfrt_pb::tensor '" << name << "'. "
+            DLOG(INFO) << "FOUND tfrt_pb::tensor '" << name << "'. "
                 << "SHAPE: " << dims_str(tensor_shape(tensor)) << " "
                 << "SIZE: " << tensor.size();
             return tensor;
@@ -207,6 +207,7 @@ std::vector<nvinfer1::DimsCHW> network::outputs_shape() const
 }
 std::vector<std::string> network::outputs_name(bool suffix) const
 {
+    // TODO: more efficient way!
     std::vector<std::string> v;
     for(int i = 0 ; i < m_pb_network->outputs_size() ; ++i) {
         const tfrt_pb::output& output = m_pb_network->outputs(i);
