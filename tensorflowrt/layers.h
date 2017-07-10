@@ -15,6 +15,9 @@
 #ifndef TFRT_LAYERS_H
 #define TFRT_LAYERS_H
 
+#include <vector>
+#include <algorithm>
+
 #include "utils.h"
 #include "scope.h"
 
@@ -58,7 +61,9 @@ class layer
 {
 public:
     layer(const tfrt::scope& sc, const std::string& lname="Layer") :
-        m_scope(sc.sub(lname)) {
+            m_scope(sc.sub(lname)), m_is_output{false} {
+        // TODO: ugly initialization...
+        m_is_output = this->net_is_output();
     }
     tfrt::scope scope() const {
         return m_scope;
@@ -67,9 +72,34 @@ public:
      */
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* input) = 0;
 
+public:
+    /** Named parameter: is it output layer?
+     */
+    layer& is_output(bool is_output) {
+        m_is_output = is_output;
+        return *this;
+    }
+    bool is_output() const {
+        return m_is_output;
+    }
+
+protected:
+    /** Check from network parameters if it is an output.
+     * Return: whether the layer is an output layer or not.
+     */
+    bool net_is_output() {
+        // TODO: a bit ugly this stuff. Move to scope class?
+        auto onames = m_scope.tfrt_network()->outputs_name();
+        auto lname = m_scope.name();
+        bool r = (std::find(std::begin(onames), std::end(onames), lname) != std::end(onames));
+        return r;
+    }
+
 protected:
     // Variable scope used by the layer.
     tfrt::scope  m_scope;
+    // Is it an output?
+    bool  m_is_output;
 };
 
 /** Input layer.
