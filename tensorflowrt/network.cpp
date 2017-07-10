@@ -53,19 +53,45 @@ inline nvinfer1::Dims tensor_shape(const tfrt_pb::tensor& t)
     dims.nbDims = t.shape_size();
     return dims;
 }
-// /** Find tensor in GIE network. */
-// nvinfer1::ILayer* find_layer(nvinfer1::INetworkDefinition* network)
-// {
-//     nvinfer1::ILayer* layer{nullptr};
-//     return layer;
-// }
-// /** Mark layer outputs. */
-// void mark_layer_outputs(nvinfer1::ILayer* layer, nvinfer1::INetworkDefinition* network)
-// {
-//     for(int i = 0 ; i < layer->getNbOutputs() ; ++i) {
-//         network->markOutput(*layer->getOutput(i));
-//     }
-// }
+
+/* ============================================================================
+ * tfrt::cuda_tensor implementation.
+ * ========================================================================== */
+cuda_tensor::cuda_tensor(const std::string& _name, const nvinfer1::DimsNCHW& _shape) :
+    name{_name}, shape{_shape},
+    size{_shape.n() * _shape.c() * _shape.h() * _shape.w() * sizeof(float)},
+    cpu{nullptr}, cuda{nullptr}
+{
+}
+cuda_tensor::cuda_tensor(cuda_tensor&& t) :
+    name{t.name}, shape{t.shape}, size{t.size}, cpu{t.cpu}, cuda{t.cuda}
+{
+    // Reset t to zero...
+    t.name = "";
+    t.shape = nvinfer1::DimsNCHW();
+    t.size = 0;
+    t.cpu = nullptr;
+    t.cuda = nullptr;
+}
+cuda_tensor::~cuda_tensor()
+{
+    if(cpu) {
+        cudaFreeHost(cpu);
+    }
+}
+bool cuda_tensor::allocate()
+{
+    if(cpu) {
+        cudaFreeHost(cpu);
+    }
+    // Double check size...
+    size = shape.n() * shape.c() * shape.h() * shape.w() * sizeof(float);
+    if(!cudaAllocMapped((void**)&cpu, (void**)&cuda, size)) {
+        LOG(FATAL) << "Failed to allocate CUDA mapped memory for output: " << name;
+        return false;
+    }
+    return true;
+}
 
 /* ============================================================================
  * tfrt::network methods.
@@ -90,14 +116,6 @@ void network::clear()
 tfrt::scope network::scope(nvinfer1::INetworkDefinition* nv_network) const
 {
     return tfrt::scope(nv_network, this, this->name());
-}
-
-bool network::load(std::string filename)
-{
-    // Start by loading configuration + weights.
-    this->load_weights(filename);
-
-    return true;
 }
 
 
@@ -181,8 +199,39 @@ std::vector<std::string> network::outputs_name() const
 }
 
 /* ============================================================================
- * Private tfrt::network methods... Tambouille interne.
+ * load - build - serialize. The big stuff!
  * ========================================================================== */
+bool network::load(std::string filename)
+{
+    // Serialize model.
+    std::stringstream model_stream;
+    this->serialize_model(filename, model_stream, true);
+
+    // Inference runtime + engine + execution context.
+	nvinfer1::IRuntime* infer = createInferRuntime(m_gie_logger);
+    CHECK_NOTNULL(infer);
+	nvinfer1::ICudaEngine* engine = infer->deserializeCudaEngine(model_stream);
+    CHECK_NOTNULL(engine);
+	nvinfer1::IExecutionContext* context = engine->createExecutionContext();
+    CHECK_NOTNULL(context);
+
+    // Debug and profiler options.
+	if(m_enable_debug) {
+        LOG(INFO) << LOG_GIE << "Enabling context debug sync.";
+		context->setDebugSync(true);
+	}
+	if(m_enable_profiler) {
+		context->setProfiler(&m_gie_profiler);
+    }
+    LOG(INFO) << LOG_GIE << "CUDA engine context initialized with #bindings: " << engine->getNbBindings();
+	m_nv_infer = infer;
+	m_nv_engine = engine;
+	m_nv_context = context;
+
+
+
+    return true;
+}
 bool network::load_weights(const std::string& filename)
 {
     LOG(INFO) << "Loading network parameters and weights from: " << filename;
@@ -250,7 +299,7 @@ bool network::profile_model(std::stringstream& model_stream)
 	nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(m_gie_logger);
 	nvinfer1::INetworkDefinition* network = builder->createNetwork();
 
-	builder->setDebugSync(mEnableDebug);
+	builder->setDebugSync(m_enable_debug);
 	builder->setMinFindIterations(10);	    // allow time for TX1/2 GPU to spin up.
     builder->setAverageFindIterations(5);
 

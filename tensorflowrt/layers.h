@@ -98,7 +98,7 @@ protected:
      */
     nvinfer1::ITensor* mark_output(nvinfer1::ITensor* tensor) {
         if(m_is_output) {
-            LOG(INFO) << "MARK output layer: " << m_scope.name();
+            LOG(INFO) << "MARK output (layer) on tensor: " << tensor->getName();
             m_scope.network()->markOutput(*tensor);
         }
         return tensor;

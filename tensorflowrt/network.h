@@ -28,10 +28,38 @@
 
 #include "tfrt_jetson.h"
 #include "network.pb.h"
+#include "cuda/cudaMappedMemory.h"
 
 namespace tfrt
 {
 class scope;
+
+/** CUDA tensor with shared memory between CUDA and CPU.
+ */
+struct cuda_tensor
+{
+public:
+    /** Constructor: provide tensor shape. */
+    cuda_tensor(const std::string&, const nvinfer1::DimsNCHW&);
+    /** Move constructor. */
+    cuda_tensor(cuda_tensor&& t);
+    /** Destructor: CUDA free memory.  */
+    ~cuda_tensor();
+    /** Allocate shared memory between CPU and CUDA */
+    bool allocate();
+
+private:
+    cuda_tensor() = default;
+    cuda_tensor(const cuda_tensor&) = default;
+
+public:
+    std::string  name;
+    nvinfer1::DimsNCHW  shape;
+    size_t  size;
+    // TODO: use std::unique_ptr with custom deleter.
+    float*  cpu;
+    float*  cuda;
+};
 
 /** Generic network class, implementation the basic building, inference
  * profiling methods.
@@ -44,7 +72,8 @@ public:
     network(std::string name, nvinfer1::DataType datatype) :
         m_pb_network(std::make_unique<tfrt_pb::network>()),
         m_nv_infer{nullptr}, m_nv_engine{nullptr}, m_nv_context{nullptr},
-        m_max_batch_size{2}, m_workspace_size{16 << 20} {
+        m_max_batch_size{2}, m_workspace_size{16 << 20},
+        m_enable_profiler{false}, m_enable_debug{false} {
     }
     ~network();
     /** Clear the network and its weights. */
@@ -132,7 +161,7 @@ protected:
 	/** When profiling is enabled, end a profiling section and report timing statistics.
 	 */
 	inline void PROFILER_REPORT()	{
-        if(mEnableProfiler) {
+        if(m_enable_profiler) {
             printf(LOG_GIE "layer network time - %f ms\n", m_gie_profiler.timingAccumulator); m_gie_profiler.timingAccumulator = 0.0f;
         }
     }
@@ -145,8 +174,13 @@ protected:
 	nvinfer1::ICudaEngine*  m_nv_engine;
 	nvinfer1::IExecutionContext*  m_nv_context;
 
-    uint32_t m_max_batch_size;
-    uint32_t m_workspace_size;
+    // TensorRT max batch size and workspace size.
+    uint32_t  m_max_batch_size;
+    uint32_t  m_workspace_size;
+    // Profiler and debugging?
+    bool  m_enable_profiler;
+	bool  m_enable_debug;
+
 
 	// uint32_t mWidth;
 	// uint32_t mHeight;
@@ -154,8 +188,6 @@ protected:
 	// float*   mInputCPU;
 	// float*   mInputCUDA;
 	// uint32_t mMaxBatchSize;
-	bool	 mEnableProfiler;
-	bool     mEnableDebug;
 	// bool	 mEnableFP16;
 	// bool     mOverride16;
 
