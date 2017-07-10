@@ -39,24 +39,25 @@ class scope;
 struct cuda_tensor
 {
 public:
+    cuda_tensor();
     /** Constructor: provide tensor shape. */
     cuda_tensor(const std::string&, const nvinfer1::DimsNCHW&);
-    /** Move constructor. */
+    /** Move constructor and assignement. */
     cuda_tensor(cuda_tensor&& t);
+    cuda_tensor& operator=(cuda_tensor&& t);
     /** Destructor: CUDA free memory.  */
     ~cuda_tensor();
     /** Allocate shared memory between CPU and CUDA */
     bool allocate();
 
 private:
-    cuda_tensor() = default;
     cuda_tensor(const cuda_tensor&) = default;
 
 public:
     std::string  name;
     nvinfer1::DimsNCHW  shape;
     size_t  size;
-    // TODO: use std::unique_ptr with custom deleter.
+    // TODO: use std::unique_ptr with custom deleter. Cleaner?
     float*  cpu;
     float*  cuda;
 };
@@ -181,6 +182,9 @@ protected:
     bool  m_enable_profiler;
 	bool  m_enable_debug;
 
+    // CUDA input and outputs.
+    tfrt::cuda_tensor  m_cuda_input;
+    std::vector<tfrt::cuda_tensor>  m_cuda_outputs;
 
 	// uint32_t mWidth;
 	// uint32_t mHeight;

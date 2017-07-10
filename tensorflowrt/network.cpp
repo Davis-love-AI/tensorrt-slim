@@ -57,6 +57,9 @@ inline nvinfer1::Dims tensor_shape(const tfrt_pb::tensor& t)
 /* ============================================================================
  * tfrt::cuda_tensor implementation.
  * ========================================================================== */
+cuda_tensor::cuda_tensor() : name{}, shape{}, size{0}, cpu{nullptr}, cuda{nullptr}
+{
+}
 cuda_tensor::cuda_tensor(const std::string& _name, const nvinfer1::DimsNCHW& _shape) :
     name{_name}, shape{_shape},
     size{_shape.n() * _shape.c() * _shape.h() * _shape.w() * sizeof(float)},
@@ -64,14 +67,28 @@ cuda_tensor::cuda_tensor(const std::string& _name, const nvinfer1::DimsNCHW& _sh
 {
 }
 cuda_tensor::cuda_tensor(cuda_tensor&& t) :
-    name{t.name}, shape{t.shape}, size{t.size}, cpu{t.cpu}, cuda{t.cuda}
+    name{}, shape{}, size{0}, cpu{nullptr}, cuda{nullptr}
 {
-    // Reset t to zero...
+    this->operator=(std::move(t));
+}
+cuda_tensor& cuda_tensor::operator=(cuda_tensor&& t) {
+    // Free allocated memory...
+    if(cpu) {
+        cudaFreeHost(cpu);
+    }
+    // Copy.
+    name = t.name;
+    shape = t.shape;
+    size = t.size;
+    cpu = t.cpu;
+    cuda = t.cuda;
+    // Reset.
     t.name = "";
     t.shape = nvinfer1::DimsNCHW();
     t.size = 0;
     t.cpu = nullptr;
     t.cuda = nullptr;
+    return *this;
 }
 cuda_tensor::~cuda_tensor()
 {
@@ -227,6 +244,15 @@ bool network::load(std::string filename)
 	m_nv_infer = infer;
 	m_nv_engine = engine;
 	m_nv_context = context;
+
+    // CUDA allocate memory.
+    nvinfer1::DimsNCHW shape;
+    const int input_idx = m_nv_engine->getBindingIndex(input_name().c_str());
+	nvinfer1::DimsCHW inshape = engine->getBindingDimensions(input_idx);
+    shape = nvinfer1::DimsNCHW{int(m_max_batch_size), inshape.c(), inshape.h(), inshape.w()};
+    m_cuda_input = std::move(tfrt::cuda_tensor(input_name(), shape));
+    bool r = m_cuda_input.allocate();
+    CHECK(r) << "Could not allocate input CUDA memory: " << input_name();
 
 
 
