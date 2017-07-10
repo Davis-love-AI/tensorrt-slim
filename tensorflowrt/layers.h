@@ -77,8 +77,13 @@ protected:
 class input : public layer
 {
 public:
-    input(const tfrt::scope& sc, const std::string& lname="Input") :
+    input(const tfrt::scope& sc, const std::string& lname="") :
         layer(sc, lname), m_shape{1, 1, 1} {
+        // Set default shape using tfrt::network values.
+        m_shape = m_scope.tfrt_network()->input_shape();
+        if(!lname.length()) {
+            m_scope = sc.sub(m_scope.tfrt_network()->input_name());
+        }
     }
     /** Named parameter: input shape. */
     input& shape(nvinfer1::DimsCHW shape) {
