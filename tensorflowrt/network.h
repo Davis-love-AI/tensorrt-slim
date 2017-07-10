@@ -19,7 +19,8 @@
 // #include <glog/logging.h>
 
 // #include <cmath>
-// #include <string>
+#include <memory>
+#include <string>
 // #include <sstream>
 
 // // #include <cuda_runtime_api.h>
@@ -40,8 +41,8 @@ class network
 public:
     /** Create network, specifying the name and the datatype.
      */
-    network(std::string name, nvinfer1::DataType datatype) {
-
+    network(std::string name, nvinfer1::DataType datatype) :
+        m_pb_network(std::make_unique<tfrt_pb::network>()) {
     }
     /** Clear the network and its weights. */
     void clear();
@@ -89,8 +90,7 @@ protected:
 
 protected:
     // Protobuf network object.
-    tfrt_pb::network  m_pb_network;
-
+    std::unique_ptr<tfrt_pb::network> m_pb_network;
 
     // Temporary collection of zero tensors.
     std::vector<tfrt_pb::tensor>  m_zero_tensors;

@@ -59,7 +59,7 @@ inline nvinfer1::Dims tensor_shape(const tfrt_pb::tensor& t)
  * ========================================================================== */
 void network::clear()
 {
-    m_pb_network.Clear();
+    m_pb_network->Clear();
     m_zero_tensors.clear();
 }
 tfrt::scope network::scope(nvinfer1::INetworkDefinition* nv_network) const
@@ -76,7 +76,7 @@ bool network::load_weights(std::string filename)
     ZeroCopyInputStream* raw_input = new FileInputStream(fd);
     CodedInputStream* coded_input = new CodedInputStream(raw_input);
     coded_input->SetTotalBytesLimit(kProtoReadBytesLimit, 536870912);
-    bool success = m_pb_network.ParseFromCodedStream(coded_input);
+    bool success = m_pb_network->ParseFromCodedStream(coded_input);
     delete coded_input;
     delete raw_input;
     close(fd);
@@ -90,8 +90,8 @@ bool network::load_weights(std::string filename)
 const tfrt_pb::tensor& network::tensor_by_name(std::string name) const
 {
     // Best search algorithm ever!
-    for(int i = 0 ; i < m_pb_network.weights_size() ; ++i) {
-        const tfrt_pb::tensor& tensor = m_pb_network.weights(i);
+    for(int i = 0 ; i < m_pb_network->weights_size() ; ++i) {
+        const tfrt_pb::tensor& tensor = m_pb_network->weights(i);
         if(tensor.name() == name) {
             LOG(INFO) << "FOUND tfrt_pb::tensor '" << name << "'. "
                 << "SHAPE: " << dims_str(tensor_shape(tensor)) << " "
@@ -123,31 +123,31 @@ nvinfer1::Weights network::tensor_to_weights(const tfrt_pb::tensor& tensor)
     return w;
 }
 const std::string& network::name() const {
-    return m_pb_network.name();
+    return m_pb_network->name();
 }
 network& network::name(const std::string& name) {
-    m_pb_network.set_name(name);
+    m_pb_network->set_name(name);
     return *this;
 }
 nvinfer1::DataType network::datatype() const {
     // Datatype of the network. Hopefully consistent with weights...
-    auto dt = m_pb_network.datatype();
+    auto dt = m_pb_network->datatype();
     return nvinfer1::DataType(int(dt));
 }
 
 nvinfer1::DimsHW network::input_shape() const
 {
-    return nvinfer1::DimsHW{m_pb_network.input().height(), m_pb_network.input().width()};
+    return nvinfer1::DimsHW{m_pb_network->input().height(), m_pb_network->input().width()};
 }
 const std::string& network::input_name() const
 {
-    return m_pb_network.input().name();
+    return m_pb_network->input().name();
 }
 std::vector<nvinfer1::DimsHW> network::outputs_shape() const
 {
     std::vector<nvinfer1::DimsHW> v;
-    for(int i = 0 ; i < m_pb_network.outputs_size() ; ++i) {
-        const tfrt_pb::output& output = m_pb_network.outputs(i);
+    for(int i = 0 ; i < m_pb_network->outputs_size() ; ++i) {
+        const tfrt_pb::output& output = m_pb_network->outputs(i);
         v.push_back(nvinfer1::DimsHW{output.height(), output.width()});
     }
     return v;
@@ -155,8 +155,8 @@ std::vector<nvinfer1::DimsHW> network::outputs_shape() const
 std::vector<std::string> network::outputs_name() const
 {
     std::vector<std::string> v;
-    for(int i = 0 ; i < m_pb_network.outputs_size() ; ++i) {
-        const tfrt_pb::output& output = m_pb_network.outputs(i);
+    for(int i = 0 ; i < m_pb_network->outputs_size() ; ++i) {
+        const tfrt_pb::output& output = m_pb_network->outputs(i);
         v.push_back(output.name());
     }
     return v;
@@ -167,7 +167,7 @@ std::vector<std::string> network::outputs_name() const
  * ========================================================================== */
 void network::clear_weights()
 {
-    m_pb_network.clear_weights();
+    m_pb_network->clear_weights();
 }
 
 }
