@@ -94,6 +94,15 @@ protected:
         bool r = (std::find(std::begin(onames), std::end(onames), lname) != std::end(onames));
         return r;
     }
+    /** Mark a tensor as an output if the layer is an output layer.
+     */
+    nvinfer1::ITensor* mark_output(nvinfer1::ITensor* tensor) {
+        if(m_is_output) {
+            LOG(INFO) << "MARK output layer: " << m_scope.name();
+            m_scope.network()->markOutput(*tensor);
+        }
+        return tensor;
+    }
 
 protected:
     // Variable scope used by the layer.
@@ -314,7 +323,7 @@ public:
         net = this->batch_norm(net);
         net = this->activation(net);
         net->setName(this->m_scope.sub("output").cname());
-        return net;
+        return this->mark_output(net);
     }
 
 protected:
@@ -388,7 +397,7 @@ public:
         net = pw_conv2d.batch_norm(net);
         net = pw_conv2d.activation(net);
         net->setName(this->m_scope.sub("output").cname());
-        return net;
+        return this->mark_output(net);
     }
 
     /** Named parameter: depth multiplier.
@@ -422,7 +431,7 @@ public:
             << "Input shape: " << dims_str(net->getDimensions());
         net = this->operation2d<ACT, PaddingType::SAME, false>::activation(net);
         net->setName(this->m_scope.sub("output").cname());
-        return net;
+        return this->mark_output(net);
     }
 
 private:
@@ -451,7 +460,7 @@ public:
             << "Input shape: " << dims_str(net->getDimensions());
         net = this->pooling(net);
         net->setName(this->m_scope.sub("output").cname());
-        return net;
+        return this->mark_output(net);
     }
 
 private:
@@ -511,7 +520,7 @@ public:
         clayer->setName(this->m_scope.name().c_str());
         auto net = clayer->getOutput(0);
         net->setName(this->m_scope.sub("output").cname());
-        return net;
+        return this->mark_output(net);
     }
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* input) {
         return nullptr;
