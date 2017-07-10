@@ -26,7 +26,7 @@
 #include <NvInfer.h>
 
 #include "tfrt_jetson.h"
-#include "tensorflowrt.pb.h"
+#include "network.pb.h"
 
 namespace tfrt
 {
@@ -40,8 +40,8 @@ class network
 public:
     /** Create network, specifying the name and the datatype.
      */
-    network(std::string name, nvinfer1::DataType datatype) :
-        m_name(name), m_datatype(datatype) {
+    network(std::string name, nvinfer1::DataType datatype) {
+
     }
     /** Clear the network and its weights. */
     void clear();
@@ -61,6 +61,7 @@ public:
     nvinfer1::Weights weights_by_name(std::string name) const;
 
     const std::string& name() const;
+    network& name(const std::string& name);
     nvinfer1::DataType datatype() const;
 
     nvinfer1::DimsHW input_shape() const;
@@ -72,24 +73,26 @@ public:
 public:
     /** Generate empty weights. */
     nvinfer1::Weights empty_weights() const {
-        return nvinfer1::Weights{.type = this->m_datatype, .values = nullptr, .count = 0};
+        return nvinfer1::Weights{.type = this->datatype(), .values = nullptr, .count = 0};
     }
     /** Convert TF protobuf tensor to NV weights. */
     static nvinfer1::Weights tensor_to_weights(const tfrt_pb::tensor& tensor);
 
-private:
-    /** Clear out the collections of tensors, to save memory.
-     */
-    void clear_tensors();
+protected:
+    // Protected setters...
+    // void name(std::string name);
 
-private:
-    // Network name.
-    std::string  m_name;
-    // Datatype used in weights storing.
-    nvinfer1::DataType  m_datatype;
+
+    /** Clear out the collections of network weights, to save memory.
+     */
+    void clear_weights();
+
+protected:
     // Protobuf network object.
     tfrt_pb::network  m_pb_network;
-    // Collection of zero tensors.
+
+
+    // Temporary collection of zero tensors.
     std::vector<tfrt_pb::tensor>  m_zero_tensors;
 };
 

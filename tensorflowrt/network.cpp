@@ -44,13 +44,13 @@ using google::protobuf::io::CodedOutputStream;
 /* ============================================================================
  * Nice utils
  * ========================================================================== */
-inline nvinfer1::Dims tensor_shape(const tfrt_pb::tensor& tensor)
+inline nvinfer1::Dims tensor_shape(const tfrt_pb::tensor& t)
 {
     nvinfer1::Dims dims;
-    for(int i = 0; i < tensor.shape_size(); i++) {
-        dims.d[i] = tensor.shape(i);
+    for(int i = 0; i < t.shape_size(); i++) {
+        dims.d[i] = t.shape(i);
     }
-    dims.nbDims = tensor.shape_size();
+    dims.nbDims = t.shape_size();
     return dims;
 }
 
@@ -64,7 +64,7 @@ void network::clear()
 }
 tfrt::scope network::scope(nvinfer1::INetworkDefinition* nv_network) const
 {
-    return tfrt::scope(nv_network, this, m_name);
+    return tfrt::scope(nv_network, this, this->name());
 }
 
 bool network::load_weights(std::string filename)
@@ -80,12 +80,6 @@ bool network::load_weights(std::string filename)
     delete coded_input;
     delete raw_input;
     close(fd);
-
-    // Set datatype corresponding to protobuf tensors.
-    if(m_pb_network.tensors_size()) {
-        auto dt = m_pb_network.tensors(0).datatype();
-        this->m_datatype = nvinfer1::DataType(int(dt));
-    }
     return success;
 }
 
@@ -96,8 +90,8 @@ bool network::load_weights(std::string filename)
 const tfrt_pb::tensor& network::tensor_by_name(std::string name) const
 {
     // Best search algorithm ever!
-    for(int i = 0 ; i < m_pb_network.tensors_size() ; ++i) {
-        const tfrt_pb::tensor& tensor = m_pb_network.tensors(i);
+    for(int i = 0 ; i < m_pb_network.weights_size() ; ++i) {
+        const tfrt_pb::tensor& tensor = m_pb_network.weights(i);
         if(tensor.name() == name) {
             LOG(INFO) << "FOUND tfrt_pb::tensor '" << name << "'. "
                 << "SHAPE: " << dims_str(tensor_shape(tensor)) << " "
@@ -131,13 +125,14 @@ nvinfer1::Weights network::tensor_to_weights(const tfrt_pb::tensor& tensor)
 const std::string& network::name() const {
     return m_pb_network.name();
 }
+network& network::name(const std::string& name) {
+    m_pb_network.set_name(name);
+    return *this;
+}
 nvinfer1::DataType network::datatype() const {
-    // Datatype of the first tensor... UGLY!!!
-    if(m_pb_network.tensors_size()) {
-        auto dt = m_pb_network.tensors(0).datatype();
-        return nvinfer1::DataType(int(dt));
-    }
-    return nvinfer1::DataType::kFLOAT;
+    // Datatype of the network. Hopefully consistent with weights...
+    auto dt = m_pb_network.datatype();
+    return nvinfer1::DataType(int(dt));
 }
 
 nvinfer1::DimsHW network::input_shape() const
@@ -170,9 +165,9 @@ std::vector<std::string> network::outputs_name() const
 /* ============================================================================
  * Private tfrt::network methods... Tambouille interne.
  * ========================================================================== */
-void network::clear_tensors()
+void network::clear_weights()
 {
-    m_pb_network.clear_tensors();
+    m_pb_network.clear_weights();
 }
 
 }
