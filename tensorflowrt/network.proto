@@ -24,13 +24,15 @@ enum DataType {
 
 message input {
     optional string name = 1 [default = "input"];
-    optional int32 height = 2 [default = 224];
-    optional int32 width = 3 [default = 224];
+    optional int32 h = 2 [default = 224];
+    optional int32 w = 3 [default = 224];
+    optional int32 c = 4 [default = 3];
 }
 message output {
     optional string name = 1 [default = "output"];
-    optional int32 height = 2;
-    optional int32 width = 3;
+    optional int32 h = 2 [default = 1];
+    optional int32 w = 3 [default = 1];
+    optional int32 c = 4 [default = 1];
 }
 
 message tensor {

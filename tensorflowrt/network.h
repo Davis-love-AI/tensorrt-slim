@@ -21,7 +21,7 @@
 // #include <cmath>
 #include <memory>
 #include <string>
-// #include <sstream>
+#include <sstream>
 
 // // #include <cuda_runtime_api.h>
 #include <NvInfer.h>
@@ -42,14 +42,16 @@ public:
     /** Create network, specifying the name and the datatype.
      */
     network(std::string name, nvinfer1::DataType datatype) :
-        m_pb_network(std::make_unique<tfrt_pb::network>()) {
+        m_pb_network(std::make_unique<tfrt_pb::network>()),
+        m_nv_infer{nullptr}, m_nv_engine{nullptr}, m_nv_context{nullptr},
+        m_max_batch_size{2}, m_workspace_size{16 << 20} {
     }
+    ~network();
     /** Clear the network and its weights. */
     void clear();
 
-    /** Load network weights. */
-    bool load_weights(std::string filename);
-
+    /** Load network configuration and weights + build + profile model. */
+    bool load(std::string filename);
     /** Get the default scope for this network. */
     tfrt::scope scope(nvinfer1::INetworkDefinition* nv_network) const;
 
@@ -65,9 +67,9 @@ public:
     network& name(const std::string& name);
     nvinfer1::DataType datatype() const;
 
-    nvinfer1::DimsHW input_shape() const;
+    nvinfer1::DimsCHW input_shape() const;
     const std::string& input_name() const;
-    std::vector<nvinfer1::DimsHW> outputs_shape() const;
+    std::vector<nvinfer1::DimsCHW> outputs_shape() const;
     std::vector<std::string> outputs_name() const;
 
 
@@ -82,15 +84,80 @@ public:
 protected:
     // Protected setters...
     // void name(std::string name);
-
-
-    /** Clear out the collections of network weights, to save memory.
-     */
+    /** Load weights and configuration from .tfrt file. */
+    bool load_weights(const std::string& filename);
+    /** Clear out the collections of network weights, to save memory. */
     void clear_weights();
+
+    /** Build the complete network.
+     * To be re-defined in children classes.
+     */
+    virtual nvinfer1::ITensor* build(tfrt::scope sc);
+    /** Serialize a network model. If caching=True, try to first load from
+     * a cached file. If no file, construct the usual way and save the cache.
+     */
+    bool serialize_model(const std::string& filename, std::stringstream& model_stream, bool caching=true);
+    /** Build and profile a model
+     */
+    bool profile_model(std::stringstream& model_stream);
+
+protected:
+	/** Prefix used for tagging printed log output. */
+	#define LOG_GIE "[GIE]  "
+
+	/** Logger class for GIE info/warning/errors.
+     */
+	class Logger : public nvinfer1::ILogger
+	{
+		void log( Severity severity, const char* msg ) override
+		{
+			if( severity != Severity::kINFO /*|| mEnableDebug*/ )
+				printf(LOG_GIE "%s\n", msg);
+		}
+	} m_gie_logger;
+	/** Profiler interface for measuring layer timings
+	 */
+	class Profiler : public nvinfer1::IProfiler
+	{
+	public:
+		Profiler() : timingAccumulator(0.0f) {}
+		virtual void reportLayerTime(const char* layerName, float ms)
+		{
+			printf(LOG_GIE "layer %s - %f ms\n", layerName, ms);
+			timingAccumulator += ms;
+		}
+		float timingAccumulator;
+
+	} m_gie_profiler;
+	/** When profiling is enabled, end a profiling section and report timing statistics.
+	 */
+	inline void PROFILER_REPORT()	{
+        if(mEnableProfiler) {
+            printf(LOG_GIE "layer network time - %f ms\n", m_gie_profiler.timingAccumulator); m_gie_profiler.timingAccumulator = 0.0f;
+        }
+    }
 
 protected:
     // Protobuf network object.
-    std::unique_ptr<tfrt_pb::network> m_pb_network;
+    std::unique_ptr<tfrt_pb::network>  m_pb_network;
+    // TensorRT elements...
+    nvinfer1::IRuntime*  m_nv_infer;
+	nvinfer1::ICudaEngine*  m_nv_engine;
+	nvinfer1::IExecutionContext*  m_nv_context;
+
+    uint32_t m_max_batch_size;
+    uint32_t m_workspace_size;
+
+	// uint32_t mWidth;
+	// uint32_t mHeight;
+	// uint32_t mInputSize;
+	// float*   mInputCPU;
+	// float*   mInputCUDA;
+	// uint32_t mMaxBatchSize;
+	bool	 mEnableProfiler;
+	bool     mEnableDebug;
+	// bool	 mEnableFP16;
+	// bool     mOverride16;
 
     // Temporary collection of zero tensors.
     std::vector<tfrt_pb::tensor>  m_zero_tensors;
