@@ -205,12 +205,18 @@ std::vector<nvinfer1::DimsCHW> network::outputs_shape() const
     }
     return v;
 }
-std::vector<std::string> network::outputs_name() const
+std::vector<std::string> network::outputs_name(bool suffix) const
 {
     std::vector<std::string> v;
     for(int i = 0 ; i < m_pb_network->outputs_size() ; ++i) {
         const tfrt_pb::output& output = m_pb_network->outputs(i);
-        v.push_back(output.name());
+        if(!suffix) {
+            // Output layer name.
+            v.push_back(output.name());
+        } else {
+            // Output tensor name.
+            v.push_back(output.name() + "/output");
+        }
     }
     return v;
 }
@@ -241,21 +247,34 @@ bool network::load(std::string filename)
 		context->setProfiler(&m_gie_profiler);
     }
     LOG(INFO) << LOG_GIE << "CUDA engine context initialized with #bindings: " << engine->getNbBindings();
-	m_nv_infer = infer;
-	m_nv_engine = engine;
-	m_nv_context = context;
+	this->m_nv_infer = infer;
+	this->m_nv_engine = engine;
+	this->m_nv_context = context;
 
-    // CUDA allocate memory.
     nvinfer1::DimsNCHW shape;
+    // CUDA allocate input memory.
+    LOG(INFO) << LOG_GIE << "Allocating CUDA input memory for " << input_name();
     const int input_idx = m_nv_engine->getBindingIndex(input_name().c_str());
 	nvinfer1::DimsCHW inshape = engine->getBindingDimensions(input_idx);
     shape = nvinfer1::DimsNCHW{int(m_max_batch_size), inshape.c(), inshape.h(), inshape.w()};
+
     m_cuda_input = std::move(tfrt::cuda_tensor(input_name(), shape));
     bool r = m_cuda_input.allocate();
-    CHECK(r) << "Could not allocate input CUDA memory: " << input_name();
+    CHECK(r) << LOG_GIE << "Could not allocate memory for CUDA input: " << dims_str(shape) << " | "<< input_name();
 
-
-
+    // CUDA allocate outputs memory.
+    m_cuda_outputs.clear();
+    auto outputs_name = this->outputs_name(true);
+    for(size_t i = 0 ; i < outputs_name.size() ; ++i) {
+        LOG(INFO) << LOG_GIE << "Allocating CUDA output memory for " << outputs_name[i];
+        const int output_idx = engine->getBindingIndex(outputs_name[i].c_str());
+		nvinfer1::DimsCHW outshape = engine->getBindingDimensions(output_idx);
+        shape = nvinfer1::DimsNCHW{int(m_max_batch_size), outshape.c(), outshape.h(), outshape.w()};
+        // Push CUDA tensor and allocate memory.
+        m_cuda_outputs.push_back(tfrt::cuda_tensor(outputs_name[i], shape));
+        r = m_cuda_outputs.back().allocate();
+        CHECK(r) << LOG_GIE << "Could not allocate memory for CUDA output: " << dims_str(shape) << " | "<< outputs_name[i];
+    }
     return true;
 }
 bool network::load_weights(const std::string& filename)

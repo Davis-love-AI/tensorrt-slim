@@ -100,7 +100,7 @@ public:
     nvinfer1::DimsCHW input_shape() const;
     const std::string& input_name() const;
     std::vector<nvinfer1::DimsCHW> outputs_shape() const;
-    std::vector<std::string> outputs_name() const;
+    std::vector<std::string> outputs_name(bool suffix=false) const;
 
 
 public:
