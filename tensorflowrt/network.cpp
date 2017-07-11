@@ -104,7 +104,7 @@ bool cuda_tensor::allocate()
     // Double check size...
     size = shape.n() * shape.c() * shape.h() * shape.w() * sizeof(float);
     if(!cudaAllocMapped((void**)&cpu, (void**)&cuda, size)) {
-        LOG(FATAL) << "Failed to allocate CUDA mapped memory for output: " << name;
+        LOG(FATAL) << "Failed to allocate CUDA mapped memory for tensor: " << name;
         return false;
     }
     return true;
@@ -269,13 +269,19 @@ bool network::load(std::string filename)
     for(size_t i = 0 ; i < outputs_name.size() ; ++i) {
         LOG(INFO) << LOG_GIE << "Allocating CUDA output memory for " << outputs_name[i];
         const int output_idx = engine->getBindingIndex(outputs_name[i].c_str());
-		nvinfer1::DimsCHW outshape = engine->getBindingDimensions(output_idx);
-        shape = nvinfer1::DimsNCHW{int(m_max_batch_size), outshape.c(), outshape.h(), outshape.w()};
-        // Push CUDA tensor and allocate memory.
-        m_cuda_outputs.push_back(tfrt::cuda_tensor(outputs_name[i], shape));
-        r = m_cuda_outputs.back().allocate();
-        CHECK(r) << LOG_GIE << "Could not allocate memory for CUDA output: " << dims_str(shape) << " | "<< outputs_name[i];
+        if(output_idx > -1) {
+            nvinfer1::DimsCHW outshape = engine->getBindingDimensions(output_idx);
+            shape = nvinfer1::DimsNCHW{int(m_max_batch_size), outshape.c(), outshape.h(), outshape.w()};
+            // Push CUDA tensor and allocate memory.
+            m_cuda_outputs.push_back(tfrt::cuda_tensor(outputs_name[i], shape));
+            r = m_cuda_outputs.back().allocate();
+            CHECK(r) << LOG_GIE << "Could not allocate memory for CUDA output: " << dims_str(shape) << " | "<< outputs_name[i];
+        }
+        else {
+            LOG(ERROR) << LOG_GIE << "Could not find binding index for output tensor: " << outputs_name[i];
+        }
     }
+    CHECK(m_cuda_outputs.size()) << LOG_GIE << "No output found in the network.";
     return true;
 }
 bool network::load_weights(const std::string& filename)
