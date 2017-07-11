@@ -15,7 +15,7 @@
 #ifndef TFRT_IMAGENET_NETWORK_H
 #define TFRT_IMAGENET_NETWORK_H
 
-#include <cmath>
+#include <tuple>
 #include <memory>
 #include <NvInfer.h>
 
@@ -30,16 +30,33 @@ public:
     /** Create imagenet network, with a given name.
      */
     imagenet_network(std::string name) :
-        tfrt::network(name), m_nb_classes{1000}, m_empty_class{false} {}
+        tfrt::network(name), m_num_classes{1000}, m_empty_class{false} {}
 
     /** Load ImageNet classes information and descriptions.
      */
     bool load_info(const std::string& filename);
 
+    /** Classify an image. Return a tuple <class, score>
+     */
+    std::tuple<int, float> classify(float* rgba, uint32_t width, uint32_t height);
+
+public:
+    /** Number of classes. */
+    uint32_t num_classes() const {
+        return m_num_classes;
+    }
+    /** Synset code of a class. */
+    std::string synset(uint32_t idx) const {
+        return m_synset_classes[idx];
+    }
+    /** Description of a class. */
+    std::string description(uint32_t idx) const {
+        return m_desc_classes[idx];
+    }
 
 protected:
     // Number of classes in the model.
-    uint32_t  m_nb_classes;
+    uint32_t  m_num_classes;
     // Empty class in the first coordinate?
     bool  m_empty_class;
 
