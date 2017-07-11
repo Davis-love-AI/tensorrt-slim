@@ -12,30 +12,23 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Robik AI Ltd.
 # =========================================================================== */
-#ifndef TENSORFLOW_RT_H
-#define TENSORFLOW_RT_H
-
-#include <gflags/gflags.h>
-#include <glog/logging.h>
+#ifndef TFRT_IMAGENET_NETWORK_H
+#define TFRT_IMAGENET_NETWORK_H
 
 #include <cmath>
-#include <string>
-#include <sstream>
-
-// #include <cuda_runtime_api.h>
+#include <memory>
 #include <NvInfer.h>
 
-#include "tfrt_jetson.h"
 #include "network.h"
-#include "scope.h"
-#include "layers.h"
-
-#include "imagenet_network.h"
-#include "ssd_network.h"
 
 namespace tfrt
 {
+
+class imagenet_network : public tfrt::network
+{
+
+};
+
 }
 
 #endif
-
