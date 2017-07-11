@@ -65,8 +65,8 @@ include_directories(/usr/lib/x86_64-linux-gnu/glib-2.0/include /usr/lib/x86_64-l
 # Build TensorFlowRT library.
 add_subdirectory(tensorflowrt)
 
-# Build several small utils...
-add_subdirectory(utils)
+# Build several small tools...
+add_subdirectory(tools)
 
 
 # install
