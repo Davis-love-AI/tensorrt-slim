@@ -16,6 +16,7 @@
 #include <glog/logging.h>
 
 #include "imagenet_network.h"
+#include "cuda/cudaImageNet.h"
 
 namespace tfrt
 {
@@ -62,6 +63,38 @@ bool imagenet_network::load_info(const std::string& filename)
     return true;
 }
 
+std::tuple<int, float> imagenet_network::classify(float* rgba, uint32_t height, uint32_t width)
+{
+    CHECK(rgba) << "Invalid image buffer.";
+    CHECK(height) << "Invalid image height.";
+    CHECK(width) << "Invalid image width.";
+
+    // Downsample and convert to RGB.
+    auto r = cudaPreImageNet((float4*)rgba, width, height,
+        m_cuda_input.cuda, m_cuda_input.shape.w(), m_cuda_input.shape.h());
+    CHECK(r) << "Failed to resize image to ImageNet network input shape.";
+
+    // Execute TensorRT network (batch size = 1).
+    void* inferenceBuffers[] = { m_cuda_input.cuda, m_cuda_outputs[0].cuda };
+    m_nv_context->execute(1, inferenceBuffers);
+    //CUDA(cudaDeviceSynchronize());
+    PROFILER_REPORT();
+
+    // Determine the class.
+    int class_idx = -1;
+    float class_score = -1.0f;
+    for(size_t n = 0 ; n < m_num_classes ; ++n) {
+        const float value = m_cuda_outputs[0].cpu[n];
+        DLOG_IF(INFO, value > 0.01f) << "Class '" << m_desc_classes[n] << "' with score " << value;
+        if(value > class_score) {
+            class_idx = n;
+            class_score = value;
+        }
+    }
+    DLOG(INFO) << "ImageNet classification: class '" << m_desc_classes[class_idx]
+               << "' with score " << class_score;
+    return std::make_tuple(class_idx, class_score);
+}
 
 
 }
