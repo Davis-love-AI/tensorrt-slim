@@ -78,7 +78,7 @@ ICudaEngine* tfrtToGIEModel()
 
 	assert(data != nullptr);
 
-	tfrt::network tf_network("InceptionV2", dt);
+	tfrt::network tf_network("InceptionV2");
 	tf_network.load_weights(gParams.modelFile.c_str());
 	// Create Inception2 network.
 	tfrt::scope sc = tf_network.scope(network);

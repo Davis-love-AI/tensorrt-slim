@@ -15,3 +15,12 @@
 
 #include "imagenet_network.h"
 
+namespace tfrt
+{
+
+bool imagenet_network::load_info(const std::string& filename)
+{
+    return true;
+}
+
+}
