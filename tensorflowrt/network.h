@@ -71,7 +71,8 @@ public:
     /** Create network, specifying the name and the datatype.
      */
     network(std::string name, nvinfer1::DataType datatype) :
-        m_pb_network(std::make_unique<tfrt_pb::network>()),
+        m_pb_network(new tfrt_pb::network()),
+        // m_pb_network(std::make_unique<tfrt_pb::network>()),
         m_nv_infer{nullptr}, m_nv_engine{nullptr}, m_nv_context{nullptr},
         m_max_batch_size{2}, m_workspace_size{16 << 20},
         m_enable_profiler{false}, m_enable_debug{false} {

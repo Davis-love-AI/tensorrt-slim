@@ -5,9 +5,7 @@
 #ifndef __CUDA_MAPPED_MEMORY_H_
 #define __CUDA_MAPPED_MEMORY_H_
 
-
 #include "cudaUtility.h"
-
 
 /**
  * Allocate ZeroCopy mapped memory, shared between CUDA and CPU.
@@ -17,9 +15,7 @@ inline bool cudaAllocMapped( void** cpuPtr, void** gpuPtr, size_t size )
 {
 	if( !cpuPtr || !gpuPtr || size == 0 )
 		return false;
-
 	//CUDA(cudaSetDeviceFlags(cudaDeviceMapHost));
-
 	if( CUDA_FAILED(cudaHostAlloc(cpuPtr, size, cudaHostAllocMapped)) )
 		return false;
 

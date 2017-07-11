@@ -11,7 +11,7 @@ execute_process(COMMAND protoc --cpp_out=./ network.proto
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 # TF-RT sources.
-FILE(GLOB TFRT_SRCS *.cpp *.cu)
+FILE(GLOB TFRT_SRCS *.cpp *.cu cuda/*.cpp cuda/*.cu)
 FILE(GLOB TFRT_HEADERS *.h)
 
 # Some debugging info...
