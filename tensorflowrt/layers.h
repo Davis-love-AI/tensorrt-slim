@@ -97,6 +97,7 @@ protected:
     /** Mark a tensor as an output if the layer is an output layer.
      */
     nvinfer1::ITensor* mark_output(nvinfer1::ITensor* tensor) {
+        tensor->setName(this->m_scope.sub("output").cname());
         if(m_is_output) {
             LOG(INFO) << "MARK output (layer) on tensor: " << tensor->getName();
             m_scope.network()->markOutput(*tensor);
@@ -132,9 +133,33 @@ public:
     /** Input construction */
     virtual nvinfer1::ITensor* operator()() {
         auto dt = m_scope.tfrt_network()->datatype();
-        auto net = m_scope.network()->addInput(m_scope.name().c_str(), dt, DIMRT(this->m_shape));
-        return net;
+        // TensorRT input.
+        nvinfer1::ITensor* input = m_scope.network()->addInput(
+            m_scope.name().c_str(), dt, DIMRT(this->m_shape));
+        LOG(INFO) << "Input shape: " << dims_str(input->getDimensions());
+        // Input scaling.
+        input = this->scale(input);
+        return input;
     }
+protected:
+    /** Scaling input tensor.
+     */
+    nvinfer1::ITensor* scale(nvinfer1::ITensor* input) {
+        // Get the scaling weights.
+        nvinfer1::Weights shift = m_scope.weights("shift");
+        nvinfer1::Weights scale = m_scope.weights("scale");
+        if(shift.values || scale.values) {
+            LOG(INFO) << "LAYER scaling input tensor.";
+            nvinfer1::Weights power{shift.type, nullptr, 0};
+            auto layer = this->m_scope.network()->addScale(
+                *input, nvinfer1::ScaleMode::kUNIFORM, shift, scale, power);
+            CHECK_NOTNULL(layer);
+            layer->setName(m_scope.subname("scaling").c_str());
+            input = layer->getOutput(0);
+        }
+        return input;
+    }
+
 protected:
     // Input shape.
     nvinfer1::DimsCHW  m_shape;
@@ -322,7 +347,6 @@ public:
         net = this->convolution(net);
         net = this->batch_norm(net);
         net = this->activation(net);
-        net->setName(this->m_scope.sub("output").cname());
         return this->mark_output(net);
     }
 
@@ -396,7 +420,6 @@ public:
         net = pw_conv2d.convolution(net, 1, "pointwise_weights", "pointwise_biases", "_pw");
         net = pw_conv2d.batch_norm(net);
         net = pw_conv2d.activation(net);
-        net->setName(this->m_scope.sub("output").cname());
         return this->mark_output(net);
     }
 
@@ -430,7 +453,6 @@ public:
         LOG(INFO) << "LAYER 2D activation '" << this->m_scope.name() << "'. "
             << "Input shape: " << dims_str(net->getDimensions());
         net = this->operation2d<ACT, PaddingType::SAME, false>::activation(net);
-        net->setName(this->m_scope.sub("output").cname());
         return this->mark_output(net);
     }
 
@@ -459,7 +481,6 @@ public:
         LOG(INFO) << "LAYER 2D contrib pooling '" << this->m_scope.name() << "'. "
             << "Input shape: " << dims_str(net->getDimensions());
         net = this->pooling(net);
-        net->setName(this->m_scope.sub("output").cname());
         return this->mark_output(net);
     }
 
@@ -519,7 +540,6 @@ public:
         CHECK_NOTNULL(clayer);
         clayer->setName(this->m_scope.name().c_str());
         auto net = clayer->getOutput(0);
-        net->setName(this->m_scope.sub("output").cname());
         return this->mark_output(net);
     }
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* input) {

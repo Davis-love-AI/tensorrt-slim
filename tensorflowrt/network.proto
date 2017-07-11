@@ -16,17 +16,27 @@ syntax = "proto2";
 
 package tfrt_pb;
 
+// NVinfer datatype.
 enum DataType {
     FLOAT = 0;
     HALF = 1;
     INT8 = 2;
 }
+// NVinfer scaling mode.
+enum ScaleMode {
+    UNIFORM = 0;
+    CHANNEL = 1;
+    ELEMENTWISE = 2;
+}
+
 
 message input {
     optional string name = 1 [default = "input"];
     optional int32 h = 2 [default = 224];
     optional int32 w = 3 [default = 224];
     optional int32 c = 4 [default = 3];
+    // Scaling mode of the input. Coefficients should be in weights.
+    optional ScaleMode scalemode = 5;
 }
 message output {
     optional string name = 1 [default = "output"];
@@ -37,18 +47,20 @@ message output {
 
 message tensor {
     optional string name = 1;
+    // Data + datatype used.
     optional bytes data = 2;
     optional DataType datatype = 3;
-
+    // Tensor shape and size.
     repeated int32 shape = 4;
     optional int32 size = 5;
 }
 
 message network {
     optional string name = 1;
+    // Network weights and datatype used.
     repeated tensor weights = 2;
     optional DataType datatype = 3;
-
+    // Input and outputs parameters.
     optional input input = 4;
     repeated output outputs = 5;
 }
