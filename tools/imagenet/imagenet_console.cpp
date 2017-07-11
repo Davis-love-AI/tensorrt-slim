@@ -12,6 +12,10 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Robik AI Ltd.
 # =========================================================================== */
+#include <glog/logging.h>
+#include <gflags/gflags.h>
+
+// TensorFlowRT headers
 #include <tensorflowrt.h>
 #include <loadImage.h>
 #include <cuda/cudaFont.h>
