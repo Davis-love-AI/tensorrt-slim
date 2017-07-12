@@ -63,7 +63,7 @@ bool imagenet_network::load_info(const std::string& filename)
     return true;
 }
 
-std::tuple<int, float> imagenet_network::classify(float* rgba, uint32_t height, uint32_t width)
+std::pair<int, float> imagenet_network::classify(float* rgba, uint32_t height, uint32_t width)
 {
     CHECK(rgba) << "Invalid image buffer.";
     CHECK(height) << "Invalid image height.";
@@ -93,7 +93,7 @@ std::tuple<int, float> imagenet_network::classify(float* rgba, uint32_t height, 
     }
     DLOG(INFO) << "ImageNet classification: class '" << m_desc_classes[class_idx]
                << "' with score " << class_score;
-    return std::make_tuple(class_idx, class_score);
+    return std::make_pair(class_idx, class_score);
 }
 
 

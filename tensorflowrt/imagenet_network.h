@@ -38,7 +38,7 @@ public:
 
     /** Classify an image. Return a tuple <class, score>
      */
-    std::tuple<int, float> classify(float* rgba, uint32_t height, uint32_t width);
+    std::pair<int, float> classify(float* rgba, uint32_t height, uint32_t width);
 
 public:
     /** Number of classes. */
