@@ -11,7 +11,11 @@ __pycache__*
 *pb3.py
 
 # DATA to ignore.
-data/
+*.tfrt
+*.ckpt.index
+*.ckpt.meta
+*.ckpt.data-00000-of-00001
+
 # Build directory.
 build/
 
