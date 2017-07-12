@@ -12,7 +12,6 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Robik AI Ltd.
 # =========================================================================== */
-
 #ifndef TFRT_INCEPTION1_H
 #define TFRT_INCEPTION1_H
 
@@ -23,7 +22,6 @@ namespace inception1
 {
 /** Arg scope for Inception v2: SAME padding + batch normalization + ReLU.
  */
-typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
 typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
 typedef tfrt::max_pooling2d<tfrt::PaddingType::SAME>    max_pool2d;
 typedef tfrt::avg_pooling2d<tfrt::PaddingType::SAME>    avg_pool2d;

@@ -21,8 +21,7 @@
 // TensorFlowRT headers
 #include <tensorflowrt.h>
 #include <tensorflowrt_util.h>
-// #include <nets/inception1.h>
-#include <nets/inception2.h>
+#include <nets/nets.h>
 
 #define IMGNET "<imagenet-console> "
 // FLAGS...
