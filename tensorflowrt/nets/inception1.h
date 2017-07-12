@@ -50,7 +50,6 @@ inline nvinfer1::ITensor* block_mixed_max(nvinfer1::ITensor* input, tfrt::scope 
     ssc = sc.sub("Branch_2");
     auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20).ksize({1, 1})(net);
     branch2 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21).ksize({3, 3})(branch2);
-    branch2 = conv2d(ssc, "Conv2d_0c_3x3").noutputs(B21).ksize({3, 3})(branch2);
     // Branch 2.
     ssc = sc.sub("Branch_3");
     auto branch3 = max_pool2d(ssc, "MaxPool_0a_3x3").ksize({3, 3})(net);
@@ -83,15 +82,12 @@ inline nvinfer1::ITensor* block_mixed_s2(nvinfer1::ITensor* input, tfrt::scope s
 }
 
 /* ============================================================================
- * Inception2 blocks 1 to 5.
+ * Inception1: blocks 1 to 5.
  * ========================================================================== */
 inline nvinfer1::ITensor* block1(nvinfer1::ITensor* net, tfrt::scope sc)
 {
-    int depthwise_multiplier = std::min(int(64 / 3), 8);
-    // 7x7 depthwise convolution.
-    net = separable_conv2d(sc, "Conv2d_1a_7x7")
-        .depthmul(depthwise_multiplier)
-        .noutputs(64).ksize({7, 7}).stride({2, 2})(net);
+    // 7x7 convolution.
+    net = conv2d(sc, "Conv2d_1a_7x7").noutputs(64).ksize({7, 7}).stride({2, 2})(net);
     return net;
 }
 inline nvinfer1::ITensor* block2(nvinfer1::ITensor* net, tfrt::scope sc)
@@ -105,31 +101,32 @@ inline nvinfer1::ITensor* block3(nvinfer1::ITensor* net, tfrt::scope sc)
 {
     // Mixed block 3b and 3c.
     net = max_pool2d(sc, "MaxPool_3a_3x3").ksize({3, 3}).stride({2, 2})(net);
-    net = block_mixed_avg<64, 64, 64, 64, 96, 32>(net, sc.sub("Mixed_3b"));
-    net = block_mixed_avg<64, 64, 96, 64, 96, 64>(net, sc.sub("Mixed_3c"));
+    net = block_mixed_max<64, 96, 128, 16, 32, 32>(net, sc.sub("Mixed_3b"));
+    net = block_mixed_max<128, 128, 192, 32, 96, 64>(net, sc.sub("Mixed_3c"));
     return net;
 }
 inline nvinfer1::ITensor* block4(nvinfer1::ITensor* net, tfrt::scope sc)
 {
     // Mixed blocks 4a to 4e.
-    net = block_mixed_s2<128, 160, 64, 96>(net, sc.sub("Mixed_4a"));
-    net = block_mixed_avg<224, 64, 96, 96, 128, 128>(net, sc.sub("Mixed_4b"));
-    net = block_mixed_avg<192, 96, 128, 96, 128, 128>(net, sc.sub("Mixed_4c"));
-    net = block_mixed_avg<160, 128, 160, 128, 160, 96>(net, sc.sub("Mixed_4d"));
-    net = block_mixed_avg<96, 128, 192, 160, 192, 96>(net, sc.sub("Mixed_4e"));
+    net = max_pool2d(sc, "MaxPool_4a_3x3").ksize({3, 3}).stride({2, 2})(net);
+    net = block_mixed_max<192, 96, 208, 16, 48, 64>(net, sc.sub("Mixed_4b"));
+    net = block_mixed_max<160, 112, 224, 24, 64, 64>(net, sc.sub("Mixed_4c"));
+    net = block_mixed_max<128, 128, 256, 24, 64, 64>(net, sc.sub("Mixed_4d"));
+    net = block_mixed_max<112, 144, 288, 32, 64, 64>(net, sc.sub("Mixed_4e"));
+    net = block_mixed_max<256, 160, 320, 32, 128, 128>(net, sc.sub("Mixed_4f"));
     return net;
 }
 inline nvinfer1::ITensor* block5(nvinfer1::ITensor* net, tfrt::scope sc)
 {
     // Mixed blocks 5a to 5c.
-    net = block_mixed_s2<128, 192, 192, 256>(net, sc.sub("Mixed_5a"));
-    net = block_mixed_avg<352, 192, 320, 160, 224, 128>(net, sc.sub("Mixed_5b"));
-    net = block_mixed_max<352, 192, 320, 192, 224, 128>(net, sc.sub("Mixed_5c"));
+    net = max_pool2d(sc, "MaxPool_5a_2x2").ksize({2, 2}).stride({2, 2})(net);
+    net = block_mixed_max<256, 160, 320, 32, 128, 128>(net, sc.sub("Mixed_5b"));
+    net = block_mixed_max<384, 192, 384, 48, 128, 128>(net, sc.sub("Mixed_5c"));
     return net;
 }
 
 /* ============================================================================
- * Inception2 network: base + full network
+ * Inception1 network: base + full network
  * ========================================================================== */
 inline nvinfer1::ITensor* base(nvinfer1::ITensor* input, tfrt::scope sc)
 {

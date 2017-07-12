@@ -96,5 +96,4 @@ std::pair<int, float> imagenet_network::classify(float* rgba, uint32_t height, u
     return std::make_pair(class_idx, class_score);
 }
 
-
 }
