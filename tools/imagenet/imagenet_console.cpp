@@ -19,12 +19,12 @@
 #include <string>
 
 // TensorFlowRT headers
-// #include <misc/std_make_unique.h>
 #include <tensorflowrt.h>
 #include <tensorflowrt_util.h>
+// #include <nets/inception1.h>
+#include <nets/inception2.h>
 
 #define IMGNET "<imagenet-console> "
-
 // FLAGS...
 DEFINE_string(network, "inception1", "ImageNet network to test.");
 DEFINE_string(network_pb, "inception1", "Network protobuf parameter file.");
@@ -40,8 +40,8 @@ tfrt::imagenet_network* networks_map(const std::string& key)
     static std::map<std::string, std::unique_ptr<tfrt::imagenet_network> > nets;
     // Fill the map at first call!
     if(nets.empty()) {
-        nets["inception1"] = std::make_unique<tfrt::imagenet_network>("test");
-        // nets["inception1"] = nullptr;
+        // nets["inception1"] = std::make_unique<tfrt::imagenet_network>("test");
+        nets["inception2"] = std::make_unique<inception2::net>();
     }
     return nets.at(key).get();
 }

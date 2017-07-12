@@ -13,11 +13,11 @@
 # from Robik AI Ltd.
 # =========================================================================== */
 
-#ifndef INCEPTION2_H
-#define INCEPTION2_H
+#ifndef TFRT_INCEPTION2_H
+#define TFRT_INCEPTION2_H
 
 #include <NvInfer.h>
-#include "tensorflowrt.h"
+#include "../tensorflowrt.h"
 
 namespace inception2
 {
@@ -156,7 +156,7 @@ inline nvinfer1::ITensor* block5(nvinfer1::ITensor* net, tfrt::scope sc)
 }
 
 /* ============================================================================
- * Inception2 network: base + full network
+ * Inception2 network: functional declaration.
  * ========================================================================== */
 inline nvinfer1::ITensor* base(nvinfer1::ITensor* input, tfrt::scope sc)
 {
@@ -187,6 +187,24 @@ inline nvinfer1::ITensor* inception2(nvinfer1::ITensor* input,
     net = tfrt::softmax(sc, "Softmax")(net);
     return net;
 }
+
+/* ============================================================================
+ * Inception2 class: as imagenet network.
+ * ========================================================================== */
+class net : public tfrt::imagenet_network
+{
+public:
+    /** Constructor with default name.  */
+    net() : tfrt::imagenet_network("InceptionV2", 1000, true) {}
+
+    /** Inception2 building method. Take a network scope and do the work!
+     */
+    virtual nvinfer1::ITensor* build(tfrt::scope sc) {
+        auto net = tfrt::input(sc)();
+        net = inception2(net, sc, 1001);
+        return net;
+    }
+};
 
 }
 

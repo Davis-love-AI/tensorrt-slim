@@ -70,7 +70,7 @@ public:
     }
     /** Layer construction on some input vector.
      */
-    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* input) = 0;
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor*) = 0;
 
 public:
     /** Named parameter: is it output layer?
@@ -117,14 +117,12 @@ protected:
 class input : public layer
 {
 public:
-    input(const tfrt::scope& sc, const std::string& lname="") :
-        layer(sc, lname), m_shape{1, 1, 1} {
-        // Set default shape using tfrt::network values.
-        m_shape = m_scope.tfrt_network()->input_shape();
-        if(!lname.length()) {
-            m_scope = sc.sub(m_scope.tfrt_network()->input_name());
-        }
-    }
+    /** Constructor, initialize input parameters (shape, name, ...) from
+     * the scope tfrt::network object.
+     */
+    input(const tfrt::scope& sc) :
+        layer(sc, sc.tfrt_network()->input_name()),
+        m_shape{sc.tfrt_network()->input_shape()} {}
     /** Named parameter: input shape. */
     input& shape(nvinfer1::DimsCHW shape) {
         m_shape = shape;
@@ -159,6 +157,8 @@ protected:
         }
         return input;
     }
+    // Should not be used!
+    nvinfer1::ITensor* operator()(nvinfer1::ITensor*) { return nullptr; }
 
 protected:
     // Input shape.
@@ -542,9 +542,10 @@ public:
         auto net = clayer->getOutput(0);
         return this->mark_output(net);
     }
-    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* input) {
-        return nullptr;
-    }
+
+protected:
+    // Should not be used!
+    nvinfer1::ITensor* operator()(nvinfer1::ITensor*) { return nullptr; }
 };
 
 /** Default layer configurations: ReLU activation, SAME padding and

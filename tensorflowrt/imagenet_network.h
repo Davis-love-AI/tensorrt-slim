@@ -29,8 +29,8 @@ class imagenet_network : public tfrt::network
 public:
     /** Create imagenet network, with a given name.
      */
-    imagenet_network(std::string name) :
-        tfrt::network(name), m_num_classes{1000}, m_empty_class{false} {}
+    imagenet_network(std::string name, uint32_t num_classes=1000, bool empty_class=false) :
+        tfrt::network(name), m_num_classes{num_classes}, m_empty_class{empty_class} {}
 
     /** Load ImageNet classes information and descriptions.
      */
