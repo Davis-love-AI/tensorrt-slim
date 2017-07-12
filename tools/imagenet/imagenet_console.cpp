@@ -17,8 +17,8 @@
 
 // TensorFlowRT headers
 #include <tensorflowrt.h>
-#include <loadImage.h>
-#include <cuda/cudaFont.h>
+#include <tensorflowrt_util.h>
+
 
 int main( int argc, char** argv )
 {
