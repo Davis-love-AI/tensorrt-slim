@@ -56,28 +56,6 @@ inline nvinfer1::ITensor* block_mixed_max(nvinfer1::ITensor* input, tfrt::scope 
     net = concat_channels(sc)({branch0, branch1, branch2, branch3});
     return net;
 }
-/** Specific mixed block with stride 2 used in Inception v2.
- */
-template <int B00, int B01, int B10, int B11>
-inline nvinfer1::ITensor* block_mixed_s2(nvinfer1::ITensor* input, tfrt::scope sc)
-{
-    nvinfer1::ITensor* net{input};
-    // Branch 0.
-    auto ssc = sc.sub("Branch_0");
-    auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B00).ksize({1, 1})(net);
-    branch0 = conv2d(ssc, "Conv2d_1a_3x3").noutputs(B01).ksize({3, 3}).stride({2, 2})(branch0);
-    // Branch 2.
-    ssc = sc.sub("Branch_1");
-    auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10).ksize({1, 1})(net);
-    branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B11).ksize({3, 3})(branch1);
-    branch1 = conv2d(ssc, "Conv2d_1a_3x3").noutputs(B11).ksize({3, 3}).stride({2, 2})(branch1);
-    // Branch 2.
-    ssc = sc.sub("Branch_2");
-    auto branch2 = max_pool2d(ssc, "MaxPool_1a_3x3").ksize({3, 3}).stride({2, 2})(net);
-    // Concat everything!
-    net = concat_channels(sc)({branch0, branch1, branch2});
-    return net;
-}
 
 /* ============================================================================
  * Inception1: blocks 1 to 5.
