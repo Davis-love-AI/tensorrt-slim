@@ -20,8 +20,15 @@
 #include <tensorflowrt_util.h>
 
 
+// DEFINE_bool(verbose, false, "Display program name before message");
+// DEFINE_string(message, "Hello world!", "Message to print");
+// DEFINE_int32(input_height, 224, "Network input height.");
+
+
 int main( int argc, char** argv )
 {
+	LOG(INFO) << "<<< ImageNet Console >>>";
+
 	// printf("imagenet-console\n  args (%i):  ", argc);
 
 	// for( int i=0; i < argc; i++ )
