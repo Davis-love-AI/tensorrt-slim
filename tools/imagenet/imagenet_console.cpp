@@ -22,14 +22,14 @@
 #include <tensorflowrt.h>
 #include <tensorflowrt_util.h>
 
+#define IMGNET "<imagenet-console> "
+
 // FLAGS...
 DEFINE_string(network, "inception1", "ImageNet network to test.");
 DEFINE_string(network_pb, "inception1", "Network protobuf parameter file.");
 DEFINE_string(imagenet_info, "../data/", "ImageNet information (classes, ...).");
 DEFINE_string(image, "../data/", "Image to classify.");
 DEFINE_bool(image_save, false, "Save the result in some new image.");
-// DEFINE_string(message, "Hello world!", "Message to print");
-// DEFINE_int32(input_height, 224, "Network input height.");
 
 /** Global map containing the list of available ImageNet networks.
  */
@@ -43,7 +43,7 @@ std::map<std::string, tfrt::imagenet_network* > NetworksMap = {
 int main( int argc, char** argv )
 {
     bool r;
-    LOG(INFO) << "<<< ImageNet-Console | Network " << FLAGS_network << " >>>";
+    LOG(INFO) << IMGNET << "Loading network: " << FLAGS_network;
     // Get network and load parameters & weights.
     tfrt::imagenet_network* network = NetworksMap.at(FLAGS_network);
     // network->EnableProfiler();
@@ -51,17 +51,17 @@ int main( int argc, char** argv )
     network->load_info(FLAGS_imagenet_info);
 
     // Load image from file on disk.
-    LOG(INFO) << "Opening image: " << FLAGS_image;
+    LOG(INFO) << IMGNET << "Opening image: " << FLAGS_image;
     tfrt::cuda_tensor img("image", {1, 1, 0, 0});
     r = loadImageRGBA(FLAGS_image.c_str(), (float4**)&img.cpu, (float4**)&img.cuda,
         &img.shape.w(), &img.shape.h());
-    CHECK(r) << "Fail to read image file: " << FLAGS_image;
+    CHECK(r) << IMGNET << "Failed to read image file: " << FLAGS_image;
 
     // Classifying image.
     auto imgclass = network->classify(img.cuda, img.shape.h(), img.shape.w());
 
     if(imgclass.first >= 0) {
-        LOG(INFO) << "ImageNet Console classification: "
+        LOG(INFO) << IMGNET << "Classification result: "
             << network->description(imgclass.first) << " with confidence " << imgclass.second;
 
         if(FLAGS_image_save) {
@@ -88,14 +88,14 @@ int main( int argc, char** argv )
                     img.shape.w(), img.shape.h(), (const char*)str, 10, 10,
                     white_background ? make_float4(0.0f, 0.0f, 0.0f, 255.0f) : make_float4(255.0f, 255.0f, 255.0f, 255.0f));
             }
-            LOG(INFO) << "ImageNet Console | Saving the output image to: " << output_filename;
+            LOG(INFO) << IMGNET << "Saving the output image to: " << output_filename;
             r = saveImageRGBA(output_filename.c_str(), (float4*)img.cpu,
                 img.shape.w(), img.shape.h());
-            CHECK(r) << "Failed to save the output image to:" << output_filename;
+            CHECK(r) << IMGNET << "Failed to save the output image to:" << output_filename;
         }
     }
     else {
-        LOG(WARNING) << "ImageNet Console: failed to classify the image.";
+        LOG(WARNING) << IMGNET << "Failed to classify the image.";
     }
     return 0;
 }
