@@ -27,7 +27,7 @@ cuda_add_library(tensorflowrt STATIC ${TFRT_SRCS} ${PROTO_SRCS})
 target_link_libraries(tensorflowrt nvinfer ${PROTOBUF_LIBRARY})
 
 # Copy TF-RT headers
-set(HEADERS_DIRS . nets cuda)
+set(HEADERS_DIRS . nets cuda misc)
 BUILD_COPY_HEADERS(HEADERS_DIRS)
 
 # foreach(HEADER ${PROTO_HEADERS})

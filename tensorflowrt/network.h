@@ -15,20 +15,16 @@
 #ifndef TFRT_NETWORK_H
 #define TFRT_NETWORK_H
 
-// #include <gflags/gflags.h>
-// #include <glog/logging.h>
-
-// #include <cmath>
 #include <memory>
 #include <string>
 #include <sstream>
-
-// // #include <cuda_runtime_api.h>
+// #include <cuda_runtime_api.h>
 #include <NvInfer.h>
 
 #include "tfrt_jetson.h"
 #include "network.pb.h"
 #include "cuda/cudaMappedMemory.h"
+#include "misc/std_make_unique.h"
 
 namespace tfrt
 {
@@ -71,8 +67,8 @@ public:
     /** Create network, specifying the name and the datatype.
      */
     network(std::string name) :
-        m_pb_network(new tfrt_pb::network()),
-        // m_pb_network(std::make_unique<tfrt_pb::network>()),
+        // m_pb_network(new tfrt_pb::network()),
+        m_pb_network(std::make_unique<tfrt_pb::network>()),
         m_nv_infer{nullptr}, m_nv_engine{nullptr}, m_nv_context{nullptr},
         m_max_batch_size{2}, m_workspace_size{16 << 20},
         m_enable_profiler{false}, m_enable_debug{false} {

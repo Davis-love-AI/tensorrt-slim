@@ -37,10 +37,9 @@ std::map<std::string, tfrt::imagenet_network*> NetworksMap = {
 };
 
 
-
 int main( int argc, char** argv )
 {
-    LOG(INFO) << "<<< ImageNet Console >>>";
+    LOG(INFO) << "<<< ImageNet Console | Network " << FLAGS_network << " >>>";
 
     // printf("imagenet-console\n  args (%i):  ", argc);
 
