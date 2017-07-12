@@ -131,12 +131,40 @@ def tensor_tf_to_tfrt(sess, tf_tensor, pb_tensor):
     tensor_np_to_tfrt(name, a, pb_tensor)
 
 
-def network_tf_name():
+def network_name(pb_network):
     """Try to deduce the network name from the TF variables scope.
     """
     vname = tf.model_variables()[0].op.name
-    name = vname.split('/')[0]
-    return name
+    pb_network.name = vname.split('/')[0]
+    print('Network name:', pb_network.name)
+    return pb_network.name
+
+
+def network_input(pb_network):
+    """Set the input parameters of the network.
+    """
+    pb_network.input.name = pb_network.name + "/" + FLAGS.input_name
+    pb_network.input.h = FLAGS.input_height
+    pb_network.input.w = FLAGS.input_width
+    pb_network.input.c = 3
+    # Only UNIFORM scaling mode available for now...
+    pb_network.input.scalemode = network_pb2.UNIFORM
+    print('Input name: ', pb_network.input.name)
+    print('Input shape: [%i, %i, %i]' % (pb_network.input.h, pb_network.input.w, pb_network.input.c))
+
+
+def network_outputs(pb_network):
+    """Set the outputs collection of the network.
+    """
+    l_outputs = FLAGS.outputs_name.split(',')
+    for i, o in enumerate(l_outputs):
+        net_output = pb_network.outputs.add()
+        net_output.name = pb_network.name + "/" + o
+        # TODO: fix this crap for SSD networks.
+        net_output.h = 1
+        net_output.w = 1
+        net_output.c = 1
+        print('Output #%i name: %s' % (i, net_output.name))
 
 
 def network_tf_to_tfrt(sess):
@@ -148,9 +176,10 @@ def network_tf_to_tfrt(sess):
     for v in model_variables:
         tensor_tf_to_tfrt(sess, v, pb_network.weights.add())
     # Network parameters.
-    pb_network.name = network_tf_name()
-    print('Network name:', pb_network.name)
-
+    pb_network.datatype = network_pb2.HALF if FLAGS.fp16 else network_pb2.FLOAT
+    network_name(pb_network)
+    network_input(pb_network)
+    network_outputs(pb_network)
     return pb_network
 
 
