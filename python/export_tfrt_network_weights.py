@@ -33,7 +33,7 @@ from __future__ import print_function
 
 import numpy as np
 import tensorflow as tf
-import tensorflowrt_pb2 as tfrt_pb
+import network_pb2
 
 slim = tf.contrib.slim
 
@@ -47,6 +47,20 @@ tf.app.flags.DEFINE_float(
     'moving_average_decay', None, 'Moving average decay value. None if not used.')
 tf.app.flags.DEFINE_boolean(
     'fp16', False, 'Export weights in half-precision fp16 format.')
+
+tf.app.flags.DEFINE_string(
+    'input_name', 'Input', 'Name of the input tensor.')
+tf.app.flags.DEFINE_integer(
+    'input_height', 224, 'Input height.')
+tf.app.flags.DEFINE_integer(
+    'input_width', 224, 'Input width.')
+tf.app.flags.DEFINE_float(
+    'input_shift', 0.0, 'Input preprocessing shift.')
+tf.app.flags.DEFINE_float(
+    'input_scale', 1.0, 'Input preprocessing scale.')
+
+tf.app.flags.DEFINE_string(
+    'outputs_name', 'Sotfmax', 'Name of the output tensors.')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -71,13 +85,10 @@ def restore_checkpoint(sess, ckpt_filename, moving_average_decay=None):
     fn_restore(sess)
 
 
-def tensor_tf_to_tfrt(sess, tf_tensor, pb_tensor):
-    """Convert a TF tensor to the TFRT format.
+def tensor_np_to_tfrt(name, np_tensor, pb_tensor):
+    """Convert a numpy Tensor + name to TF-RT tensor format.
     """
-    name = tf_tensor.op.name
-    print('Proceeding with tensor:', tf_tensor.op.name, '...')
-    # Get numpy array from tensor.
-    a = sess.run(tf_tensor)
+    a = np_tensor
     # Permutation of axes.
     if a.ndim == 4:
         a = np.transpose(a, axes=[3, 2, 0, 1])
@@ -105,32 +116,53 @@ def tensor_tf_to_tfrt(sess, tf_tensor, pb_tensor):
     # Fill protobuf tensor fields.
     pb_tensor.name = name
     pb_tensor.data = a.tobytes()
-    pb_tensor.datatype = tfrt_pb.tensor.HALF if FLAGS.fp16 else tfrt_pb.tensor.FLOAT
+    pb_tensor.datatype = network_pb2.HALF if FLAGS.fp16 else network_pb2.FLOAT
     pb_tensor.shape[:] = a.shape
     pb_tensor.size = a.size
+
+
+def tensor_tf_to_tfrt(sess, tf_tensor, pb_tensor):
+    """Convert a TF tensor to the TFRT tensor format.
+    """
+    name = tf_tensor.op.name
+    print('Proceeding with tensor:', tf_tensor.op.name, '...')
+    # Get numpy array from tensor and convert it.
+    a = sess.run(tf_tensor)
+    tensor_np_to_tfrt(name, a, pb_tensor)
+
+
+def network_tf_name():
+    """Try to deduce the network name from the TF variables scope.
+    """
+    vname = tf.model_variables()[0].op.name
+    name = vname.split('/')[0]
+    return name
 
 
 def network_tf_to_tfrt(sess):
     """Convert the TF graph/network to a TensorFlowRT model.
     """
-    pb_network = tfrt_pb.network()
-    # Convert all model variables.
+    pb_network = network_pb2.network()
+    # Convert all model weights.
     model_variables = tf.model_variables()
     for v in model_variables:
-        tensor_tf_to_tfrt(sess, v, pb_network.tensors.add())
+        tensor_tf_to_tfrt(sess, v, pb_network.weights.add())
+    # Network parameters.
+    pb_network.name = network_tf_name()
+    print('Network name:', pb_network.name)
+
     return pb_network
 
 
-def tfrt_pb_filename(checkpoint_path, fp16):
+def network_pb_filename(checkpoint_path, fp16):
     """Generate the output filename based on the checkpoint path.
     """
     tfrt_filename = checkpoint_path
     tfrt_filename = tfrt_filename.replace('.ckpt', '')
     if fp16:
-        tfrt_filename += '_fp16'
+        tfrt_filename += '.tfrt16'
     else:
-        tfrt_filename += '_fp32'
-    tfrt_filename += '.tfrt'
+        tfrt_filename += '.tfrt32'
     return tfrt_filename
 
 
@@ -150,7 +182,7 @@ def main(_):
         print('Converting weights to TensorFlowRT format.')
         pb_network = network_tf_to_tfrt(sess)
         # Saving protobuf TFRT model...
-        tfrt_filename = tfrt_pb_filename(FLAGS.checkpoint_path, FLAGS.fp16)
+        tfrt_filename = network_pb_filename(FLAGS.checkpoint_path, FLAGS.fp16)
         with open(tfrt_filename, 'wb') as f:
             f.write(pb_network.SerializeToString())
 

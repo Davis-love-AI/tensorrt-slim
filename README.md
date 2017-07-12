@@ -30,8 +30,8 @@ protoc  --python_out=../python network.proto
 ```
 The convertion script then works as following:
 ```bash
-python python/tfrt_export_weights.py \
-    --checkpoint_path=../../data/tfrt/inception_v2_fused.ckpt \
+python python/export_tfrt_network_weights.py \
+    --checkpoint_path=./data/networks/inception_v2_fused.ckpt \
     --fp16=0
 ```
 
