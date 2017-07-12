@@ -41,54 +41,22 @@ std::map<std::string, tfrt::imagenet_network*> NetworksMap = {
 
 int main( int argc, char** argv )
 {
+    bool r;
     LOG(INFO) << "<<< ImageNet Console | Network " << FLAGS_network << " >>>";
     // Get network and load parameters & weights.
     tfrt::imagenet_network* network = NetworksMap.at(FLAGS_network);
+    // network->EnableProfiler();
     network->load(FLAGS_network_pb);
     network->load_info(FLAGS_imagenet_info);
 
+    // Load image from file on disk.
+    tfrt::cuda_tensor img("image", {1, 1, 0, 0});
+    r = loadImageRGBA(FLAGS_image.c_str(), (float4**)&img.cpu, (float4**)&img.cuda,
+        &img.shape.w(), &img.shape.h());
+    CHECK(r) << "Fail to read image file: " << FLAGS_image;
 
-    // printf("imagenet-console\n  args (%i):  ", argc);
-
-    // for( int i=0; i < argc; i++ )
-    // 	printf("%i [%s]  ", i, argv[i]);
-
-    // printf("\n\n");
-
-
-    // // retrieve filename argument
-    // if( argc < 2 )
-    // {
-    // 	printf("imagenet-console:   input image filename required\n");
-    // 	return 0;
-    // }
-
-    // const char* imgFilename = argv[1];
-
-
-    // // create imageNet
-    // imageNet* net = imageNet::Create(argc, argv);
-
-    // if( !net )
-    // {
-    // 	printf("imagenet-console:   failed to initialize imageNet\n");
-    // 	return 0;
-    // }
-
-    // net->EnableProfiler();
-
-    // // load image from file on disk
-    // float* imgCPU    = NULL;
-    // float* imgCUDA   = NULL;
-    // int    imgWidth  = 0;
-    // int    imgHeight = 0;
-
-    // if( !loadImageRGBA(imgFilename, (float4**)&imgCPU, (float4**)&imgCUDA, &imgWidth, &imgHeight) )
-    // {
-    // 	printf("failed to load image '%s'\n", imgFilename);
-    // 	return 0;
-    // }
-
+    // Classifying image.
+    auto rclass = network->classify(img.cuda, img.shape.h(), img.shape.w());
     // float confidence = 0.0f;
 
     // // classify image
@@ -138,7 +106,7 @@ int main( int argc, char** argv )
     // 	printf("imagenet-console:  failed to classify '%s'  (result=%i)\n", imgFilename, img_class);
 
     // printf("\nshutting down...\n");
-    // CUDA(cudaFreeHost(imgCPU));
+    // CUDA(cudaFreeHost(img.cpu));
     // delete net;
     // return 0;
 }

@@ -74,7 +74,7 @@ cuda_tensor::cuda_tensor(cuda_tensor&& t) :
 cuda_tensor& cuda_tensor::operator=(cuda_tensor&& t) {
     // Free allocated memory...
     if(cpu) {
-        cudaFreeHost(cpu);
+        CUDA(cudaFreeHost(cpu));
     }
     // Copy.
     name = t.name;
@@ -93,13 +93,13 @@ cuda_tensor& cuda_tensor::operator=(cuda_tensor&& t) {
 cuda_tensor::~cuda_tensor()
 {
     if(cpu) {
-        cudaFreeHost(cpu);
+        CUDA(cudaFreeHost(cpu));
     }
 }
 bool cuda_tensor::allocate()
 {
     if(cpu) {
-        cudaFreeHost(cpu);
+        CUDA(cudaFreeHost(cpu));
     }
     // Double check size...
     size = shape.n() * shape.c() * shape.h() * shape.w() * sizeof(float);
