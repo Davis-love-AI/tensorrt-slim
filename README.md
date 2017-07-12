@@ -32,8 +32,15 @@ The convertion script then works as following:
 ```bash
 python python/export_tfrt_network_weights.py \
     --checkpoint_path=./data/networks/inception_v2_fused.ckpt \
+    --input_name=Input \
+    --input_height=224 \
+    --input_width=224 \
+    --input_shift=0.0 \
+    --input_scale=1.0 \
+    --outputs_name=Softmax \
     --fp16=0
 ```
+
 
 ## Running some tests...
 

@@ -149,8 +149,19 @@ def network_input(pb_network):
     pb_network.input.c = 3
     # Only UNIFORM scaling mode available for now...
     pb_network.input.scalemode = network_pb2.UNIFORM
+    # Create shift and scale weights if necessary.
+    if FLAGS.input_shift != 0.0:
+        a = np.array([FLAGS.input_shift])
+        name = pb_network.name + '/' + FLAGS.input_name + '/shift'
+        tensor_np_to_tfrt(name, a, pb_network.weights.add())
+    if FLAGS.input_scale != 1.0:
+        a = np.array([FLAGS.input_scale])
+        name = pb_network.name + '/' + FLAGS.input_name + '/scale'
+        tensor_np_to_tfrt(name, a, pb_network.weights.add())
+
     print('Input name: ', pb_network.input.name)
     print('Input shape: [%i, %i, %i]' % (pb_network.input.h, pb_network.input.w, pb_network.input.c))
+    print('Input shift and scale: ', [FLAGS.input_shift, FLAGS.input_scale])
 
 
 def network_outputs(pb_network):
