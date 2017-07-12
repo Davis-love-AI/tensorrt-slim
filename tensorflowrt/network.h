@@ -115,7 +115,7 @@ public:
     void clear_weights();
 
     /** Build the complete network. Input + all layers.
-     * To be re-implemented in children classes.
+     * VIRTUAL: to be re-implemented in children classes.
      */
     virtual nvinfer1::ITensor* build(tfrt::scope sc);
     /** Serialize a network model. If caching=True, try to first load from

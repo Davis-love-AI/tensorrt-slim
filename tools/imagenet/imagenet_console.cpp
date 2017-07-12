@@ -24,7 +24,9 @@
 
 // FLAGS...
 DEFINE_string(network, "inception1", "ImageNet network to test.");
+DEFINE_string(network_pb, "inception1", "Network protobuf parameter file.");
 DEFINE_string(image, "../data/", "Image to classify.");
+DEFINE_string(imagenet_info, "../data/", "ImageNet information (classes, ...).");
 // DEFINE_bool(verbose, false, "Display program name before message");
 // DEFINE_string(message, "Hello world!", "Message to print");
 // DEFINE_int32(input_height, 224, "Network input height.");
@@ -40,6 +42,11 @@ std::map<std::string, tfrt::imagenet_network*> NetworksMap = {
 int main( int argc, char** argv )
 {
     LOG(INFO) << "<<< ImageNet Console | Network " << FLAGS_network << " >>>";
+    // Get network and load parameters & weights.
+    tfrt::imagenet_network* network = NetworksMap.at(FLAGS_network);
+    network->load(FLAGS_network_pb);
+    network->load_info(FLAGS_imagenet_info);
+
 
     // printf("imagenet-console\n  args (%i):  ", argc);
 
