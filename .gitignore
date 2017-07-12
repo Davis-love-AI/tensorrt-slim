@@ -12,8 +12,8 @@ __pycache__*
 
 # DATA to ignore.
 *.tfrt
-*.tfrt16
-*.tfrt32
+# *.tfrt16
+# *.tfrt32
 *.ckpt.index
 *.ckpt.meta
 *.ckpt.data-00000-of-00001
