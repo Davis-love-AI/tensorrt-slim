@@ -22,6 +22,19 @@ export CPLUS_INCLUDE_PATH=/usr/lib/x86_64-linux-gnu/glib-2.0/include:$CPLUS_INCL
 export CPLUS_INCLUDE_PATH=/usr/lib/x86_64-linux-gnu/gstreamer-1.0/include:$CPLUS_INCLUDE_PATH
 ```
 
+## Python converting script TF -> TF-RT protobufs
+
+One may first need to generate the protobuf python sources:
+```bash
+protoc  --python_out=../python network.proto
+```
+The convertion script then works as following:
+```bash
+python python/tfrt_export_weights.py \
+    --checkpoint_path=../../data/tfrt/inception_v2_fused.ckpt \
+    --fp16=0
+```
+
 ## Running some tests...
 
 ## blablabla

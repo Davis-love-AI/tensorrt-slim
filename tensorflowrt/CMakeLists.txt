@@ -9,6 +9,9 @@ PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HEADERS network.proto)
 # Ugly direct generation! Don't know how to copy headers otherwise
 execute_process(COMMAND protoc --cpp_out=./ network.proto
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+# Generate python too...
+execute_process(COMMAND protoc --python_out=../python/ network.proto
+                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 # TF-RT sources.
 FILE(GLOB TFRT_SRCS *.cpp *.cu cuda/*.cpp cuda/*.cu)
