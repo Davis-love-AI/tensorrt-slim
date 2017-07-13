@@ -89,7 +89,9 @@ ICudaEngine* tfrtToGIEModel()
     tf_network->input_shape({3, gParams.inheight, gParams.inwidth});
     tfrt::scope sc = tf_network->scope(network);
     auto net = tf_network->build(sc);
+    // Input and output information.
     gInputs = {tf_network->input_name(true)};
+    gParams.outputs = tf_network->outputs_name(true, true);
 
     // Build the engine
     builder->setMaxBatchSize(gParams.batchSize);
