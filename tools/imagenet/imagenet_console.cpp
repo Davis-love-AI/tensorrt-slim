@@ -37,15 +37,15 @@ DEFINE_bool(image_save, false, "Save the result in some new image.");
 
 /** Map-method containing the list of available ImageNet networks.
  */
-tfrt::imagenet_network* networks_map(const std::string& key)
+std::unique_ptr<tfrt::imagenet_network>&& networks_map(const std::string& key)
 {
     static std::map<std::string, std::unique_ptr<tfrt::imagenet_network> > nets;
     // Fill the map at first call!
     if(nets.empty()) {
-        // nets["inception1"] = std::make_unique<tfrt::imagenet_network>("test");
+        nets["inception1"] = std::make_unique<inception1::net>();
         nets["inception2"] = std::make_unique<inception2::net>();
     }
-    return nets.at(key).get();
+    return std::move(nets.at(key));
 }
 
 
@@ -57,7 +57,7 @@ int main( int argc, char** argv )
     bool r;
     LOG(INFO) << IMGNET << "Loading network: " << FLAGS_network;
     // Get network and load parameters & weights.
-    tfrt::imagenet_network* network = networks_map(FLAGS_network);
+    auto network = networks_map(FLAGS_network);
     // network->EnableProfiler();
     network->load(FLAGS_network_pb);
     network->load_info(FLAGS_imagenet_info);
@@ -109,5 +109,7 @@ int main( int argc, char** argv )
     else {
         LOG(WARNING) << IMGNET << "Failed to classify the image.";
     }
+    // Free network: avoid CUDA problems...
+    network.reset(nullptr);
     return 0;
 }
