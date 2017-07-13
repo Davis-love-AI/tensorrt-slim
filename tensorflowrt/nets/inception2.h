@@ -163,7 +163,7 @@ inline nvinfer1::ITensor* base(nvinfer1::ITensor* input, tfrt::scope sc)
 {
     nvinfer1::ITensor* net{input};
     // Main blocks 1 to 5.
-    net = block1(input, sc);
+    // net = block1(net, sc);
     net = block2(net, sc);
     net = block3(net, sc);
     net = block4(net, sc);
@@ -201,7 +201,7 @@ public:
     /** Inception2 building method. Take a network scope and do the work!
      */
     virtual nvinfer1::ITensor* build(tfrt::scope sc) {
-        auto net = tfrt::input(sc)();
+        auto net = tfrt::input(sc).shape({64, 112, 112})();
         net = inception2(net, sc, 1001);
         return net;
     }
