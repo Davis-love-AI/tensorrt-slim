@@ -90,7 +90,7 @@ def parse_fix_scopes():
     """Parse the fix_scopes FLAG into a list of pairs.
     """
     l_fix_scopes = FLAGS.fix_scopes.split(',')
-    l_fix_scopes = [a.split(':') for a in l_fix_scopes]
+    l_fix_scopes = [a.split(':') for a in l_fix_scopes if len(a)]
     l_fix_scopes = [(a[0], a[1]) for a in l_fix_scopes]
     return l_fix_scopes
 
