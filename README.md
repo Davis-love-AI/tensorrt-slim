@@ -61,7 +61,7 @@ for every layer. It gives a good overview on the bottlenecks and which part to i
     --batch=2 \
     --iterations=10 \
     --avgRuns=10 \
-    --half2=true \
+    --workspace=16 \
     --verbose=true
 ```
 

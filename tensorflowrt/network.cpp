@@ -385,10 +385,16 @@ bool network::profile_model(std::stringstream& model_stream)
     LOG(INFO) << LOG_GIE << "Configuring CUDA engine.";
 	builder->setMaxBatchSize(m_max_batch_size);
 	builder->setMaxWorkspaceSize(m_workspace_size);
-	// set up the network for paired-fp16 format
-	if(this->datatype() == nvinfer1::DataType::kHALF) {
-		builder->setHalf2Mode(true);
-    }
+    // Set up the floating mode.
+    bool compatibleType = (this->datatype() == nvinfer1::DataType::kFLOAT ||
+                           builder->platformHasFastFp16());
+    CHECK(compatibleType) << LOG_GIE << "Can not build network with FP16 data type. Platform not compatible.";
+    bool useFP16 = (this->datatype() == nvinfer1::DataType::kHALF &&
+                    builder->platformHasFastFp16());
+    LOG_IF(INFO, useFP16) << LOG_GIE << "Configure network with FP16 data type.";
+    LOG_IF(INFO, !useFP16) << LOG_GIE << "Configure network with FP32 data type.";
+    builder->setHalf2Mode(useFP16);
+
     nvinfer1::ICudaEngine* engine = builder->buildCudaEngine(*network);
     CHECK_NOTNULL(engine);
 

@@ -97,7 +97,7 @@ ICudaEngine* tfrtToGIEModel()
     // Set up the floating mode.
     bool compatibleType = (tf_network->datatype() == nvinfer1::DataType::kFLOAT ||
                             builder->platformHasFastFp16());
-    CHECK(compatibleType) << "CAN NOT build network with FP16 data type. Platform incompatible";
+    CHECK(compatibleType) << "CAN NOT build network with FP16 data type. Platform not compatible.";
     bool useFP16 = (tf_network->datatype() == nvinfer1::DataType::kHALF &&
                     builder->platformHasFastFp16());
     LOG_IF(INFO, useFP16) << "BUILD network with FP16 data type.";
