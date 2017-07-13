@@ -296,7 +296,7 @@ protected:
     /** Set up an activation operation.
      */
     nvinfer1::ITensor* activation(nvinfer1::ITensor* input) {
-        LOG(INFO) << "OP activation. Type: " << int(ACT)
+        LOG(INFO) << "OP activation. Type: " << ActivationName(ACT)
                 << " Input shape: " << dims_str(input->getDimensions());
         std::string aname = ActivationName(ACT);
         if(ACT != ActivationType::NONE && ACT != ActivationType::SOFTMAX) {
