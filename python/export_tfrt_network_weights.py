@@ -243,6 +243,7 @@ def main(_):
         pb_network = network_tf_to_tfrt(sess)
         # Saving protobuf TFRT model...
         tfrt_filename = network_pb_filename(FLAGS.checkpoint_path, FLAGS.fp16)
+        print('Export weights to: ', tfrt_filename)
         with open(tfrt_filename, 'wb') as f:
             f.write(pb_network.SerializeToString())
 
