@@ -17,6 +17,7 @@
 
 #include <map>
 #include <string>
+#include <iomanip>
 
 // TensorFlowRT headers
 #include <tensorflowrt.h>
@@ -73,8 +74,9 @@ int main( int argc, char** argv )
     auto imgclass = network->classify(img.cuda, img.shape.h(), img.shape.w());
 
     if(imgclass.first >= 0) {
-        LOG(INFO) << IMGNET << "Classification result: "
-            << network->description(imgclass.first) << " with confidence " << imgclass.second;
+        LOG(INFO) << IMGNET
+            << "Classification result: " << network->description(imgclass.first)
+            << " with confidence " << std::setprecision(10) << imgclass.second;
 
         if(FLAGS_image_save) {
             std::string  output_filename = FLAGS_image + ".class";
