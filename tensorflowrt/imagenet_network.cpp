@@ -56,7 +56,7 @@ bool imagenet_network::load_info(const std::string& filename)
         }
     }
     fclose(f);
-    LOG(INFO) << "ImageNet loaded with #entries: " << m_synset_classes.size();
+    LOG(INFO) << "ImageNet information loaded with #entries: " << m_synset_classes.size();
     if(m_synset_classes.size() == 0) {
         return false;
     }

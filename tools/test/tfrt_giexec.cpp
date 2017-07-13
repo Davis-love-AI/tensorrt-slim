@@ -94,7 +94,14 @@ ICudaEngine* tfrtToGIEModel()
     // Build the engine
     builder->setMaxBatchSize(gParams.batchSize);
     builder->setMaxWorkspaceSize(gParams.workspaceSize << 20);
-    builder->setHalf2Mode(gParams.half2);
+    // Set up the floating mode.
+    bool compatibleType = (tf_network->datatype() == nvinfer1::DataType::kFLOAT ||
+                            builder->platformHasFastFp16());
+    CHECK(compatibleType) << "CAN NOT build network with FP16 data type. Platform incompatible";
+    bool useFP16 = (tf_network->datatype() == nvinfer1::DataType::kHALF &&
+                    builder->platformHasFastFp16());
+    LOG_IF(INFO, useFP16) << "BUILD network with FP16 data type.";
+    LOG_IF(INFO, !useFP16) << "BUILD network with FP32 data type.";
 
     ICudaEngine* engine = builder->buildCudaEngine(*network);
     if (engine == nullptr)
