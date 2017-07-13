@@ -94,6 +94,7 @@ inline nvinfer1::ITensor* block4(nvinfer1::ITensor* net, tfrt::scope sc)
 }
 inline nvinfer1::ITensor* block5(nvinfer1::ITensor* net, tfrt::scope sc)
 {
+    typedef tfrt::max_pooling2d<tfrt::PaddingType::VALID>    max_pool2d;
     // Mixed blocks 5a to 5c.
     net = max_pool2d(sc, "MaxPool_5a_2x2").ksize({2, 2}).stride({2, 2})(net);
     net = block_mixed_max<256, 160, 320, 32, 128, 128>(net, sc.sub("Mixed_5b"));
