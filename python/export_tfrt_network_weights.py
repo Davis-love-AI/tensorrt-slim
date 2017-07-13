@@ -87,18 +87,6 @@ def restore_checkpoint(sess, ckpt_filename, moving_average_decay=None):
     fn_restore(sess)
 
 
-def tf_get_model_variable(sess, name):
-    """Get the value of a model variable.
-    """
-    model_variables = tf.model_variables()
-    v = next((a for a in model_variables if a.op.name == name), None)
-    if v is None:
-        print('WARNING: Could not find variable', name)
-        return np.array([], np.float32)
-    a = sess.run(v)
-    return a
-
-
 def parse_fix_scopes():
     """Parse the fix_scopes FLAG into a list of pairs.
     """
@@ -117,6 +105,18 @@ def fix_scope_name(name, fix_scopes):
             print('SCOPE fixing name from \'%s\' to \'%s\'' % (name, new))
             name = new
     return name
+
+
+def tf_get_model_variable(sess, name):
+    """Get the value of a model variable.
+    """
+    model_variables = tf.model_variables()
+    v = next((a for a in model_variables if a.op.name == name), None)
+    if v is None:
+        print('WARNING: Could not find variable', name)
+        return np.array([], np.float32)
+    a = sess.run(v)
+    return a
 
 
 def tensor_to_float(a, name=''):
@@ -159,7 +159,8 @@ def tensor_np_to_tfrt(sess, name, np_tensor, pb_tensor):
     # Convert to half-precision if necessary.
     a = tensor_to_float(a, name=name)
     # Fill protobuf tensor fields.
-    pb_tensor.name = name
+    fix_scopes = parse_fix_scopes()
+    pb_tensor.name = fix_scope_name(name, fix_scopes)
     pb_tensor.data = a.tobytes()
     pb_tensor.datatype = network_pb2.HALF if FLAGS.fp16 else network_pb2.FLOAT
     pb_tensor.shape[:] = a.shape
@@ -169,8 +170,7 @@ def tensor_np_to_tfrt(sess, name, np_tensor, pb_tensor):
 def tensor_tf_to_tfrt(sess, tf_tensor, pb_tensor):
     """Convert a TF tensor to the TFRT tensor format.
     """
-    fix_scopes = parse_fix_scopes()
-    name = fix_scope_name(tf_tensor.op.name, fix_scopes)
+    name = tf_tensor.op.name
     # Get numpy array from tensor and convert it.
     a = sess.run(tf_tensor)
     print('Proceeding with tensor:', name, 'with shape', a.shape)
