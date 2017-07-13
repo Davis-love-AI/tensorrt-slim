@@ -89,7 +89,7 @@ protected:
      */
     bool net_is_output() {
         // TODO: a bit ugly this stuff. Move to scope class?
-        auto onames = m_scope.tfrt_network()->outputs_name();
+        auto onames = m_scope.tfrt_network()->outputs_name(true, false);
         auto lname = m_scope.name();
         bool r = (std::find(std::begin(onames), std::end(onames), lname) != std::end(onames));
         return r;
@@ -121,7 +121,7 @@ public:
      * the scope tfrt::network object.
      */
     input(const tfrt::scope& sc) :
-        layer(sc, sc.tfrt_network()->input_name()),
+        layer(sc, sc.tfrt_network()->input_name(false)),
         m_shape{sc.tfrt_network()->input_shape()} {}
     /** Named parameter: input shape. */
     input& shape(nvinfer1::DimsCHW shape) {

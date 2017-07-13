@@ -95,9 +95,9 @@ public:
     nvinfer1::DataType datatype() const;
     // Input and outputs getters.
     nvinfer1::DimsCHW input_shape() const;
-    const std::string& input_name() const;
+    std::string input_name(bool fullname) const;
     std::vector<nvinfer1::DimsCHW> outputs_shape() const;
-    std::vector<std::string> outputs_name(bool suffix=false) const;
+    std::vector<std::string> outputs_name(bool fullname, bool suffix) const;
     // Input and output setters.
     tfrt::network& input_shape(const nvinfer1::DimsCHW& shape);
 

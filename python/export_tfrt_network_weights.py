@@ -143,7 +143,7 @@ def network_name(pb_network):
 def network_input(pb_network):
     """Set the input parameters of the network.
     """
-    pb_network.input.name = pb_network.name + "/" + FLAGS.input_name
+    pb_network.input.name = FLAGS.input_name
     pb_network.input.h = FLAGS.input_height
     pb_network.input.w = FLAGS.input_width
     pb_network.input.c = 3
@@ -160,7 +160,7 @@ def network_input(pb_network):
         tensor_np_to_tfrt(name, a, pb_network.weights.add())
 
     print('Input name: ', pb_network.input.name)
-    print('Input shape: [%i, %i, %i]' % (pb_network.input.h, pb_network.input.w, pb_network.input.c))
+    print('Input CHW shape: ', [pb_network.input.c, pb_network.input.h, pb_network.input.w])
     print('Input shift and scale: ', [FLAGS.input_shift, FLAGS.input_scale])
 
 
@@ -170,7 +170,7 @@ def network_outputs(pb_network):
     l_outputs = FLAGS.outputs_name.split(',')
     for i, o in enumerate(l_outputs):
         net_output = pb_network.outputs.add()
-        net_output.name = pb_network.name + "/" + o
+        net_output.name = o
         # TODO: fix this crap for SSD networks.
         net_output.h = 1
         net_output.w = 1

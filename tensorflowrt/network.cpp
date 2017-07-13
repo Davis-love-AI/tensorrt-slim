@@ -193,9 +193,13 @@ nvinfer1::DimsCHW network::input_shape() const
     auto input = m_pb_network->input();
     return nvinfer1::DimsCHW{input.c(), input.h(), input.w()};
 }
-const std::string& network::input_name() const
+std::string network::input_name(bool fullname) const
 {
-    return m_pb_network->input().name();
+    std::string iname = m_pb_network->input().name();
+    if(fullname) {
+        iname = (this->name() + "/") + iname;
+    }
+    return iname;
 }
 std::vector<nvinfer1::DimsCHW> network::outputs_shape() const
 {
@@ -206,19 +210,21 @@ std::vector<nvinfer1::DimsCHW> network::outputs_shape() const
     }
     return v;
 }
-std::vector<std::string> network::outputs_name(bool suffix) const
+std::vector<std::string> network::outputs_name(bool fullname, bool suffix) const
 {
     // TODO: more efficient way!
     std::vector<std::string> v;
     for(int i = 0 ; i < m_pb_network->outputs_size() ; ++i) {
         const tfrt_pb::output& output = m_pb_network->outputs(i);
-        if(!suffix) {
-            // Output layer name.
-            v.push_back(output.name());
-        } else {
-            // Output tensor name.
-            v.push_back(output.name() + "/output");
+        // Construct output name...
+        std::string oname = output.name();
+        if(fullname) {
+            oname = (this->name() + "/") + oname;
         }
+        if(suffix) {
+            oname += "/output";
+        }
+        v.push_back(oname);
     }
     return v;
 }
@@ -267,18 +273,18 @@ bool network::load(std::string filename)
 
     nvinfer1::DimsNCHW shape;
     // CUDA allocate input memory.
-    LOG(INFO) << LOG_GIE << "Allocating CUDA input memory for " << input_name();
-    const int input_idx = m_nv_engine->getBindingIndex(input_name().c_str());
+    LOG(INFO) << LOG_GIE << "Allocating CUDA input memory for " << input_name(true);
+    const int input_idx = m_nv_engine->getBindingIndex(input_name(true).c_str());
 	nvinfer1::DimsCHW inshape = engine->getBindingDimensions(input_idx);
     shape = nvinfer1::DimsNCHW{int(m_max_batch_size), inshape.c(), inshape.h(), inshape.w()};
 
-    m_cuda_input = std::move(tfrt::cuda_tensor(input_name(), shape));
+    m_cuda_input = std::move(tfrt::cuda_tensor(input_name(true), shape));
     bool r = m_cuda_input.allocate();
-    CHECK(r) << LOG_GIE << "Could not allocate memory for CUDA input: " << dims_str(shape) << " | "<< input_name();
+    CHECK(r) << LOG_GIE << "Could not allocate memory for CUDA input: " << dims_str(shape) << " | "<< input_name(true);
 
     // CUDA allocate outputs memory.
     m_cuda_outputs.clear();
-    auto outputs_name = this->outputs_name(true);
+    auto outputs_name = this->outputs_name(true, true);
     for(size_t i = 0 ; i < outputs_name.size() ; ++i) {
         LOG(INFO) << LOG_GIE << "Allocating CUDA output memory for " << outputs_name[i];
         const int output_idx = engine->getBindingIndex(outputs_name[i].c_str());
