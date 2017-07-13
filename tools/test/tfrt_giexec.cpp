@@ -12,23 +12,17 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Robik AI Ltd.
 # =========================================================================== */
-#include <assert.h>
 #include <fstream>
-#include <sstream>
-#include <iostream>
-#include <cmath>
 #include <sys/stat.h>
-#include <cmath>
 #include <time.h>
-// #include <algorithm>
 #include <chrono>
-#include <string.h>
 
 #include <cuda_runtime_api.h>
 #include <NvInfer.h>
 
 #include <tensorflowrt.h>
-#include <nets/inception2.h>
+#include <nets/nets.h>
+
 
 using namespace nvinfer1;
 
@@ -40,7 +34,23 @@ using namespace nvinfer1;
         abort();										\
     }													\
 }
+/* ============================================================================
+ * Static collection of nets.
+ * ========================================================================== */
+tfrt::imagenet_network* networks_map(const std::string& key)
+{
+    static std::map<std::string, std::unique_ptr<tfrt::imagenet_network> > nets;
+    // Fill the map at first call!
+    if(nets.empty()) {
+        nets["inception1"] = std::make_unique<inception1::net>();
+        nets["inception2"] = std::make_unique<inception2::net>();
+    }
+    return nets.at(key).get();
+}
 
+/* ============================================================================
+ * Parameters + NV logger.
+ * ========================================================================== */
 struct Params
 {
     std::string modelFile, modelName, engine;
@@ -64,26 +74,21 @@ class Logger : public ILogger
 } gLogger;
 
 
-
+/* ============================================================================
+ * Build + inference.
+ * ========================================================================== */
 ICudaEngine* tfrtToGIEModel()
 {
     // Builder + network.
     IBuilder* builder = createInferBuilder(gLogger);
     INetworkDefinition* network = builder->createNetwork();
 
-    DimsCHW inshape{3, gParams.inheight, gParams.inwidth};
-    auto dt = gParams.half2 ? DataType::kHALF:DataType::kFLOAT;
-    auto data = network->addInput("data", dt, DIMRT(inshape));
-    gInputs.push_back(data->getName());
-
-    assert(data != nullptr);
-
-    tfrt::network tf_network("InceptionV2");
-    tf_network.load_weights(gParams.modelFile.c_str());
-    // Create Inception2 network.
-    tfrt::scope sc = tf_network.scope(network);
-    auto output = inception2::inception2(data, sc);
-    network->markOutput(*output);
+    // Build TF-RT network.
+    tfrt::imagenet_network* tf_network = networks_map(gParams.modelName);
+    tf_network->load_weights(gParams.modelFile.c_str());
+    tf_network->input_shape({3, gParams.inheight, gParams.inwidth});
+    tfrt::scope sc = tf_network->scope(network);
+    auto net = tf_network->build(sc);
 
     // Build the engine
     builder->setMaxBatchSize(gParams.batchSize);
