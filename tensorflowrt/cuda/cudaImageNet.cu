@@ -26,6 +26,7 @@ __global__ void gpuPreImageNet(float2 scale, float4* input, int iWidth,
     output[n * 2 + y * oWidth + x] = rgb.z;
 }
 
+
 // cudaPreImageNet
 cudaError_t cudaPreImageNet(float4* input, size_t inputWidth, size_t inputHeight,
                             float* output, size_t outputWidth, size_t outputHeight)

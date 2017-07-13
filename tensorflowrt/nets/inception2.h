@@ -180,7 +180,7 @@ inline nvinfer1::ITensor* inception2(nvinfer1::ITensor* input,
     // Logits end block.
     {
         typedef tfrt::avg_pooling2d<tfrt::PaddingType::VALID>  avg_pool2d;
-        typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false>  conv2d;
+        typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, false>  conv2d;
         auto ssc = sc.sub("Logits");
         net = avg_pool2d(ssc, "AvgPool_1a_7x7").ksize({7, 7})(net);
         net = conv2d(ssc, "Conv2d_1c_1x1").noutputs(num_classes).ksize({1, 1})(net);
