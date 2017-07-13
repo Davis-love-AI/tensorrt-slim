@@ -134,7 +134,7 @@ public:
         // TensorRT input.
         nvinfer1::ITensor* input = m_scope.network()->addInput(
             m_scope.name().c_str(), dt, DIMRT(this->m_shape));
-        LOG(INFO) << "Input shape: " << dims_str(input->getDimensions());
+        LOG(INFO) << "LAYER input with shape: " << dims_str(input->getDimensions());
         // Input scaling.
         input = this->scale(input);
         return input;

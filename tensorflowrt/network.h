@@ -89,16 +89,17 @@ public:
     /** Get NV weights by name. Return empty weights if not found.
      */
     nvinfer1::Weights weights_by_name(std::string name) const;
-
+    // General network parameters.
     const std::string& name() const;
     network& name(const std::string& name);
     nvinfer1::DataType datatype() const;
-
+    // Input and outputs getters.
     nvinfer1::DimsCHW input_shape() const;
     const std::string& input_name() const;
     std::vector<nvinfer1::DimsCHW> outputs_shape() const;
     std::vector<std::string> outputs_name(bool suffix=false) const;
-
+    // Input and output setters.
+    tfrt::network& input_shape(const nvinfer1::DimsCHW& shape);
 
 public:
     /** Generate empty weights. */

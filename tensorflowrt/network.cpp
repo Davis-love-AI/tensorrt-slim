@@ -174,6 +174,7 @@ nvinfer1::Weights network::tensor_to_weights(const tfrt_pb::tensor& tensor)
     }
     return w;
 }
+
 const std::string& network::name() const {
     return m_pb_network->name();
 }
@@ -186,7 +187,7 @@ nvinfer1::DataType network::datatype() const {
     auto dt = m_pb_network->datatype();
     return nvinfer1::DataType(int(dt));
 }
-
+// Input and outputs getters / setters.
 nvinfer1::DimsCHW network::input_shape() const
 {
     auto input = m_pb_network->input();
@@ -221,6 +222,18 @@ std::vector<std::string> network::outputs_name(bool suffix) const
     }
     return v;
 }
+tfrt::network& network::input_shape(const nvinfer1::DimsCHW& shape)
+{
+    // Only change shape if positive.
+    if(shape.c() && shape.h() && shape.w()) {
+        auto input = m_pb_network->mutable_input();
+        input->set_c(shape.c());
+        input->set_h(shape.h());
+        input->set_w(shape.w());
+    }
+    return *this;
+}
+
 
 /* ============================================================================
  * load - build - serialize. The big stuff!
