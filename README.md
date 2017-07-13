@@ -53,7 +53,7 @@ python python/export_tfrt_network_weights.py \
 ```bask
 ./tfrt_giexec \
     --modelName=inception2 \
-    --modelFile=../data/networks/inception_v1_fused.tfrt16 \
+    --modelFile=../data/networks/inception_v2_fused.tfrt16 \
     --output=InceptionV2/Softmax/output \
     --batch=2 \
     --iterations=10 \
