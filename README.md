@@ -41,8 +41,8 @@ python python/export_tfrt_network_weights.py \
     --input_name=Input \
     --input_height=224 \
     --input_width=224 \
-    --input_shift=-127.5 \
-    --input_scale=0.00784313725	\
+    --input_shift=-1 \
+    --input_scale=0.00784313725490196 \
     --outputs_name=Softmax \
     --fp16=1
 ```
