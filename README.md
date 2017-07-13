@@ -73,7 +73,7 @@ for every layer. It gives a good overview on the bottlenecks and which part to i
     --network_pb=../data/networks/inception_v2_fused.tfrt16 \
     --imagenet_info=../data/networks/ilsvrc12_synset_words.txt \
     --image=../data/images/orange_0.jpg \
-    --image_save=1
+    --image_save=0
 ```
 
 ## blablabla
