@@ -418,7 +418,7 @@ public:
         // Pointwise convolution.
         separable_convolution2d pw_conv2d(*this);
         pw_conv2d.ksize({1, 1}).stride({1, 1});
-        net = pw_conv2d.convolution(net, 1, "pointwise_weights", "pointwise_biases", "_pw");
+        net = pw_conv2d.convolution(net, 1, "pointwise_weights", "biases", "_pw");
         net = pw_conv2d.batch_norm(net);
         net = pw_conv2d.activation(net);
         return this->mark_output(net);
