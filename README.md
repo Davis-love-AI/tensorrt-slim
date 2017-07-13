@@ -47,7 +47,7 @@ python python/export_tfrt_network_weights.py \
     --fp16=1
 ```
 
-## Running some tests...
+## Running some basic tests
 
 ### Benchmark a network
 
@@ -64,5 +64,9 @@ for every layer. It gives a good overview on the bottlenecks and which part to i
     --half2=true \
     --verbose=true
 ```
+
+### Classification on image and video inputs
+
+
 
 ## blablabla
