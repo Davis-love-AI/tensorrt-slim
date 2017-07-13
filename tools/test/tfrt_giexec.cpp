@@ -70,9 +70,7 @@ tfrt::imagenet_network* networks_map(const std::string& key)
         nets["inception1"] = std::make_unique<inception1::net>();
         nets["inception2"] = std::make_unique<inception2::net>();
     }
-    // Update input accordingly.
     auto net = nets.at(key).get();
-    gInputs = {net->input_name(true)};
     return net;
 }
 
@@ -91,6 +89,7 @@ ICudaEngine* tfrtToGIEModel()
     tf_network->input_shape({3, gParams.inheight, gParams.inwidth});
     tfrt::scope sc = tf_network->scope(network);
     auto net = tf_network->build(sc);
+    gInputs = {tf_network->input_name(true)};
 
     // Build the engine
     builder->setMaxBatchSize(gParams.batchSize);
