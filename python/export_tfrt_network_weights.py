@@ -61,6 +61,8 @@ tf.app.flags.DEFINE_float(
 
 tf.app.flags.DEFINE_string(
     'outputs_name', 'Sotfmax', 'Name of the output tensors.')
+tf.app.flags.DEFINE_string(
+    'fix_scopes', '', 'Scopes to be modify. Format: old0:new0,old1:new1')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -84,6 +86,23 @@ def restore_checkpoint(sess, ckpt_filename, moving_average_decay=None):
                                                 ignore_missing_vars=True)
     fn_restore(sess)
 
+def parse_fix_scopes():
+    """Parse the fix_scopes FLAG into a list of pairs.
+    """
+    l_fix_scopes = FLAGS.fix_scopes.split(',')
+    l_fix_scopes = [a.split(':') for a in l_fix_scopes]
+    l_fix_scopes = [(a[0], a[1]) for a in l_fix_scopes]
+    return l_fix_scopes
+
+def fix_scope_name(name, fix_scopes):
+    """Fix a scope name.
+    """
+    for a in fix_scopes:
+        if a[0] in name:
+            new = name.replace(a[0], a[1])
+            print('SCOPE fixing name from \'%s\' to \'%s\'' % (name, new))
+            name = new
+    return name
 
 def tensor_np_to_tfrt(name, np_tensor, pb_tensor):
     """Convert a numpy Tensor + name to TF-RT tensor format.
@@ -124,8 +143,9 @@ def tensor_np_to_tfrt(name, np_tensor, pb_tensor):
 def tensor_tf_to_tfrt(sess, tf_tensor, pb_tensor):
     """Convert a TF tensor to the TFRT tensor format.
     """
-    name = tf_tensor.op.name
-    print('Proceeding with tensor:', tf_tensor.op.name, '...')
+    fix_scopes = parse_fix_scopes()
+    name = fix_scope_name(tf_tensor.op.name, fix_scopes)
+    print('Proceeding with tensor:', name, '...')
     # Get numpy array from tensor and convert it.
     a = sess.run(tf_tensor)
     tensor_np_to_tfrt(name, a, pb_tensor)
