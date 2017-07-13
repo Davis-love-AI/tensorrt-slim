@@ -92,6 +92,9 @@ std::pair<int, float> imagenet_network::classify(float* rgba, uint32_t height, u
             class_score = value;
         }
     }
+    if(this->m_empty_class) {
+        class_idx--;
+    }
     DLOG(INFO) << "ImageNet classification: class '" << m_desc_classes[class_idx]
                << "' with score " << class_score;
     return std::make_pair(class_idx, class_score);
