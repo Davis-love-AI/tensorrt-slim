@@ -70,9 +70,10 @@ std::pair<int, float> imagenet_network::classify(float* rgba, uint32_t height, u
     CHECK(width) << "Invalid image width.";
 
     // Downsample and convert to RGB.
-    auto r = cudaPreImageNet((float4*)rgba, width, height,
+    cudaError_t r = cudaPreImageNet((float4*)rgba, width, height,
         m_cuda_input.cuda, m_cuda_input.shape.w(), m_cuda_input.shape.h());
-    CHECK(r) << "Failed to resize image to ImageNet network input shape.";
+    CHECK_EQ(r, cudaSuccess) << "Failed to resize image to ImageNet network input shape."
+        << "CUDA error: " << r;
 
     // Execute TensorRT network (batch size = 1).
     void* inferenceBuffers[] = { m_cuda_input.cuda, m_cuda_outputs[0].cuda };
