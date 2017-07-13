@@ -86,6 +86,19 @@ def restore_checkpoint(sess, ckpt_filename, moving_average_decay=None):
                                                 ignore_missing_vars=True)
     fn_restore(sess)
 
+
+def tf_get_model_variable(sess, name):
+    """Get the value of a model variable.
+    """
+    model_variables = tf.model_variables()
+    v = next((a for a in model_variables if a.op.name == name), None)
+    if v is None:
+        print('WARNING: Could not find variable', name)
+        return np.array([], np.float32)
+    a = sess.run(v)
+    return a
+
+
 def parse_fix_scopes():
     """Parse the fix_scopes FLAG into a list of pairs.
     """
@@ -93,6 +106,7 @@ def parse_fix_scopes():
     l_fix_scopes = [a.split(':') for a in l_fix_scopes if len(a)]
     l_fix_scopes = [(a[0], a[1]) for a in l_fix_scopes]
     return l_fix_scopes
+
 
 def fix_scope_name(name, fix_scopes):
     """Fix a scope name.
@@ -104,7 +118,23 @@ def fix_scope_name(name, fix_scopes):
             name = new
     return name
 
-def tensor_np_to_tfrt(name, np_tensor, pb_tensor):
+
+def tensor_to_float(a, name=''):
+    """Convert a tensor to float16 or float32, depending on the type FLAGS.
+    """
+    if FLAGS.fp16:
+        minval = np.finfo(np.float16).min
+        maxval = np.finfo(np.float16).max
+        mask = np.logical_or(a < minval, a > maxval)
+        if np.sum(mask):
+            print('WARNING: FP16 infinite values in the tensor', name)
+        a = a.astype(np.float16)
+    else:
+        a = a.astype(np.float32)
+    return a
+
+
+def tensor_np_to_tfrt(sess, name, np_tensor, pb_tensor):
     """Convert a numpy Tensor + name to TF-RT tensor format.
     """
     a = np_tensor
@@ -117,21 +147,17 @@ def tensor_np_to_tfrt(name, np_tensor, pb_tensor):
         a = np.expand_dims(a, axis=0)
         a = np.transpose(a, axes=[2, 1, 0, 3, 4])
     # Batch norm moving variables: transform into scaling parameters.
+    # Must satisfy the equation y = s*x + b
     if 'BatchNorm/moving_mean' in name:
-        a = -a
+        # Need the variance to fix the coefficient...
+        v = tf_get_model_variable(sess, str.replace(name, 'moving_mean', 'moving_variance'))
+        a = -a / np.sqrt(v)
     if 'BatchNorm/moving_variance' in name:
         a = 1. / np.sqrt(a)
     # TODO: fuse with scaling parameters beta and gamma...
 
     # Convert to half-precision if necessary.
-    if FLAGS.fp16:
-        minval = np.finfo(np.float16).min
-        maxval = np.finfo(np.float16).max
-        mask = np.logical_or(a < minval, a > maxval)
-        if np.sum(mask):
-            print('WARNING: FP16 infinite values in the tensor', name)
-        a = a.astype(np.float16)
-
+    a = tensor_to_float(a, name=name)
     # Fill protobuf tensor fields.
     pb_tensor.name = name
     pb_tensor.data = a.tobytes()
@@ -145,10 +171,10 @@ def tensor_tf_to_tfrt(sess, tf_tensor, pb_tensor):
     """
     fix_scopes = parse_fix_scopes()
     name = fix_scope_name(tf_tensor.op.name, fix_scopes)
-    print('Proceeding with tensor:', name, '...')
     # Get numpy array from tensor and convert it.
     a = sess.run(tf_tensor)
-    tensor_np_to_tfrt(name, a, pb_tensor)
+    print('Proceeding with tensor:', name, 'with shape', a.shape)
+    tensor_np_to_tfrt(sess, name, a, pb_tensor)
 
 
 def network_name(pb_network):
@@ -160,7 +186,7 @@ def network_name(pb_network):
     return pb_network.name
 
 
-def network_input(pb_network):
+def network_input(sess, pb_network):
     """Set the input parameters of the network.
     """
     pb_network.input.name = FLAGS.input_name
@@ -171,20 +197,20 @@ def network_input(pb_network):
     pb_network.input.scalemode = network_pb2.UNIFORM
     # Create shift and scale weights if necessary.
     if FLAGS.input_shift != 0.0:
-        a = np.array([FLAGS.input_shift])
+        a = np.array([FLAGS.input_shift], np.float32)
         name = pb_network.name + '/' + FLAGS.input_name + '/shift'
-        tensor_np_to_tfrt(name, a, pb_network.weights.add())
+        tensor_np_to_tfrt(sess, name, a, pb_network.weights.add())
     if FLAGS.input_scale != 1.0:
-        a = np.array([FLAGS.input_scale])
+        a = np.array([FLAGS.input_scale], np.float32)
         name = pb_network.name + '/' + FLAGS.input_name + '/scale'
-        tensor_np_to_tfrt(name, a, pb_network.weights.add())
+        tensor_np_to_tfrt(sess, name, a, pb_network.weights.add())
 
     print('Input name: ', pb_network.input.name)
     print('Input CHW shape: ', [pb_network.input.c, pb_network.input.h, pb_network.input.w])
     print('Input shift and scale: ', [FLAGS.input_shift, FLAGS.input_scale])
 
 
-def network_outputs(pb_network):
+def network_outputs(sess, pb_network):
     """Set the outputs collection of the network.
     """
     l_outputs = FLAGS.outputs_name.split(',')
@@ -209,8 +235,8 @@ def network_tf_to_tfrt(sess):
     # Network parameters.
     pb_network.datatype = network_pb2.HALF if FLAGS.fp16 else network_pb2.FLOAT
     network_name(pb_network)
-    network_input(pb_network)
-    network_outputs(pb_network)
+    network_input(sess, pb_network)
+    network_outputs(sess, pb_network)
     return pb_network
 
 
