@@ -110,6 +110,7 @@ ICudaEngine* tfrtToGIEModel()
 
     network->destroy();
     builder->destroy();
+    tf_network->clear_weights();
     return engine;
 }
 
