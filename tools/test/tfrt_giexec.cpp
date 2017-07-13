@@ -102,6 +102,7 @@ ICudaEngine* tfrtToGIEModel()
                     builder->platformHasFastFp16());
     LOG_IF(INFO, useFP16) << "BUILD network with FP16 data type.";
     LOG_IF(INFO, !useFP16) << "BUILD network with FP32 data type.";
+    builder->setHalf2Mode(useFP16);
 
     ICudaEngine* engine = builder->buildCudaEngine(*network);
     if (engine == nullptr)
