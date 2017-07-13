@@ -51,6 +51,8 @@ python python/export_tfrt_network_weights.py \
 
 ### Benchmark a network
 
+We can benchmark quite precisely a network using TensorRt, getting profiling time
+for every layer. It gives a good overview on the bottlenecks and which part to improve.
 ```bask
 ./tfrt_giexec \
     --modelName=inception2 \
