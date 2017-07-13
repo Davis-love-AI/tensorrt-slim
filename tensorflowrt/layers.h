@@ -134,7 +134,8 @@ public:
         // TensorRT input.
         nvinfer1::ITensor* input = m_scope.network()->addInput(
             m_scope.name().c_str(), dt, DIMRT(this->m_shape));
-        LOG(INFO) << "LAYER input with shape: " << dims_str(input->getDimensions());
+        LOG(INFO) << "LAYER input '" << m_scope.name() << "'. "
+            << "Shape: " << dims_str(input->getDimensions());
         // Input scaling.
         input = this->scale(input);
         return input;
@@ -359,8 +360,8 @@ protected:
                                    std::string bname="biases",
                                    std::string lnamesuffix="") {
         LOG(INFO) << "OP 2D convolution. "
-            << "Input shape: " << dims_str(input->getDimensions());
-        LOG(INFO) << "PARAMETERS >> "
+            << "Input shape: " << dims_str(input->getDimensions())
+            << ". PARAMETERS: "
             << "ksize: " << dims_str(this->ksize()) << " | "
             << "noutputs: " << this->noutputs() << " | "
             << "ngroups: " << ngroups << " | "

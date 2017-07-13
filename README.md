@@ -16,6 +16,11 @@ cd build
 cmake ../
 make
 ```
+Fully optimized binaries can be generated using:
+```bash
+cmake -DCMAKE_BUILD_TYPE=Release ../
+```
+
 Note, some libraries such as Glib and Gstreamer sometimes install development headers in some weird locations. You may need to modify the `CPLUS_INCLUDE_PATH` global variable to help the compiler finding them. For instance, on `x86-64`:
 ```bash
 export CPLUS_INCLUDE_PATH=/usr/lib/x86_64-linux-gnu/glib-2.0/include:$CPLUS_INCLUDE_PATH
@@ -41,7 +46,20 @@ python python/export_tfrt_network_weights.py \
     --fp16=0
 ```
 
-
 ## Running some tests...
+
+### Benchmark a network
+
+```bask
+./tfrt_giexec \
+    --modelName=inception2 \
+    --modelFile=../data/networks/inception_v1_fused.tfrt16 \
+    --output=InceptionV2/Softmax/output \
+    --batch=2 \
+    --iterations=10 \
+    --avgRuns=10 \
+    --half2=true \
+    --verbose=true
+```
 
 ## blablabla
