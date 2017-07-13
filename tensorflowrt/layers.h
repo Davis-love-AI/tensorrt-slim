@@ -148,7 +148,7 @@ protected:
         nvinfer1::Weights shift = m_scope.weights("shift");
         nvinfer1::Weights scale = m_scope.weights("scale");
         if(shift.values || scale.values) {
-            LOG(INFO) << "LAYER input tensor scaling.";
+            LOG(INFO) << "OP input pre-scaling (shift + scale).";
             nvinfer1::Weights power{shift.type, nullptr, 0};
             auto layer = this->m_scope.network()->addScale(
                 *input, nvinfer1::ScaleMode::kUNIFORM, shift, scale, power);

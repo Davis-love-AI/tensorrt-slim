@@ -34,19 +34,6 @@ using namespace nvinfer1;
         abort();										\
     }													\
 }
-/* ============================================================================
- * Static collection of nets.
- * ========================================================================== */
-tfrt::imagenet_network* networks_map(const std::string& key)
-{
-    static std::map<std::string, std::unique_ptr<tfrt::imagenet_network> > nets;
-    // Fill the map at first call!
-    if(nets.empty()) {
-        nets["inception1"] = std::make_unique<inception1::net>();
-        nets["inception2"] = std::make_unique<inception2::net>();
-    }
-    return nets.at(key).get();
-}
 
 /* ============================================================================
  * Parameters + NV logger.
@@ -59,7 +46,6 @@ struct Params
     int inwidth{ 224 }, inheight{ 224 };
     bool half2{ false }, verbose{ false }, hostTime{ false };
 } gParams;
-
 std::vector<std::string> gInputs;
 
 // Logger for GIE info/warning/errors
@@ -73,6 +59,22 @@ class Logger : public ILogger
     }
 } gLogger;
 
+/* ============================================================================
+ * Static collection of nets.
+ * ========================================================================== */
+tfrt::imagenet_network* networks_map(const std::string& key)
+{
+    static std::map<std::string, std::unique_ptr<tfrt::imagenet_network> > nets;
+    // Fill the map at first call!
+    if(nets.empty()) {
+        nets["inception1"] = std::make_unique<inception1::net>();
+        nets["inception2"] = std::make_unique<inception2::net>();
+    }
+    // Update input accordingly.
+    auto net = nets.at(key).get();
+    gInputs = {net->input_name(true)};
+    return net;
+}
 
 /* ============================================================================
  * Build + inference.
