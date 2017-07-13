@@ -25,10 +25,13 @@
 
 #define IMGNET "<imagenet-console> "
 // FLAGS...
-DEFINE_string(network, "inception1", "ImageNet network to test.");
-DEFINE_string(network_pb, "inception1", "Network protobuf parameter file.");
-DEFINE_string(imagenet_info, "../data/", "ImageNet information (classes, ...).");
-DEFINE_string(image, "../data/", "Image to classify.");
+DEFINE_string(network, "inception2", "ImageNet network to test.");
+DEFINE_string(network_pb, "../data/networks/inception_v2_fused.tfrt16",
+    "Network protobuf parameter file.");
+DEFINE_string(imagenet_info, "../data/networks/ilsvrc12_synset_words.txt",
+    "ImageNet information (classes, ...).");
+DEFINE_string(image, "../data/images/orange_0.jpg",
+    "Image to classify.");
 DEFINE_bool(image_save, false, "Save the result in some new image.");
 
 
