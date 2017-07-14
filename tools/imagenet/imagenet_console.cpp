@@ -112,6 +112,6 @@ int main( int argc, char** argv )
         LOG(WARNING) << IMGNET << "Failed to classify the image.";
     }
     // Free network: avoid CUDA problems...
-    network.reset(nullptr);
+    // network.reset(nullptr);
     return 0;
 }
