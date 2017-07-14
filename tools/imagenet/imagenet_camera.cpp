@@ -121,13 +121,6 @@ int main( int argc, char** argv )
     }
     printf("\nimagenet-camera:  camera open for streaming\n");
 
-
-    // processing loop
-    // float confidence = 0.0f;
-    // // Classifying image.
-    // auto imgclass = network->classify(img.cuda, img.shape.h(), img.shape.w());
-
-
     while( !signal_recieved )
     {
         void* imgCPU  = NULL;
@@ -141,7 +134,6 @@ int main( int argc, char** argv )
 
         // convert from YUV to RGBA
         void* imgRGBA = NULL;
-
         if( !camera->ConvertRGBA(imgCUDA, &imgRGBA) )
             printf("imagenet-camera:  failed to convert from NV12 to RGBA\n");
 
@@ -159,10 +151,8 @@ int main( int argc, char** argv )
                 char str[256];
                 sprintf(str, "%05.2f%% %s", confidence * 100.0f, network->description(img_class).c_str());
 
-                font->RenderOverlay((float4*)imgRGBA, (float4*)imgRGBA, camera->GetWidth(), camera->GetHeight(),
-                                    str, 0, 0, make_float4(255.0f, 255.0f, 255.0f, 255.0f));
+                font->RenderOverlay((float4*)imgRGBA, (float4*)imgRGBA, camera->GetWidth(), camera->GetHeight(), str, 0, 0, make_float4(255.0f, 255.0f, 255.0f, 255.0f));
             }
-
             if( display != NULL )
             {
                 char str[256];
@@ -171,8 +161,6 @@ int main( int argc, char** argv )
                 display->SetTitle(str);
             }
         }
-
-
         // update display
         if( display != NULL )
         {
@@ -185,42 +173,28 @@ int main( int argc, char** argv )
                 CUDA(cudaNormalizeRGBA((float4*)imgRGBA, make_float2(0.0f, 255.0f),
                                    (float4*)imgRGBA, make_float2(0.0f, 1.0f),
                                     camera->GetWidth(), camera->GetHeight()));
-
                 // map from CUDA to openGL using GL interop
                 void* tex_map = texture->MapCUDA();
-
                 if( tex_map != NULL )
                 {
                     cudaMemcpy(tex_map, imgRGBA, texture->GetSize(), cudaMemcpyDeviceToDevice);
                     texture->Unmap();
                 }
-
                 // draw the texture
                 texture->Render(100,100);
             }
-
             display->EndRender();
         }
     }
-
     printf("\nimagenet-camera:  un-initializing video device\n");
-
-
-    /*
-     * shutdown the camera device
-     */
-    if( camera != NULL )
-    {
+    if( camera != NULL ) {
         delete camera;
         camera = NULL;
     }
-
-    if( display != NULL )
-    {
+    if( display != NULL ) {
         delete display;
         display = NULL;
     }
-
     printf("imagenet-camera:  video device has been un-initialized.\n");
     printf("imagenet-camera:  this concludes the test of the video device.\n");
     return 0;
