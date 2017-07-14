@@ -18,23 +18,22 @@
 #include <map>
 #include <string>
 #include <iomanip>
+#include <signal.h>
+#include <unistd.h>
 
 // TensorFlowRT headers
 #include <tensorflowrt.h>
 #include <tensorflowrt_util.h>
 #include <nets/nets.h>
 
-// #include "gstCamera.h"
+#include "cuda/cudaNormalize.h"
+#include "cuda/cudaImageNet.h"
 
+// #include "gstCamera.h"
 // #include "glDisplay.h"
 // #include "glTexture.h"
 
 // #include <stdio.h>
-// #include <signal.h>
-// #include <unistd.h>
-
-#include "cuda/cudaNormalize.h"
-#include "cuda/cudaImageNet.h"
 // #include "cudaFont.h"
 
 // FLAGS...
@@ -80,6 +79,20 @@ int main( int argc, char** argv )
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     LOG(INFO) << IMGNET << "Classification of camera input...";
+    // Attach signal handler
+    if( signal(SIGINT, sig_handler) == SIG_ERR ) {
+        printf("\ncan't catch SIGINT\n");
+    }
+
+    // Create the camera device.
+    gstCamera* camera = gstCamera::Create(DEFAULT_CAMERA);
+    if( !camera ) {
+        printf("\nimagenet-camera:  failed to initialize video device\n");
+        return 0;
+    }
+
+
+
     LOG(INFO) << IMGNET << "Loading network: " << FLAGS_network;
     // Get network and load parameters & weights.
     auto network = networks_map(FLAGS_network);
@@ -88,31 +101,7 @@ int main( int argc, char** argv )
     network->load_info(FLAGS_imagenet_info);
 
 
-    // printf("imagenet-camera\n  args (%i):  ", argc);
 
-    // for( int i=0; i < argc; i++ )
-    //     printf("%i [%s]  ", i, argv[i]);
-
-    // printf("\n\n");
-
-
-    // /*
-    //  * attach signal handler
-    //  */
-    // if( signal(SIGINT, sig_handler) == SIG_ERR )
-    //     printf("\ncan't catch SIGINT\n");
-
-
-    // /*
-    //  * create the camera device
-    //  */
-    // gstCamera* camera = gstCamera::Create(DEFAULT_CAMERA);
-
-    // if( !camera )
-    // {
-    //     printf("\nimagenet-camera:  failed to initialize video device\n");
-    //     return 0;
-    // }
 
     // printf("\nimagenet-camera:  successfully initialized video device\n");
     // printf("    width:  %u\n", camera->GetWidth());

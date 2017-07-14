@@ -27,7 +27,7 @@ FILE(GLOB TFRT_HEADERS *.h)
 # Build TensorFlowRT
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 cuda_add_library(tensorflowrt STATIC ${TFRT_SRCS} ${PROTO_SRCS})
-target_link_libraries(tensorflowrt nvinfer ${PROTOBUF_LIBRARY})
+target_link_libraries(tensorflowrt nvinfer ${PROTOBUF_LIBRARY} glog gflags)
 
 # Copy TF-RT headers
 set(HEADERS_DIRS . nets cuda misc)
