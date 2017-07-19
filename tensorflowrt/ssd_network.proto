@@ -52,4 +52,10 @@ message ssd_network {
     optional network network = 1;
     // Feature layers.
     repeated ssd_feature features = 2;
+    // Number of 2D classes.
+    optional int32 num_classes_2d = 3 [default = 0];
+    // Number of 3D classes.
+    optional int32 num_classes_3d = 4 [default = 0];
+    // Number of segmentation classes.
+    optional int32 num_classes_seg = 5 [default = 0];
 }

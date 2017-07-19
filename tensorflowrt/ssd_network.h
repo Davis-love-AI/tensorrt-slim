@@ -70,6 +70,10 @@ public:
     size_t nb_features() const;
     /** Get the list of features. */
     std::vector<ssd_feature> features() const;
+    // Number of classes...
+    int num_classes_2d() const {  return m_pb_ssd_network->num_classes_2d();  }
+    int num_classes_3d() const {  return m_pb_ssd_network->num_classes_3d();  }
+    int num_classes_seg() const {  return m_pb_ssd_network->num_classes_seg();  }
 
 public:
     /** Load weights and configuration from .tfrt file. */

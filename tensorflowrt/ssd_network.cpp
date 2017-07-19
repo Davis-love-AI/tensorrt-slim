@@ -21,12 +21,16 @@ namespace tfrt
 {
 
 /* ============================================================================
- * tfrt::ssd_network methods.
+ * tfrt::ssd_anchor2d methods.
  * ========================================================================== */
 ssd_anchor2d::ssd_anchor2d(const tfrt_pb::ssd_anchor2d& anchor) :
     size{anchor.size()},
     scales{anchor.scales().begin(), anchor.scales().end()}
 {}
+
+/* ============================================================================
+ * tfrt::ssd_feature methods.
+ * ========================================================================== */
 ssd_feature::ssd_feature(const tfrt_pb::ssd_feature& feature) :
     name{feature.name()}, fullname{feature.fullname()},
     shape{dims_pb(feature.shape())},
