@@ -73,7 +73,7 @@ public:
         m_max_batch_size{2}, m_workspace_size{16 << 20},
         m_enable_profiler{false}, m_enable_debug{false} {
     }
-    ~network();
+    virtual ~network();
     /** Clear the network and its weights. */
     void clear();
 

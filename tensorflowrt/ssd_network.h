@@ -20,13 +20,25 @@
 #include <NvInfer.h>
 
 #include "network.h"
+#include "ssd_network.pb.h"
 
 namespace tfrt
 {
 
 class ssd_network : public tfrt::network
 {
+    /** Create SSD network, specifying the name.
+     */
+    ssd_network(std::string name) :
+        tfrt::network(name),
+        m_pb_ssd_network(std::make_unique<tfrt_pb::ssd_network>()) {
+    }
+    virtual ~ssd_network();
 
+
+protected:
+    // Protobuf network object.
+    std::unique_ptr<tfrt_pb::ssd_network>  m_pb_ssd_network;
 };
 
 }
