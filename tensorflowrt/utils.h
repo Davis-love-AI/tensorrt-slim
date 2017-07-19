@@ -19,12 +19,15 @@
 #include <NvInfer.h>
 
 #include "tfrt_jetson.h"
+#include "network.pb.h"
 
 namespace tfrt
 {
 /* ============================================================================
  * Dim utils.
  * ========================================================================== */
+/** Get the number of channels from a dims object.
+ */
 inline int dims_channels(nvinfer1::Dims dims)
 {
     // Suppose NCHW, CHW or HW format...
@@ -36,6 +39,8 @@ inline int dims_channels(nvinfer1::Dims dims)
     }
     return 1;
 }
+/** Generate a string describing a dims object.
+ */
 inline std::string dims_str(nvinfer1::Dims dims)
 {
     std::ostringstream oss;
@@ -45,6 +50,16 @@ inline std::string dims_str(nvinfer1::Dims dims)
     }
     oss << "]";
     return oss.str();
+}
+/** Generate a NV dims object from an equivalent protobuf object.
+ */
+inline nvinfer1::DimsCHW dims_pb(tfrt_pb::dimsCHW dims)
+{
+    return {dims.c(), dims.h(), dims.w()};
+}
+inline nvinfer1::DimsHW dims_pb(tfrt_pb::dimsHW dims)
+{
+    return {dims.h(), dims.w()};
 }
 
 }

@@ -83,12 +83,11 @@ public:
     tfrt::scope scope(nvinfer1::INetworkDefinition* nv_network) const;
 
 public:
-    /** Get a tensor by name. Return empty tensor if not found.
-     */
+    /** Get a tensor by name. Return empty tensor if not found. */
     const tfrt_pb::tensor& tensor_by_name(std::string name) const;
-    /** Get NV weights by name. Return empty weights if not found.
-     */
+    /** Get NV weights by name. Return empty weights if not found. */
     nvinfer1::Weights weights_by_name(std::string name) const;
+
     // General network parameters.
     const std::string& name() const;
     network& name(const std::string& name);

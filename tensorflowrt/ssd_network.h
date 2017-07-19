@@ -27,22 +27,31 @@ namespace tfrt
 
 /** Structure representing 2D SSD anchors.
  */
-struct ssd_anchors2d
+struct ssd_anchor2d
 {
+    // Anchor reference size, in pixels.
     float size;
+    // Anchor scales: height / width.
     std::vector<float> scales;
-};
 
+public:
+    /** Construct from equivalent protobuf object. */
+    ssd_anchor2d(const tfrt_pb::ssd_anchor2d& anchor);
+};
 /** Structure representing a feature of an SSD network.
  */
 struct ssd_feature
 {
-    // Basic parameters: name + shape.
+    // Parameters: basic name + full name + shape.
     std::string name;
     std::string fullname;
     nvinfer1::DimsCHW shape;
-    // List of anchors associated.
-    std::vector<ssd_anchors2d> anchors2d;
+    // List of 2D anchors associated.
+    std::vector<ssd_anchor2d> anchors2d;
+
+public:
+    /** Construct from an equivalent protobuf object. */
+    ssd_feature(const tfrt_pb::ssd_feature& feature);
 };
 
 class ssd_network : public tfrt::network
@@ -57,11 +66,16 @@ public:
     virtual ~ssd_network();
 
 public:
+    /** Get the number of features. */
+    size_t nb_features() const;
+    /** Get the list of features. */
+    std::vector<ssd_feature> features() const;
+
+public:
     /** Load weights and configuration from .tfrt file. */
     virtual bool load_weights(const std::string& filename);
     /** Clear out the collections of network weights, to save memory. */
     // virtual void clear_weights();
-
 
 protected:
     // Protobuf network object.
