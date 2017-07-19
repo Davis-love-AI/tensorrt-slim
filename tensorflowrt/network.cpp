@@ -244,6 +244,32 @@ tfrt::network& network::input_shape(const nvinfer1::DimsCHW& shape)
 /* ============================================================================
  * load - build - serialize. The big stuff!
  * ========================================================================== */
+bool network::parse_protobuf(const std::string& filename, google::protobuf::MessageLite* message)
+{
+    LOG(INFO) << "Parsing protobuf binary file: " << filename;
+    // Highly inspired by Caffe source code!
+    int fd = open(filename.c_str(), O_RDONLY);
+    CHECK_NE(fd, -1) << "FILE not found: " << filename;
+    ZeroCopyInputStream* raw_input = new FileInputStream(fd);
+    CodedInputStream* coded_input = new CodedInputStream(raw_input);
+    coded_input->SetTotalBytesLimit(kProtoReadBytesLimit, 536870912);
+    bool success = message->ParseFromCodedStream(coded_input);
+    delete coded_input;
+    delete raw_input;
+    close(fd);
+    CHECK(success) << "FATAL error, could not parse protobuf file: " << filename;
+    return success;
+}
+bool network::load_weights(const std::string& filename)
+{
+    LOG(INFO) << "Loading network parameters and weights from: " << filename;
+    return parse_protobuf(filename, m_pb_network.get());
+}
+void network::clear_weights()
+{
+    m_pb_network->clear_weights();
+}
+
 bool network::load(std::string filename)
 {
     // Serialize model.
@@ -303,26 +329,7 @@ bool network::load(std::string filename)
     CHECK(m_cuda_outputs.size()) << LOG_GIE << "No output found in the network.";
     return true;
 }
-bool network::load_weights(const std::string& filename)
-{
-    LOG(INFO) << "Loading network parameters and weights from: " << filename;
-    // Highly inspired by Caffe source code!
-    int fd = open(filename.c_str(), O_RDONLY);
-    CHECK_NE(fd, -1) << "FILE not found: " << filename;
-    ZeroCopyInputStream* raw_input = new FileInputStream(fd);
-    CodedInputStream* coded_input = new CodedInputStream(raw_input);
-    coded_input->SetTotalBytesLimit(kProtoReadBytesLimit, 536870912);
-    bool success = m_pb_network->ParseFromCodedStream(coded_input);
-    delete coded_input;
-    delete raw_input;
-    close(fd);
-    CHECK(success) << "FATAL error, could not parse network from protobuf file: " << filename;
-    return success;
-}
-void network::clear_weights()
-{
-    m_pb_network->clear_weights();
-}
+
 
 nvinfer1::ITensor* network::build(tfrt::scope sc)
 {

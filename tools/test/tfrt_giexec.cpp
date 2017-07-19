@@ -21,7 +21,7 @@
 #include <NvInfer.h>
 
 #include <tensorflowrt.h>
-#include <nets/nets.h>
+#include <tensorflowrt_nets.h>
 
 
 using namespace nvinfer1;

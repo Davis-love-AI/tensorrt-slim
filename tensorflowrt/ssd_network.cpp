@@ -12,6 +12,7 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Robik AI Ltd.
 # =========================================================================== */
+#include <glog/logging.h>
 
 #include "ssd_network.h"
 
@@ -24,5 +25,14 @@ namespace tfrt
 ssd_network::~ssd_network()
 {
 }
+bool ssd_network::load_weights(const std::string& filename)
+{
+    LOG(INFO) << "Loading SSD network parameters and weights from: " << filename;
+    bool r = parse_protobuf(filename, m_pb_ssd_network.get());
+    // Hacky swaping!
+    m_pb_network.reset(m_pb_ssd_network->release_network());
+    return r;
+}
+
 
 }

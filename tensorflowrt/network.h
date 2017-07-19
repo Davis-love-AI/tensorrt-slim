@@ -108,12 +108,14 @@ public:
     }
     /** Convert TF protobuf tensor to NV weights. */
     static nvinfer1::Weights tensor_to_weights(const tfrt_pb::tensor& tensor);
+    /** Parse a protobuf file into a message.  */
+    static bool parse_protobuf(const std::string&, google::protobuf::MessageLite*);
 
 public:
     /** Load weights and configuration from .tfrt file. */
-    bool load_weights(const std::string& filename);
+    virtual bool load_weights(const std::string& filename);
     /** Clear out the collections of network weights, to save memory. */
-    void clear_weights();
+    virtual void clear_weights();
 
     /** Build the complete network. Input + all layers.
      * VIRTUAL: to be re-implemented in children classes.

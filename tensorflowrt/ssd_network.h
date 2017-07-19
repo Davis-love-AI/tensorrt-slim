@@ -15,8 +15,8 @@
 #ifndef TFRT_SSD_NETWORK_H
 #define TFRT_SSD_NETWORK_H
 
-#include <cmath>
-#include <memory>
+// #include <cmath>
+// #include <memory>
 #include <NvInfer.h>
 
 #include "network.h"
@@ -25,8 +25,29 @@
 namespace tfrt
 {
 
+/** Structure representing 2D SSD anchors.
+ */
+struct ssd_anchors2d
+{
+    float size;
+    std::vector<float> scales;
+};
+
+/** Structure representing a feature of an SSD network.
+ */
+struct ssd_feature
+{
+    // Basic parameters: name + shape.
+    std::string name;
+    std::string fullname;
+    nvinfer1::DimsCHW shape;
+    // List of anchors associated.
+    std::vector<ssd_anchors2d> anchors2d;
+};
+
 class ssd_network : public tfrt::network
 {
+public:
     /** Create SSD network, specifying the name.
      */
     ssd_network(std::string name) :
@@ -34,6 +55,12 @@ class ssd_network : public tfrt::network
         m_pb_ssd_network(std::make_unique<tfrt_pb::ssd_network>()) {
     }
     virtual ~ssd_network();
+
+public:
+    /** Load weights and configuration from .tfrt file. */
+    virtual bool load_weights(const std::string& filename);
+    /** Clear out the collections of network weights, to save memory. */
+    // virtual void clear_weights();
 
 
 protected:

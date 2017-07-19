@@ -25,7 +25,7 @@ message box_scaling {
 }
 /** SSD anchors.
  */
-message anchor {
+message ssd_anchor2d {
     // Anchor size.
     optional float size = 1 [default = 0.];
     // Scales associated with this anchor.
@@ -33,14 +33,14 @@ message anchor {
 }
 /** SSD feature layer.
  */
-message feature {
+message ssd_feature {
     // Name of feature (and full-scoped name).
     optional string name = 1;
     optional string fullname = 2;
     // Feature shape.
     optional dimsCHW shape = 3;
     // Anchors associated with this feature.
-    repeated anchor anchors = 4;
+    repeated ssd_anchor2d anchors2d = 4;
     // Prior scaling.
     optional box_scaling prior_scaling = 5;
 }
@@ -49,7 +49,7 @@ message feature {
  */
 message ssd_network {
     // Basic underlying network.
-    optional network net = 1;
+    optional network network = 1;
     // Feature layers.
-    repeated feature features = 2;
+    repeated ssd_feature features = 2;
 }
