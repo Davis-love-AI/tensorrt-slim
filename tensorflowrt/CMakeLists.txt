@@ -5,9 +5,9 @@ FIND_PACKAGE(Protobuf REQUIRED)
 # Protobuf generate files...
 message("-- Generating Protobuf source files...")
 include_directories(${PROTOBUF_INCLUDE_DIR})
-PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HEADERS network.proto)
+PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HEADERS network.proto ssd_network.proto)
 # Ugly direct generation! Don't know how to copy headers otherwise
-execute_process(COMMAND protoc --cpp_out=./ network.proto
+execute_process(COMMAND protoc --cpp_out=./ network.proto ssd_network.proto
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 # Generate python too...
 execute_process(COMMAND protoc --python_out=../python/ network.proto
