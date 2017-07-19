@@ -24,7 +24,7 @@
 // TensorFlowRT headers
 #include <tensorflowrt.h>
 #include <tensorflowrt_util.h>
-#include <nets/nets.h>
+#include <tensorflowrt_nets.h>
 
 #include "cuda/cudaNormalize.h"
 #include "cuda/cudaImageNet.h"

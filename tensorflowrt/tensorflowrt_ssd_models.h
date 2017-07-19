@@ -12,10 +12,10 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Robik AI Ltd.
 # =========================================================================== */
-#ifndef TFRT_NETWORKS
-#define TFRT_NETWORKS
+#ifndef TFRT_SSD_MODELS
+#define TFRT_SSD_MODELS
 
-#include "inception1.h"
-#include "inception2.h"
+// #include "inception1.h"
+// #include "inception2.h"
 
 #endif

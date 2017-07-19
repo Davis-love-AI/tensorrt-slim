@@ -22,7 +22,7 @@
 // TensorFlowRT headers
 #include <tensorflowrt.h>
 #include <tensorflowrt_util.h>
-#include <nets/nets.h>
+#include <tensorflowrt_nets.h>
 
 #define IMGNET "<imagenet-console> "
 // FLAGS...
