@@ -29,6 +29,15 @@ enum ScaleMode {
     ELEMENTWISE = 2;
 }
 
+message dimsHW {
+    optional int32 h = 2 [default = 0];
+    optional int32 w = 3 [default = 0];
+}
+message dimsCHW {
+    optional int32 h = 2 [default = 0];
+    optional int32 w = 3 [default = 0];
+    optional int32 c = 4 [default = 0];
+}
 
 message input {
     optional string name = 1 [default = "input"];

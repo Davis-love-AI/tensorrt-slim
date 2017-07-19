@@ -17,7 +17,39 @@ syntax = "proto2";
 package tfrt_pb;
 import "network.proto";
 
+message box_scaling {
+    optional float y = 1 [default = 1.];
+    optional float x = 2 [default = 1.];
+    optional float h = 3 [default = 1.];
+    optional float w = 4 [default = 1.];
+}
+/** SSD anchors.
+ */
+message anchor {
+    // Anchor size.
+    optional float size = 1 [default = 0.];
+    // Scales associated with this anchor.
+    repeated float scales = 2;
+}
+/** SSD feature layer.
+ */
+message feature {
+    // Name of feature (and full-scoped name).
+    optional string name = 1;
+    optional string fullname = 2;
+    // Feature shape.
+    optional dimsCHW shape = 3;
+    // Anchors associated with this feature.
+    repeated anchor anchors = 4;
+    // Prior scaling.
+    optional box_scaling prior_scaling = 5;
+}
+
+/** SSD network description.
+ */
 message ssd_network {
     // Basic underlying network.
-    required network net = 1;
+    optional network net = 1;
+    // Feature layers.
+    repeated feature features = 2;
 }
