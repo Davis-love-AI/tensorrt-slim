@@ -128,6 +128,10 @@ public:
      */
     bool profile_model(std::stringstream& model_stream);
 
+public:
+    /** Standard map string->tensor. */
+    typedef std::map<std::string, nvinfer1::ITensor*> map_tensor;
+
 protected:
 	/** Prefix used for tagging printed log output. */
 	#define LOG_GIE "[GIE]  "

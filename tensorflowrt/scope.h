@@ -50,26 +50,15 @@ public:
     }
 
 public:
-    /** Get the parent network objects.
-     */
-    nvinfer1::INetworkDefinition* network() const {
-        return m_nv_network;
-    }
-    const tfrt::network* tfrt_network() const {
-        return m_tf_network;
-    }
-    /** Get the scope name, as a std::string.
-     */
-    std::string name() const {
-        return m_name;
-    }
-    /** Get the scope name, as a std::string.
-     */
-    const char* cname() const {
-        return m_name.c_str();
-    }
-    /** Generate a sub-scope name.
-     */
+    /** Get the parent network objects. */
+    nvinfer1::INetworkDefinition* network() const {  return m_nv_network;  }
+    const tfrt::network* tfrt_network() const {  return m_tf_network;  }
+    /** Get the scope name, as a std::string. */
+    std::string name() const {  return m_name;  }
+    /** Get the scope name, as a std::string. */
+    const char* cname() const {  return m_name.c_str();  }
+
+    /** Generate a sub-scope name. */
     std::string subname(std::string subname) const {
         if(subname.length() > 0) {
             if(m_name.length() > 0 and m_name[m_name.length()-1] != '/') {
