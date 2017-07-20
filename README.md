@@ -68,7 +68,7 @@ python export_tfrt_ssd_inception2_v0.py \
 We can benchmark quite precisely a network using TensorRt, getting profiling time
 for every layer. It gives a good overview on the bottlenecks and which part to improve.
 ```bask
-./tfrt_giexec \
+GLOG_logtostderr=1 ./tfrt_giexec \
     --modelName=inception2 \
     --modelFile=../data/networks/inception_v2_fused.tfrt16 \
     --output=InceptionV2/Softmax/output \
