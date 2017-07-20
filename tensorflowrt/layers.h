@@ -166,6 +166,54 @@ protected:
     nvinfer1::DimsCHW  m_shape;
 };
 
+/** Scaling layer: output = (input * scale + shift)^power
+ */
+class scale : public layer
+{
+public:
+    /** Standard constructor, with scope and layer sub-name.
+     * Initialize mode to UNIFORM.
+     */
+    scale(const tfrt::scope& sc, const std::string& lname) :
+        layer(sc, lname), m_mode{nvinfer1::ScaleMode::kUNIFORM} {
+    }
+    /** Named parameter: scaling mode. */
+    scale& mode(nvinfer1::ScaleMode mode) {
+        m_mode = mode;
+        return *this;
+    }
+    nvinfer1::ScaleMode mode() const {
+        return m_mode;
+    }
+    /** Add the scaling layer to network graph, using operator(root).
+     */
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        LOG(INFO) << "LAYER scale '" << this->m_scope.name() << "'. "
+            << "Input shape: " << dims_str(net->getDimensions());
+        net = this->scale_op(net);
+        return this->mark_output(net);
+    }
+
+protected:
+    /** Set up a scaling operation.
+     */
+    nvinfer1::ITensor* scale_op(nvinfer1::ITensor* net) {
+        LOG(INFO) << "OP scaling. "
+            << "Input shape: " << dims_str(net->getDimensions());
+        // Get weights and add scale layer.
+        auto drift = m_scope.weights("drift");
+        auto scale = m_scope.weights("scale");
+        auto power = m_scope.weights("power");
+        auto slayer = this->m_scope.network()->addScale(*net, m_mode, drift, scale, power);
+        CHECK_NOTNULL(slayer);
+        slayer->setName(m_scope.cname());
+        return slayer->getOutput(0);
+    }
+protected:
+    // Scaling mode
+    nvinfer1::ScaleMode m_mode;
+};
+
 /** Generic 2D operation, with the following common structure:
  * op2d (with padding) -> batch norm/bias -> activation.
  */
