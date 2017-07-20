@@ -126,13 +126,12 @@ void createMemory(const ICudaEngine& engine, std::vector<void*>& buffers, const 
     size_t eltCount = dimensions.c*dimensions.h*dimensions.w*gParams.batchSize, memSize = eltCount * sizeof(float);
 
     float* localMem = new float[eltCount];
-    for (size_t i = 0; i < eltCount; i++)
+    for (size_t i = 0; i < eltCount; i++) {
         localMem[i] = (float(rand()) / RAND_MAX) * 2 - 1;
-
+    }
     void* deviceMem;
     CHECK_CUDA(cudaMalloc(&deviceMem, memSize));
-    if (deviceMem == nullptr)
-    {
+    if (deviceMem == nullptr) {
         std::cerr << "Out of memory" << std::endl;
         exit(1);
     }
@@ -300,32 +299,22 @@ bool parseArgs(int argc, char* argv[])
 
 int main(int argc, char** argv)
 {
+    google::InitGoogleLogging(argv[0]);
+	gflags::ParseCommandLineFlags(&argc, &argv, true);
     // create a GIE model from the caffe model and serialize it to a stream
-
-    if (!parseArgs(argc, argv))
+    if(!parseArgs(argc, argv)) {
         return -1;
-
+    }
     cudaSetDevice(gParams.device);
-
-    if (gParams.modelName.empty() || gParams.modelFile.empty())
-    {
+    if (gParams.modelName.empty() || gParams.modelFile.empty()) {
         std::cerr << "Model name or file not specified" << std::endl;
         return -1;
     }
-
-    if (gParams.outputs.size() == 0)
-    {
-        std::cerr << "At least one network output must be defined" << std::endl;
-        return -1;
-    }
-
     ICudaEngine* engine = tfrtToGIEModel();
-    if (!engine)
-    {
+    if (!engine) {
         std::cerr << "Engine could not be created" << std::endl;
         return -1;
     }
-
     if (!gParams.engine.empty())
     {
         std::ofstream p(gParams.engine);
