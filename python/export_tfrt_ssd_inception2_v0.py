@@ -31,7 +31,7 @@ from __future__ import print_function
 import numpy as np
 import tensorflow as tf
 
-import network_pb2
+# import network_pb2
 import ssd_network_pb2
 import export_tfrt_network_weights as tfrt_export
 
@@ -67,7 +67,7 @@ tf.app.flags.DEFINE_float(
     'input_scale', 0.00784313725490196, 'Input preprocessing scale.')
 
 tf.app.flags.DEFINE_integer(
-    'num_classes', 81, 'Number of classes.')
+    'num_classes', 91, 'Number of classes.')
 
 # tf.app.flags.DEFINE_string(
 #     'outputs_name', 'Sotfmax', 'Name of the output tensors.')
@@ -97,6 +97,12 @@ def build_ssd_network():
     return ssd_net, ssd_anchors
 
 
+def ssd_network_tf_to_tfrt(sess, ssd_net, ssd_anchors):
+    """Convert SSD network to TF-RT protobuf format.
+    """
+    pb_ssd_network = ssd_network_pb2.ssd_network()
+    return pb_ssd_network
+
 # =========================================================================== #
 # Main converting routine.
 # =========================================================================== #
@@ -112,14 +118,15 @@ def main(_):
         saver = tf.train.Saver()
         saver.restore(sess, FLAGS.checkpoint_path)
 
-        # # Convert model variables and add them to protobuf network.
-        # print('Converting weights to TensorFlowRT format.')
-        # pb_network = network_tf_to_tfrt(sess)
-        # # Saving protobuf TFRT model...
-        # tfrt_filename = network_pb_filename(FLAGS.checkpoint_path, FLAGS.fp16)
-        # print('Export weights to: ', tfrt_filename)
-        # with open(tfrt_filename, 'wb') as f:
-        #     f.write(pb_network.SerializeToString())
+        # Convert model variables and add them to protobuf network.
+        print('Converting SSD weights to TensorFlowRT format.')
+        pb_ssd_network = ssd_network_tf_to_tfrt(sess, ssd_net, ssd_anchors)
+        # Saving protobuf TFRT model...
+        tfrt_filename = tfrt_export.network_pb_filename(FLAGS.checkpoint_path, FLAGS.fp16)
+        print('Export weights to: ', tfrt_filename)
+        with open(tfrt_filename, 'wb') as f:
+            f.write(pb_ssd_network.SerializeToString())
+
 
 if __name__ == '__main__':
     tf.app.run()

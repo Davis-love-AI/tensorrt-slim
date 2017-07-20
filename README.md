@@ -33,7 +33,8 @@ One may first need to generate the protobuf python sources:
 ```bash
 protoc  --python_out=../python network.proto
 ```
-The convertion script then works as following:
+
+A common imagenet classification network can be exported as following:
 ```bash
 python python/export_tfrt_network_weights.py \
     --checkpoint_path=./data/networks/inception_v2_fused.ckpt \
@@ -44,6 +45,19 @@ python python/export_tfrt_network_weights.py \
     --input_shift=-1 \
     --input_scale=0.00784313725490196 \
     --outputs_name=Softmax \
+    --fp16=1
+```
+
+In the case of SSD networks, we use the specialized script:
+```bash
+python python/export_tfrt_ssd_inception2_v0.py \
+    --checkpoint_path=./checkpoints/ssd_inception2_v0_orig.ckpt \
+    --input_name=Input \
+    --input_height=300 \
+    --input_width=300 \
+    --input_shift=-1 \
+    --input_scale=0.00784313725490196 \
+    --num_classes=91 \
     --fp16=1
 ```
 
