@@ -30,6 +30,30 @@ namespace tfrt
 {
 class scope;
 
+/** Standard map string->tensor. */
+typedef std::map<std::string, nvinfer1::ITensor*> map_tensor;
+/** Add an end point to a collection (if existing).
+ */
+inline nvinfer1::ITensor* add_end_point(tfrt::map_tensor* end_points, const std::string& name, nvinfer1::ITensor* tensor) {
+    if(end_points) {
+        end_points->operator[](name) = tensor;
+    }
+    return tensor;
+}
+/** Find an end point in a collection. First partial match.
+ */
+inline nvinfer1::ITensor* find_end_point(tfrt::map_tensor* end_points, const std::string& name) {
+    if(end_points) {
+        for(auto&& point : *end_points) {
+            if(point.first.find(name) != std::string::npos) {
+                return point.second;
+            }
+        }
+    }
+    return nullptr;
+}
+
+
 /** CUDA tensor with shared memory between CUDA and CPU.
  */
 struct cuda_tensor
@@ -127,10 +151,6 @@ public:
     /** Build and profile a model.
      */
     bool profile_model(std::stringstream& model_stream);
-
-public:
-    /** Standard map string->tensor. */
-    typedef std::map<std::string, nvinfer1::ITensor*> map_tensor;
 
 protected:
 	/** Prefix used for tagging printed log output. */
