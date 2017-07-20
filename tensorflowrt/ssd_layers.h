@@ -68,11 +68,14 @@ inline tensors_pair ssd_boxes2d_block(
         .noutputs(num_anchors * 4).ksize({3, 3})(net);
     // Decode boxes.
     if(decode_boxes) {
-        net_loc = ssd_boxes2d_decode(sc, "decoce")(net_loc);
+        net_loc = ssd_boxes2d_decode(sc, "decode")(net_loc);
+    }
+    if(mark_outputs) {
+        sc.network()->markOutput(*net_cls);
+        sc.network()->markOutput(*net_loc);
     }
     return std::make_pair(net_cls, net_loc);
 }
-
 
 }
 #endif
