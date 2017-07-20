@@ -29,12 +29,14 @@
 #include "network.h"
 #include "scope.h"
 #include "layers.h"
+#include "ssd_layers.h"
 
 #include "imagenet_network.h"
 #include "ssd_network.h"
 
 namespace tfrt
 {
+
 }
 
 #endif
