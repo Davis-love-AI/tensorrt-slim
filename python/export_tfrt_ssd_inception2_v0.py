@@ -46,26 +46,8 @@ slim = tf.contrib.slim
 
 
 # =========================================================================== #
-# Main flags.
+# Main SSD flags.
 # =========================================================================== #
-tf.app.flags.DEFINE_string(
-    'checkpoint_path', None, 'Path of the checkpoint files.')
-tf.app.flags.DEFINE_float(
-    'moving_average_decay', None, 'Moving average decay value. None if not used.')
-tf.app.flags.DEFINE_boolean(
-    'fp16', False, 'Export weights in half-precision fp16 format.')
-
-tf.app.flags.DEFINE_string(
-    'input_name', 'Input', 'Name of the input tensor.')
-tf.app.flags.DEFINE_integer(
-    'input_height', 300, 'Input height.')
-tf.app.flags.DEFINE_integer(
-    'input_width', 300, 'Input width.')
-tf.app.flags.DEFINE_float(
-    'input_shift', -1.0, 'Input preprocessing shift.')
-tf.app.flags.DEFINE_float(
-    'input_scale', 0.00784313725490196, 'Input preprocessing scale.')
-
 tf.app.flags.DEFINE_integer(
     'num_classes', 91, 'Number of classes.')
 

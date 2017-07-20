@@ -50,15 +50,15 @@ python python/export_tfrt_network_weights.py \
 
 In the case of SSD networks, we use the specialized script:
 ```bash
-python python/export_tfrt_ssd_inception2_v0.py \
-    --checkpoint_path=./checkpoints/ssd_inception2_v0_orig.ckpt \
+python export_tfrt_ssd_inception2_v0.py \
+    --checkpoint_path=../checkpoints/ssd_inception2_v0_orig.ckpt \
     --input_name=Input \
     --input_height=300 \
     --input_width=300 \
     --input_shift=-1 \
     --input_scale=0.00784313725490196 \
     --num_classes=91 \
-    --fp16=1
+    --fp16=0
 ```
 
 ## Running some basic tests
