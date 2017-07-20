@@ -90,10 +90,12 @@ def ssd_network_parameters(pb_ssd_network):
     return pb_ssd_network
 
 
-def ssd_network_anchor2d(pb_ssd_network, pb_anchor, asize, ascales, ssd_anchor):
-    """Convert an anchor to TF-RT protobuf format.
+def ssd_feature_fullname(pb_ssd_network, featname):
+    """SSD feature fullname.
     """
-    pass
+    netname = tfrt_export.network_name(pb_ssd_network.network)
+    fullname = netname + 'ssd_boxes2d_blocks/' + featname + '_boxes'
+    return fullname
 
 
 def ssd_network_anchors2d_weight(fidx, pb_ssd_network, ssd_net, ssd_anchors):
@@ -117,6 +119,12 @@ def ssd_network_anchors2d_weight(fidx, pb_ssd_network, ssd_net, ssd_anchors):
         ascale[i, 3] = ssd_net.params.prior_scaling[3] / N
         apower[i, 2] = N
         apower[i, 3] = N
+    # Save the weights.
+    name = ssd_feature_fullname(pb_ssd_network, ssd_net.params.feat_layers[fidx][0])
+    name += '/decode/scale_channel/'
+    tensor_np_to_tfrt(None, name + 'drift', adrift, pb_ssd_network.network.weights.add())
+    tensor_np_to_tfrt(None, name + 'scale', ascale, pb_ssd_network.network.weights.add())
+    tensor_np_to_tfrt(None, name + 'power', apower, pb_ssd_network.network.weights.add())
 
     # Elementwise scaling.
     anchor_y = ssd_anchors[fidx][0]
@@ -136,7 +144,11 @@ def ssd_network_anchors2d_weight(fidx, pb_ssd_network, ssd_net, ssd_anchors):
         # height, width.
         ascale2[i, 0] = anchor_h
         ascale2[i, 1] = anchor_w
-
+    # Save the weights.
+    name = ssd_feature_fullname(pb_ssd_network, ssd_net.params.feat_layers[fidx][0])
+    name += '/decode/scale_elementwise/'
+    tensor_np_to_tfrt(None, name + 'drift', adrift2, pb_ssd_network.network.weights.add())
+    tensor_np_to_tfrt(None, name + 'scale', ascale2, pb_ssd_network.network.weights.add())
 
 
 def ssd_network_feature(idx, pb_ssd_network, ssd_net, ssd_anchors):
@@ -174,6 +186,7 @@ def ssd_network_tf_to_tfrt(sess, ssd_net, ssd_anchors):
     ssd_network_parameters(pb_ssd_network)
     for idx, _ in enumerate(ssd_net.params.feat_layers):
         ssd_network_feature(idx, pb_ssd_network, ssd_net, ssd_anchors)
+        ssd_network_anchors2d_weight(idx, pb_ssd_network, ssd_net, ssd_anchors)
     return pb_ssd_network
 
 
