@@ -10,7 +10,7 @@ PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HEADERS network.proto ssd_network.proto)
 execute_process(COMMAND protoc --cpp_out=./ network.proto ssd_network.proto
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 # Generate python too...
-execute_process(COMMAND protoc --python_out=../python/ network.proto
+execute_process(COMMAND protoc --python_out=../python/ network.proto ssd_network.proto
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 # TF-RT sources.
