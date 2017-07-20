@@ -60,7 +60,7 @@ tf.app.flags.DEFINE_float(
     'input_scale', 1.0, 'Input preprocessing scale.')
 
 tf.app.flags.DEFINE_string(
-    'outputs_name', 'Sotfmax', 'Name of the output tensors.')
+    'outputs_name', '', 'Name of the output tensors.')
 tf.app.flags.DEFINE_string(
     'fix_scopes', '', 'Scopes to be modify. Format: old0:new0,old1:new1')
 
@@ -215,13 +215,14 @@ def network_outputs(sess, pb_network):
     """
     l_outputs = FLAGS.outputs_name.split(',')
     for i, o in enumerate(l_outputs):
-        net_output = pb_network.outputs.add()
-        net_output.name = o
-        # TODO: fix this crap for SSD networks.
-        net_output.h = 1
-        net_output.w = 1
-        net_output.c = 1
-        print('Output #%i name: %s' % (i, net_output.name))
+        if len(o):
+            net_output = pb_network.outputs.add()
+            net_output.name = o
+            # TODO: fix this crap for SSD networks.
+            net_output.h = 1
+            net_output.w = 1
+            net_output.c = 1
+            print('Output #%i name: %s' % (i, net_output.name))
 
 
 def network_tf_to_tfrt(sess, pb_network=network_pb2.network()):

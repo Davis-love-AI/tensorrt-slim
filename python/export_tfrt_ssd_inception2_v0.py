@@ -104,6 +104,7 @@ def ssd_network_anchors2d_weight(fidx, pb_ssd_network, ssd_net, ssd_anchors):
     """
     N = 256
     nanchors = np.sum([len(a[1]) for a in ssd_net.params.anchor_sizes[fidx]])
+    featname = ssd_net.params.feat_layers[fidx][0]
     # Channel scaling.
     adrift = np.zeros([nanchors, 4], np.float32)
     ascale = np.ones([nanchors, 4], np.float32)
@@ -121,7 +122,7 @@ def ssd_network_anchors2d_weight(fidx, pb_ssd_network, ssd_net, ssd_anchors):
         apower[i, 2] = N
         apower[i, 3] = N
     # Save the weights.
-    name = ssd_feature_fullname(pb_ssd_network, ssd_net.params.feat_layers[fidx][0])
+    name = ssd_feature_fullname(pb_ssd_network, featname)
     name += '/decode/scale_channel/'
     tfrt_export.tensor_np_to_tfrt(None, name + 'drift', adrift, pb_ssd_network.network.weights.add())
     tfrt_export.tensor_np_to_tfrt(None, name + 'scale', ascale, pb_ssd_network.network.weights.add())
@@ -146,10 +147,27 @@ def ssd_network_anchors2d_weight(fidx, pb_ssd_network, ssd_net, ssd_anchors):
         ascale2[i, 0] = anchor_h
         ascale2[i, 1] = anchor_w
     # Save the weights.
-    name = ssd_feature_fullname(pb_ssd_network, ssd_net.params.feat_layers[fidx][0])
+    name = ssd_feature_fullname(pb_ssd_network, featname)
     name += '/decode/scale_elementwise/'
     tfrt_export.tensor_np_to_tfrt(None, name + 'drift', adrift2, pb_ssd_network.network.weights.add())
     tfrt_export.tensor_np_to_tfrt(None, name + 'scale', ascale2, pb_ssd_network.network.weights.add())
+
+    # Prediction output.
+    net_output = pb_ssd_network.network.outputs.add()
+    net_output.name = 'ssd_boxes2d_blocks/' + featname + '_boxes'
+    net_output.suffix = net_output.name + '/predictions'
+    net_output.h = ashape[0]
+    net_output.w = ashape[1]
+    net_output.c = 1
+    print('Output #%i name: %s' % (fidx, net_output.name))
+    # 2D boxes output.
+    net_output = pb_ssd_network.network.outputs.add()
+    net_output.name = 'ssd_boxes2d_blocks/' + featname + '_boxes'
+    net_output.suffix = net_output.name + '/boxes'
+    net_output.h = ashape[0]
+    net_output.w = ashape[1]
+    net_output.c = 1
+    print('Output #%i name: %s' % (fidx, net_output.name))
 
 
 def ssd_network_feature(idx, pb_ssd_network, ssd_net, ssd_anchors):
