@@ -85,9 +85,14 @@ public:
         ssc = sc.sub("ssd_boxes2d_blocks");
         for(auto&& f : features) {
             net = tfrt::find_end_point(&end_points, f.name);
-            tfrt::ssd_boxes2d_block(net, ssc.sub(f.name + "_boxes"),
-                f.num_anchors2d_total(), this->num_classes_2d(),
-                true, true);
+            // SSD boxes2d layer.
+            tfrt::ssd_boxes2d_block(ssc, f.name + "_boxes")
+                .num_anchors(f.num_anchors2d_total())
+                .num_classes(this->num_classes_2d())
+                .decode_boxes(true)(net);
+            // tfrt::ssd_boxes2d_block(net, ssc.sub(f.name + "_boxes"),
+            //     f.num_anchors2d_total(), this->num_classes_2d(),
+            //     true, true);
         }
         return net;
     }

@@ -96,8 +96,8 @@ protected:
     }
     /** Mark a tensor as an output if the layer is an output layer.
      */
-    nvinfer1::ITensor* mark_output(nvinfer1::ITensor* tensor) {
-        tensor->setName(this->m_scope.sub("output").cname());
+    nvinfer1::ITensor* mark_output(nvinfer1::ITensor* tensor, std::string suffix="output") {
+        tensor->setName(this->m_scope.sub(suffix).cname());
         if(m_is_output) {
             LOG(INFO) << "MARK output (layer) on tensor: " << tensor->getName();
             m_scope.network()->markOutput(*tensor);

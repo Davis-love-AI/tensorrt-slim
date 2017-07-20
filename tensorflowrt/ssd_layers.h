@@ -52,32 +52,100 @@ public:
 /* ============================================================================
  * SSD blocks.
  * ========================================================================== */
-/* 2D bounding block: classification + boxes regression.
- * Return a pair of tensors <classification, boxes2d>
+/* 2D bounding block: predictions + boxes regression.
+ * Configured as an output layer by default.
+ * Return a pair of tensors <predictions, boxes2d> as outputs.
  */
-inline tensors_pair ssd_boxes2d_block(
-    nvinfer1::ITensor* net, tfrt::scope sc,
-    int num_anchors, int num_classes,
-    bool mark_outputs=true, bool decode_boxes=true)
+class ssd_boxes2d_block : public tfrt::layer
 {
-    typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, false>  conv2d;
-    LOG(INFO) << "BLOCK SSD boxes2d '" << sc.name() << "'. "
-            << "Input shape: " << dims_str(net->getDimensions());
-    // Classification + boxes regression convolutions.
-    auto net_cls = conv2d(sc, "conv_cls")
-        .noutputs(num_anchors * num_classes).ksize({3, 3})(net);
-    auto net_loc = conv2d(sc, "conv_loc")
-        .noutputs(num_anchors * 4).ksize({3, 3})(net);
-    // Decode boxes.
-    if(decode_boxes) {
-        net_loc = ssd_boxes2d_decode(sc, "decode")(net_loc);
+public:
+    ssd_boxes2d_block(const tfrt::scope& sc, const std::string& lname) :
+        layer(sc, lname), m_num_classes{0}, m_num_anchors{0}, m_decode_boxes{true}
+    {
+        this->is_output(true);
     }
-    if(mark_outputs) {
-        sc.network()->markOutput(*net_cls);
-        sc.network()->markOutput(*net_loc);
+
+    /** Named parameter: number of classes. */
+    ssd_boxes2d_block& num_classes(int num_classes) {
+        m_num_classes = num_classes;
+        return *this;
     }
-    return std::make_pair(net_cls, net_loc);
-}
+    /** Named parameter: number of anchors. */
+    ssd_boxes2d_block& num_anchors(int num_anchors) {
+        m_num_anchors = num_anchors;
+        return *this;
+    }
+    /** Named parameter: decode 2d boxes. */
+    ssd_boxes2d_block& decode_boxes(bool decode_boxes) {
+        m_decode_boxes = decode_boxes;
+        return *this;
+    }
+    // Getters...
+    int num_classes() const {  return m_num_classes;  }
+    int num_anchors() const {  return m_num_anchors;  }
+    bool decode_boxes() const {  return m_decode_boxes;  }
+
+public:
+    /** Add the decoding layer to network graph. Perform two scaling operations,
+     * a channelwise and then an elementwise.
+     * Return a nullptr. Needs to use outputs() to get all outputs.
+     */
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, false>  conv2d;
+        auto& sc = this->m_scope;
+        LOG(INFO) << "LAYER SSD boxes2d block '" << sc.name() << "'. "
+                << "Input shape: " << dims_str(net->getDimensions());
+        // Classification + boxes regression convolutions.
+        auto net_cls = conv2d(sc, "conv_cls")
+            .noutputs(m_num_anchors * m_num_classes).ksize({3, 3})(net);
+        auto net_loc = conv2d(sc, "conv_loc")
+            .noutputs(m_num_anchors * 4).ksize({3, 3})(net);
+        // Decode boxes.
+        if(m_decode_boxes) {
+            net_loc = ssd_boxes2d_decode(sc, "decode")(net_loc);
+        }
+        // Mark outputs.
+        this->mark_output(net_cls, "predictions");
+        this->mark_output(net_loc, "boxes");
+        // return this->mark_output(net);
+        // return std::make_pair(net_cls, net_loc);
+        return nullptr;
+    }
+
+private:
+    // Number of classes.
+    int m_num_classes;
+    // Number of anchors in the block.
+    int m_num_anchors;
+    // Decode 2D boxes.
+    bool m_decode_boxes;
+};
+
+
+
+// inline tensors_pair ssd_boxes2d_block(
+//     nvinfer1::ITensor* net, tfrt::scope sc,
+//     int num_anchors, int num_classes,
+//     bool mark_outputs=true, bool decode_boxes=true)
+// {
+//     typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, false>  conv2d;
+//     LOG(INFO) << "BLOCK SSD boxes2d '" << sc.name() << "'. "
+//             << "Input shape: " << dims_str(net->getDimensions());
+//     // Classification + boxes regression convolutions.
+//     auto net_cls = conv2d(sc, "conv_cls")
+//         .noutputs(num_anchors * num_classes).ksize({3, 3})(net);
+//     auto net_loc = conv2d(sc, "conv_loc")
+//         .noutputs(num_anchors * 4).ksize({3, 3})(net);
+//     // Decode boxes.
+//     if(decode_boxes) {
+//         net_loc = ssd_boxes2d_decode(sc, "decode")(net_loc);
+//     }
+//     if(mark_outputs) {
+//         sc.network()->markOutput(*net_cls);
+//         sc.network()->markOutput(*net_loc);
+//     }
+//     return std::make_pair(net_cls, net_loc);
+// }
 
 }
 #endif

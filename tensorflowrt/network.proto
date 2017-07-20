@@ -49,6 +49,7 @@ message input {
 }
 message output {
     optional string name = 1 [default = "output"];
+    optional string suffix = 5 [default = "output"];
     optional int32 h = 2 [default = 1];
     optional int32 w = 3 [default = 1];
     optional int32 c = 4 [default = 1];

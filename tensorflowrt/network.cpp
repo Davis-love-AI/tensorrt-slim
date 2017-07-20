@@ -222,7 +222,8 @@ std::vector<std::string> network::outputs_name(bool fullname, bool suffix) const
             oname = (this->name() + "/") + oname;
         }
         if(suffix) {
-            oname += "/output";
+            oname += "/";
+            oname += output.suffix();
         }
         v.push_back(oname);
     }
