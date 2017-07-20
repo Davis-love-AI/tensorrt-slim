@@ -96,6 +96,49 @@ def ssd_network_anchor2d(pb_ssd_network, pb_anchor, asize, ascales, ssd_anchor):
     pass
 
 
+def ssd_network_anchors2d_weight(fidx, pb_ssd_network, ssd_net, ssd_anchors):
+    """Generate the scaling weights necessary to 2D anchors decoding.
+    """
+    N = 256
+    nanchors = np.sum([len(a[1]) for a in ssd_net.params.anchor_sizes[fidx]])
+    # Channel scaling.
+    adrift = np.zeros([nanchors, 4], np.float32)
+    ascale = np.ones([nanchors, 4], np.float32)
+    apower = np.ones([nanchors, 4], np.float32)
+    for i in range(nanchors):
+        # Order on 2nd axis: y, x, h, w
+        # y, x coordinates.
+        ascale[i, 0] = ssd_net.params.prior_scaling[0]
+        ascale[i, 1] = ssd_net.params.prior_scaling[1]
+        # height, width.
+        adrift[i, 2] = 1.0
+        adrift[i, 3] = 1.0
+        ascale[i, 2] = ssd_net.params.prior_scaling[2] / N
+        ascale[i, 3] = ssd_net.params.prior_scaling[3] / N
+        apower[i, 2] = N
+        apower[i, 3] = N
+
+    # Elementwise scaling.
+    anchor_y = ssd_anchors[fidx][0]
+    anchor_x = ssd_anchors[fidx][1]
+    ashape = anchor_y.shape
+    adrift2 = np.zeros([nanchors, 4, ashape[0], ashape[1]], np.float32)
+    ascale2 = np.ones([nanchors, 4, ashape[0], ashape[1]], np.float32)
+    for i in range(nanchors):
+        # Order on 2nd axis: y, x, h, w
+        anchor_h = ssd_anchors[fidx][2][i]
+        anchor_w = ssd_anchors[fidx][3][i]
+        # y, x coordinates.
+        adrift2[i, 0] = anchor_y
+        adrift2[i, 1] = anchor_x
+        ascale2[i, 0] = anchor_h
+        ascale2[i, 1] = anchor_w
+        # height, width.
+        ascale2[i, 0] = anchor_h
+        ascale2[i, 1] = anchor_w
+
+
+
 def ssd_network_feature(idx, pb_ssd_network, ssd_net, ssd_anchors):
     """Convert the SSD features to the appropriate format.
     """
