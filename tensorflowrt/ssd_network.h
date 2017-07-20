@@ -52,6 +52,18 @@ struct ssd_feature
 public:
     /** Construct from an equivalent protobuf object. */
     ssd_feature(const tfrt_pb::ssd_feature& feature);
+    /** Number of anchors. */
+    size_t num_anchors2d() const {
+        return anchors2d.size();
+    }
+    /** Total number of anchors, with different scales. */
+    size_t num_anchors2d_total() const {
+        size_t nanchors{0};
+        for(auto&& a : anchors2d) {
+            nanchors += a.scales.size();
+        }
+        return nanchors;
+    }
 };
 
 class ssd_network : public tfrt::network

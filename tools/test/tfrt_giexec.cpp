@@ -22,6 +22,7 @@
 
 #include <tensorflowrt.h>
 #include <tensorflowrt_nets.h>
+#include <tensorflowrt_ssd_models.h>
 
 
 using namespace nvinfer1;
@@ -88,7 +89,7 @@ ICudaEngine* tfrtToGIEModel()
     tf_network->load_weights(gParams.modelFile.c_str());
     tf_network->input_shape({3, gParams.inheight, gParams.inwidth});
     tfrt::scope sc = tf_network->scope(network);
-    auto net = tf_network->build(sc);
+    tf_network->build(sc);
     // Input and output information.
     gInputs = {tf_network->input_name(true)};
     gParams.outputs = tf_network->outputs_name(true, true);

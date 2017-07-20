@@ -23,53 +23,72 @@
 namespace ssd_inception2_v0
 {
 /* ============================================================================
- * Inception2 network: functional declaration.
+ * SSD Inception2 V0 network: functional declaration.
  * ========================================================================== */
-inline nvinfer1::ITensor* base(nvinfer1::ITensor* input, tfrt::scope sc)
+typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
+
+/** Additional feature layer.
+ */
+inline nvinfer1::ITensor* inception2_extra_feature(
+    nvinfer1::ITensor* net, tfrt::scope sc, int num_outputs, tfrt::map_tensor* end_points=nullptr)
+{
+    LOG(INFO) << "BLOCK SSD inception2 extra-features '" << sc.name() << "'. "
+            << "Input shape: " << tfrt::dims_str(net->getDimensions());
+    // 1x1 compression convolution.
+    net = conv2d(sc, "conv1x1").noutputs(num_outputs / 2).ksize({1, 1})(net);
+    // 3x3 convolution with stride=2.
+    net = conv2d(sc, "conv3x3").noutputs(num_outputs).ksize({3, 3}).stride({2, 2})(net);
+    return tfrt::add_end_point(end_points, sc.name(), net);
+}
+/** Inception2 base network.
+ */
+inline nvinfer1::ITensor* inception2_base(
+    nvinfer1::ITensor* input, tfrt::scope sc, tfrt::map_tensor* end_points=nullptr)
 {
     nvinfer1::ITensor* net{input};
     // Main blocks 1 to 5.
-    net = block1(net, sc);
-    net = block2(net, sc);
-    net = block3(net, sc);
-    net = block4(net, sc);
-    net = block5(net, sc);
-    return net;
-}
-inline nvinfer1::ITensor* inception2(nvinfer1::ITensor* input,
-                                     tfrt::scope sc,
-                                     int num_classes=1001)
-{
-    nvinfer1::ITensor* net;
-    // Construct backbone network.
-    net = base(input, sc);
-    // Logits end block.
-    {
-        typedef tfrt::avg_pooling2d<tfrt::PaddingType::VALID>  avg_pool2d;
-        typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, false>  conv2d;
-        auto ssc = sc.sub("Logits");
-        net = avg_pool2d(ssc, "AvgPool_1a_7x7").ksize({7, 7})(net);
-        net = conv2d(ssc, "Conv2d_1c_1x1").noutputs(num_classes).ksize({1, 1})(net);
-    }
-    net = tfrt::softmax(sc, "Softmax")(net);
+    net = inception2::block1(net, sc, end_points);
+    net = inception2::block2(net, sc, end_points);
+    net = inception2::block3(net, sc, end_points);
+    net = inception2::block4(net, sc, end_points);
+    net = inception2::block5(net, sc, end_points);
     return net;
 }
 
 /* ============================================================================
- * Inception2 class: as imagenet network.
+ * SSD Inception2 class: as ssd_network.
  * ========================================================================== */
-class net : public tfrt::imagenet_network
+class net : public tfrt::ssd_network
 {
 public:
     /** Constructor with default name.  */
-    net() : tfrt::imagenet_network("InceptionV2", 1000, true) {}
+    net() : tfrt::ssd_network("ssd_inception2") {}
 
-    /** Inception2 building method. Take a network scope and do the work!
+    /** SSD Inception2 building method. Take a network scope and do the work!
      */
     virtual nvinfer1::ITensor* build(tfrt::scope sc) {
         auto net = tfrt::input(sc)();
-        // auto net = tfrt::input(sc).shape({64, 112, 112})();
-        net = inception2(net, sc, 1001);
+        tfrt::map_tensor end_points;
+
+        // Build the Inception2 base.
+        net = inception2_base(net, sc.sub("inception2_base"), &end_points);
+        // Add extra-features.
+        auto features = this->features();
+        auto ssc = sc.sub("feat_layers_extra");
+        for(auto&& f : features) {
+            int num_outputs = f.shape.c();
+            if(num_outputs > 0) {
+                net = inception2_extra_feature(net, ssc.sub(f.name), num_outputs, &end_points);
+            }
+        }
+        // Add SSD boxed2d blocks.
+        ssc = sc.sub("ssd_boxes2d_blocks");
+        for(auto&& f : features) {
+            net = tfrt::find_end_point(&end_points, f.name);
+            tfrt::ssd_boxes2d_block(net, ssc.sub(f.name + "_boxes"),
+                f.num_anchors2d_total(), this->num_classes_2d(),
+                true, true);
+        }
         return net;
     }
 };

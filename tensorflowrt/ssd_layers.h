@@ -61,6 +61,8 @@ inline tensors_pair ssd_boxes2d_block(
     bool mark_outputs=true, bool decode_boxes=true)
 {
     typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, false>  conv2d;
+    LOG(INFO) << "BLOCK SSD boxes2d '" << sc.name() << "'. "
+            << "Input shape: " << dims_str(net->getDimensions());
     // Classification + boxes regression convolutions.
     auto net_cls = conv2d(sc, "conv_cls")
         .noutputs(num_anchors * num_classes).ksize({3, 3})(net);

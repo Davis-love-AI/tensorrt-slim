@@ -15,7 +15,7 @@
 #ifndef TFRT_SSD_MODELS
 #define TFRT_SSD_MODELS
 
-// #include "inception1.h"
+#include "models/ssd_inception2_v0.h"
 // #include "inception2.h"
 
 #endif
