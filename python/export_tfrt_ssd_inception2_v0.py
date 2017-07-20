@@ -90,7 +90,7 @@ def ssd_network_parameters(pb_ssd_network):
     return pb_ssd_network
 
 
-def ssd_network_anchor(pb_ssd_network, pb_anchor, asize, ascales, ssd_anchor):
+def ssd_network_anchor2d(pb_ssd_network, pb_anchor, asize, ascales, ssd_anchor):
     """Convert an anchor to TF-RT protobuf format.
     """
     pass
