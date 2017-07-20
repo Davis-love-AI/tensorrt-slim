@@ -300,7 +300,7 @@ bool parseArgs(int argc, char* argv[])
 int main(int argc, char** argv)
 {
     google::InitGoogleLogging(argv[0]);
-	gflags::ParseCommandLineFlags(&argc, &argv, true);
+	// gflags::ParseCommandLineFlags(&argc, &argv, true);
     // create a GIE model from the caffe model and serialize it to a stream
     if(!parseArgs(argc, argv)) {
         return -1;
