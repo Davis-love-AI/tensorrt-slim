@@ -224,10 +224,9 @@ def network_outputs(sess, pb_network):
         print('Output #%i name: %s' % (i, net_output.name))
 
 
-def network_tf_to_tfrt(sess):
+def network_tf_to_tfrt(sess, pb_network=network_pb2.network()):
     """Convert the TF graph/network to a TensorFlowRT model.
     """
-    pb_network = network_pb2.network()
     # Convert all model weights.
     model_variables = tf.model_variables()
     for v in model_variables:
