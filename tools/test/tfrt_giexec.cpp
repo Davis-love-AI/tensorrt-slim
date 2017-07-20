@@ -63,16 +63,16 @@ class Logger : public ILogger
 /* ============================================================================
  * Static collection of nets.
  * ========================================================================== */
-tfrt::imagenet_network* networks_map(const std::string& key)
+std::unique_ptr<tfrt::network>&& networks_map(const std::string& key)
 {
-    static std::map<std::string, std::unique_ptr<tfrt::imagenet_network> > nets;
+    static std::map<std::string, std::unique_ptr<tfrt::network> > nets;
     // Fill the map at first call!
     if(nets.empty()) {
         nets["inception1"] = std::make_unique<inception1::net>();
         nets["inception2"] = std::make_unique<inception2::net>();
+        nets["ssd_inception2_v0"] = std::make_unique<ssd_inception2_v0::net>();
     }
-    auto net = nets.at(key).get();
-    return net;
+    return std::move(nets.at(key));
 }
 
 /* ============================================================================
@@ -85,7 +85,7 @@ ICudaEngine* tfrtToGIEModel()
     INetworkDefinition* network = builder->createNetwork();
 
     // Build TF-RT network.
-    tfrt::imagenet_network* tf_network = networks_map(gParams.modelName);
+    auto tf_network = networks_map(gParams.modelName);
     tf_network->load_weights(gParams.modelFile.c_str());
     tf_network->input_shape({3, gParams.inheight, gParams.inwidth});
     tfrt::scope sc = tf_network->scope(network);
