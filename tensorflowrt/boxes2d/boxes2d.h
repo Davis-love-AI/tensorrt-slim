@@ -16,6 +16,7 @@
 #define TFRT_BOXES2D_H
 
 #include <Eigen/Core>
+#include <unsupported/Eigen/CXX11/Tensor>
 
 // tfrt::boxes2d namespace
 namespace tfrt

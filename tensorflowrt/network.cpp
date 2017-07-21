@@ -73,9 +73,7 @@ cuda_tensor::cuda_tensor(cuda_tensor&& t) :
 }
 cuda_tensor& cuda_tensor::operator=(cuda_tensor&& t) {
     // Free allocated memory...
-    if(cpu) {
-        CUDA(cudaFreeHost(cpu));
-    }
+    free();
     // Copy.
     name = t.name;
     shape = t.shape;
@@ -92,15 +90,11 @@ cuda_tensor& cuda_tensor::operator=(cuda_tensor&& t) {
 }
 cuda_tensor::~cuda_tensor()
 {
-    if(cpu) {
-        CUDA(cudaFreeHost(cpu));
-    }
+    free();
 }
 bool cuda_tensor::allocate()
 {
-    if(cpu) {
-        CUDA(cudaFreeHost(cpu));
-    }
+    free();
     // Double check size...
     size = shape.n() * shape.c() * shape.h() * shape.w() * sizeof(float);
     if(!cudaAllocMapped((void**)&cpu, (void**)&cuda, size)) {
@@ -108,6 +102,20 @@ bool cuda_tensor::allocate()
         return false;
     }
     return true;
+}
+void cuda_tensor::free()
+{
+    if(cpu) {
+        CUDA(cudaFreeHost(cpu));
+        cpu = nullptr;
+        cuda = nullptr;
+    }
+}
+tfrt::nchw<float>::tensor cuda_tensor::tensor() const
+{
+    // Tensor using existing memory.
+    CHECK_NOTNULL(cpu);
+    return tfrt::nchw<float>::tensor_map(cpu, shape.n(), shape.c(), shape.h(), shape.w());
 }
 
 /* ============================================================================

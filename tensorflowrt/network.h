@@ -18,9 +18,12 @@
 #include <memory>
 #include <string>
 #include <sstream>
+
+#include <unsupported/Eigen/CXX11/Tensor>
 // #include <cuda_runtime_api.h>
 #include <NvInfer.h>
 
+#include "types.h"
 #include "tfrt_jetson.h"
 #include "network.pb.h"
 #include "cuda/cudaMappedMemory.h"
@@ -53,7 +56,9 @@ inline nvinfer1::ITensor* find_end_point(tfrt::map_tensor* end_points, const std
     return nullptr;
 }
 
-
+/* ============================================================================
+ * tfrt::cuda_tensor: shared memory between CPU and GPU/CUDA.
+ * ========================================================================== */
 /** CUDA tensor with shared memory between CUDA and CPU.
  */
 struct cuda_tensor
@@ -67,12 +72,17 @@ public:
     cuda_tensor& operator=(cuda_tensor&& t);
     /** Destructor: CUDA free memory.  */
     ~cuda_tensor();
-    /** Allocate shared memory between CPU and CUDA */
+    /** Allocate shared memory between CPU and GPU/CUDA. */
     bool allocate();
+    /** Free allocated memory and reset pointers. */
+    void free();
+
+public:
+    /** Get an Eigen tensor representation of the CPU tensor. */
+    tfrt::nchw<float>::tensor tensor() const;
 
 private:
     cuda_tensor(const cuda_tensor&) = default;
-
 public:
     std::string  name;
     nvinfer1::DimsNCHW  shape;
@@ -82,6 +92,9 @@ public:
     float*  cuda;
 };
 
+/* ============================================================================
+ * tfrt::network
+ * ========================================================================== */
 /** Generic network class, implementation the basic building, inference
  * profiling methods.
  */
