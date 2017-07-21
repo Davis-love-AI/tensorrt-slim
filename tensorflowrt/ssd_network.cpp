@@ -134,11 +134,56 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
         if(detections >= max_detections-1)
             break;
     }
-
     // Simple post-processing of outputs of every feature layer.
-
-
     return bboxes2d;
+}
+
+void ssd_network::fill_bboxes2d(
+    const tfrt::nachw<float>::tensor& predictions2d,
+    const tfrt::nachw<float>::tensor& boxesd2d,
+    float threshold, size_t max_detections, size_t batch,
+    size_t& bboxes2d_idx, tfrt::boxes2d::bboxes2d& bboxes2d) const
+{
+    // No silver bullet here! Have to go the hard loop-way!
+    // size_t idx{bboxes2d_idx};
+    float y, x, h, w;
+    // Loop on anchors, height and width dimensions.
+    for(long i = 0 ; i < predictions2d.dimension(3) ; ++i) {
+        for(long j = 0 ; j < predictions2d.dimension(4) ; ++j) {
+            for(long k = 0 ; k < predictions2d.dimension(1) ; ++k) {
+                // Check index did not reach bounds...
+                if(bboxes2d_idx >= max_detections-1) {
+                    return;
+                }
+                // Initialize with no-object class.
+                size_t max_idx = 0;
+                size_t max_pred = predictions2d(batch, k, 0, i, j);
+                // Loop over the classes!
+                for(long l = 1 ; l < predictions2d.dimension(2) ; ++l) {
+                    if(predictions2d(batch, k, l, i, j) > max_pred) {
+                        max_idx = l;
+                        max_pred = predictions2d(batch, k, l, i, j);
+                    }
+                }
+                // Assign bounding box.
+                if(max_idx > 0 && max_pred > threshold) {
+                    bboxes2d.classes(bboxes2d_idx) = max_idx;
+                    bboxes2d.scores(bboxes2d_idx) = max_pred;
+                    // Recall: raw output in y, x, h, w format.
+                    y = boxesd2d(batch, k, 0, i, j);
+                    x = boxesd2d(batch, k, 1, i, j);
+                    h = boxesd2d(batch, k, 2, i, j);
+                    w = boxesd2d(batch, k, 3, i, j);
+                    // Convert to ymin, xmin, ymax, xmax.
+                    bboxes2d.boxes(bboxes2d_idx, 0) = y - h / 2.;
+                    bboxes2d.boxes(bboxes2d_idx, 1) = x - w / 2.;
+                    bboxes2d.boxes(bboxes2d_idx, 2) = y + h / 2.;
+                    bboxes2d.boxes(bboxes2d_idx, 3) = x + w / 2.;
+                    bboxes2d_idx++;
+                }
+            }
+        }
+    }
 }
 
 }

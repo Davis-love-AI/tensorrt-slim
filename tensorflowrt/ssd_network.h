@@ -96,11 +96,6 @@ public:
     }
     virtual ~ssd_network();
 
-    /** Raw detection of 2Dobject on one image.
-     */
-    tfrt::boxes2d::bboxes2d raw_detect2d(
-        float* rgba, uint32_t height, uint32_t width, float threshold, size_t max_detections);
-
 public:
     /** Get the number of features. */
     size_t nb_features() const;
@@ -116,6 +111,20 @@ public:
     virtual bool load_weights(const std::string& filename);
     /** Clear out the collections of network weights, to save memory. */
     // virtual void clear_weights();
+
+    /** Raw detection of 2Dobject on one image.
+     */
+    tfrt::boxes2d::bboxes2d raw_detect2d(
+        float* rgba, uint32_t height, uint32_t width, float threshold, size_t max_detections);
+
+protected:
+    /** Fill 2D bounding boxes collection from raw output tensors.
+     */
+    void fill_bboxes2d(
+        const tfrt::nachw<float>::tensor& predictions2d,
+        const tfrt::nachw<float>::tensor& boxesd2d,
+        float threshold, size_t max_detections, size_t batch,
+        size_t& bboxes2d_idx, tfrt::boxes2d::bboxes2d& bboxes2d) const;
 
 protected:
     // Protobuf network object.
