@@ -19,6 +19,7 @@
 // #include <memory>
 #include <NvInfer.h>
 
+#include "types.h"
 #include "network.h"
 #include "ssd_network.pb.h"
 #include "boxes2d/boxes2d.h"
@@ -51,14 +52,16 @@ struct ssd_feature
     std::vector<ssd_anchor2d> anchors2d;
 
     /** Output CUDA tensors. */
-    struct {
+    struct outputs_cuda {
         // 2D predictions + boxes.
         tfrt::cuda_tensor*  predictions2d;
         tfrt::cuda_tensor*  boxes2d;
         // 3D predictions + boxes.
         tfrt::cuda_tensor*  predictions3d;
         tfrt::cuda_tensor*  boxes3d;
-    } outputs;
+    };
+    // CUDA outputs.
+    outputs_cuda outputs;
 
 public:
     /** Construct from an equivalent protobuf object. */
@@ -75,6 +78,11 @@ public:
         }
         return nanchors;
     }
+public:
+    /** Get the 2D predictions as a NACHW tensor. */
+    tfrt::nachw<float>::tensor predictions2d() const;
+    /** Get the 2D boxes as a NACHW tensor. */
+    tfrt::nachw<float>::tensor boxes2d() const;
 };
 
 class ssd_network : public tfrt::network

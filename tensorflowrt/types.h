@@ -42,6 +42,20 @@ struct nchw {
     typedef Eigen::TensorMap<Eigen::Tensor<const T, 4, Eigen::RowMajor, IndexType>,
                              Eigen::Aligned> const_tensor_map;
 };
+/** NACHW type of tensors.
+ * A stands for the anchors dimension.
+ */
+template <typename T=float, typename IndexType=Eigen::DenseIndex>
+struct nachw {
+    typedef Eigen::Tensor<T, 5, Eigen::RowMajor, IndexType> tensor;
+    typedef Eigen::Tensor<const T, 5, Eigen::RowMajor, IndexType> const_tensor;
+
+    typedef Eigen::TensorMap<Eigen::Tensor<T, 5, Eigen::RowMajor, IndexType>,
+                             Eigen::Aligned> tensor_map;
+    typedef Eigen::TensorMap<Eigen::Tensor<const T, 5, Eigen::RowMajor, IndexType>,
+                             Eigen::Aligned> const_tensor_map;
+};
+
 
 }
 

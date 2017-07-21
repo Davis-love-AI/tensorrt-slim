@@ -39,6 +39,28 @@ ssd_feature::ssd_feature(const tfrt_pb::ssd_feature& feature) :
     outputs{nullptr, nullptr, nullptr, nullptr}
 {}
 
+tfrt::nachw<float>::tensor ssd_feature::predictions2d() const
+{
+    // Reshape NCHW tensor.
+    size_t nanchors2d = this->num_anchors2d_total();
+    auto t = this->outputs.predictions2d->tensor();
+    std::array<long, 5> shape{
+        t.dimension(0), long(nanchors2d), long(t.dimension(1) / nanchors2d),
+        t.dimension(2), t.dimension(3)};
+    tfrt::nachw<float>::tensor a = t.reshape(shape);
+    return a;
+}
+tfrt::nachw<float>::tensor ssd_feature::boxes2d() const
+{
+    // Reshape NCHW tensor.
+    size_t nanchors2d = this->num_anchors2d_total();
+    auto t = this->outputs.boxes2d->tensor();
+    std::array<long, 5> shape{
+        t.dimension(0), long(nanchors2d), 4, t.dimension(2), t.dimension(3)};
+    tfrt::nachw<float>::tensor a = t.reshape(shape);
+    return a;
+}
+
 /* ============================================================================
  * tfrt::ssd_network methods.
  * ========================================================================== */
@@ -96,11 +118,26 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
 
     // Execute TensorRT network (batch size = 1) TODO.
     m_nv_context->execute(1, (void**)m_cached_bindings.data());
-    // Simple post-processing of outputs of every feature layer.
-    const auto& features = this->features();
 
-
+    // Post-processing of outputs of every feature layer.
     tfrt::boxes2d::bboxes2d bboxes2d{max_detections};
+    const std::vector<ssd_feature>& features = this->features();
+    size_t detections = 0;
+    for(const auto& f : features) {
+        // Get the Eigen output tensors.
+        tfrt::nachw<float>::tensor pred2d = f.predictions2d();
+        tfrt::nachw<float>::tensor boxes2d = f.boxes2d();
+        pred2d.size();
+        // pred2d(0, 0, 0, 0, 0);
+
+        // Collected everything I can!
+        if(detections >= max_detections-1)
+            break;
+    }
+
+    // Simple post-processing of outputs of every feature layer.
+
+
     return bboxes2d;
 }
 
