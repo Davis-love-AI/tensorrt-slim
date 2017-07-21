@@ -21,6 +21,7 @@
 
 #include "network.h"
 #include "ssd_network.pb.h"
+#include "boxes2d/boxes2d.h"
 
 namespace tfrt
 {
@@ -49,6 +50,16 @@ struct ssd_feature
     // List of 2D anchors associated.
     std::vector<ssd_anchor2d> anchors2d;
 
+    /** Output CUDA tensors. */
+    struct {
+        // 2D predictions + boxes.
+        tfrt::cuda_tensor*  predictions2d;
+        tfrt::cuda_tensor*  boxes2d;
+        // 3D predictions + boxes.
+        tfrt::cuda_tensor*  predictions3d;
+        tfrt::cuda_tensor*  boxes3d;
+    } outputs;
+
 public:
     /** Construct from an equivalent protobuf object. */
     ssd_feature(const tfrt_pb::ssd_feature& feature);
@@ -76,6 +87,11 @@ public:
         m_pb_ssd_network(std::make_unique<tfrt_pb::ssd_network>()) {
     }
     virtual ~ssd_network();
+
+    /** Raw detection of 2Dobject on one image.
+     */
+    tfrt::boxes2d::bboxes2d raw_detect2d(
+        float* rgba, uint32_t height, uint32_t width, float threshold, size_t max_detections);
 
 public:
     /** Get the number of features. */

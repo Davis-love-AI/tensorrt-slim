@@ -34,6 +34,13 @@ message ssd_anchor2d {
 /** SSD feature layer.
  */
 message ssd_feature {
+    // Fullnames of the different output tensors.
+    message outputs_name {
+        optional string predictions2d = 1;
+        optional string boxes2d = 2;
+        optional string predictions3d = 3;
+        optional string boxes3d = 4;
+    }
     // Name of feature (and full-scoped name).
     optional string name = 1;
     optional string fullname = 2;
@@ -43,6 +50,8 @@ message ssd_feature {
     repeated ssd_anchor2d anchors2d = 4;
     // Prior scaling.
     optional box_scaling prior_scaling = 5;
+    // Outputs from this feature.
+    optional outputs_name outputs = 6;
 }
 
 /** SSD network description.

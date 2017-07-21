@@ -84,6 +84,7 @@ public:
 private:
     cuda_tensor(const cuda_tensor&) = default;
 public:
+    // Tensor name, shape and size.
     std::string  name;
     nvinfer1::DimsNCHW  shape;
     size_t  size;
@@ -164,6 +165,11 @@ public:
     /** Build and profile a model.
      */
     bool profile_model(std::stringstream& model_stream);
+
+protected:
+    /** Find a output CUDA tensor from the all collection! Return first partial match.
+     */
+    tfrt::cuda_tensor* find_cuda_output(const std::string& name) const;
 
 protected:
 	/** Prefix used for tagging printed log output. */

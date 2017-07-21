@@ -24,8 +24,15 @@ namespace tfrt
 namespace boxes2d
 {
 
+struct boxes2d
+{
 
+};
 
+struct bboxes2d
+{
+
+};
 
 
 

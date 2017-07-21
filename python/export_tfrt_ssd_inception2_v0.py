@@ -166,6 +166,7 @@ def ssd_network_anchors2d_elementwise_weights(fidx, pb_ssd_network, ssd_net, ssd
 def ssd_network_anchors2d_outputs(fidx, pb_ssd_network, ssd_net, ssd_anchors):
     """Add SSD anchors outputs to the collection of outputs.
     """
+    pb_feature = pb_ssd_network.features[fidx]
     featname = ssd_net.params.feat_layers[fidx][0]
     ashape = ssd_anchors[fidx][0].shape
     nanchors = np.sum([len(a[1]) for a in ssd_net.params.anchor_sizes[fidx]])
@@ -173,17 +174,22 @@ def ssd_network_anchors2d_outputs(fidx, pb_ssd_network, ssd_net, ssd_anchors):
     def add_anchors2d_output(suffix, nchannels):
         """Generic method for every output of an anchor.
         """
+        # Add generic output...
         outnet = pb_ssd_network.network.outputs.add()
-        outnet.name = 'ssd_boxes2d_blocks/' + featname + '_boxes'
+        outnet.name = os.path.join('ssd_boxes2d_blocks', featname + '_boxes')
         outnet.suffix = suffix
         outnet.h = ashape[0]
         outnet.w = ashape[1]
         outnet.c = nchannels
         print('Output #%i with shape %s and name: \'%s/%s\'' % (fidx,
             [outnet.h, outnet.w, outnet.c], outnet.name, outnet.suffix))
+        return os.path.join(outnet.name, outnet.suffix)
+
     # Prediction and 2D boxes outputs.
-    add_anchors2d_output('predictions', pb_ssd_network.num_classes_2d * nanchors)
-    add_anchors2d_output('boxes', 4 * nanchors)
+    name = add_anchors2d_output('predictions', pb_ssd_network.num_classes_2d * nanchors)
+    pb_feature.outputs_name.predictions2d = name
+    name = add_anchors2d_output('boxes', 4 * nanchors)
+    pb_feature.outputs_name.boxes2d = name
 
 
 def ssd_network_feature(idx, pb_ssd_network, ssd_net, ssd_anchors):

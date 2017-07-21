@@ -35,7 +35,6 @@ public:
     /** Load ImageNet classes information and descriptions.
      */
     bool load_info(const std::string& filename);
-
     /** Classify an image. Return a tuple <class, score>
      */
     std::pair<int, float> classify(float* rgba, uint32_t height, uint32_t width);

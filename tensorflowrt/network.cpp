@@ -251,7 +251,16 @@ tfrt::network& network::input_shape(const nvinfer1::DimsCHW& shape)
     }
     return *this;
 }
-
+tfrt::cuda_tensor* network::find_cuda_output(const std::string& name) const
+{
+    for(auto& t : m_cuda_outputs) {
+        if(t.name.find(name) != std::string::npos) {
+            // A bit ugly hack!!!
+            return (tfrt::cuda_tensor*) &t;
+        }
+    }
+    return nullptr;
+}
 
 /* ============================================================================
  * load - build - serialize. The big stuff!
