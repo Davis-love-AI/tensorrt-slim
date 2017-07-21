@@ -97,7 +97,7 @@ public:
     /** Get the number of features. */
     size_t nb_features() const;
     /** Get the list of features. */
-    std::vector<ssd_feature> features() const;
+    const std::vector<ssd_feature>& features() const;
     // Number of classes...
     int num_classes_2d() const {  return m_pb_ssd_network->num_classes_2d();  }
     int num_classes_3d() const {  return m_pb_ssd_network->num_classes_3d();  }
@@ -112,6 +112,8 @@ public:
 protected:
     // Protobuf network object.
     std::unique_ptr<tfrt_pb::ssd_network>  m_pb_ssd_network;
+    // Cached features.
+    mutable std::vector<ssd_feature>  m_cached_features;
 };
 
 }

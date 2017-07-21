@@ -14,7 +14,7 @@ execute_process(COMMAND protoc --python_out=../python/ network.proto ssd_network
                 WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 # TF-RT sources.
-FILE(GLOB TFRT_SRCS *.cpp *.cu cuda/*.cpp cuda/*.cu)
+FILE(GLOB TFRT_SRCS *.cpp *.cu cuda/*.cpp cuda/*.cu boxes2d/*.cpp)
 FILE(GLOB TFRT_HEADERS *.h)
 
 # Some debugging info...

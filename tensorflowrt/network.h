@@ -91,6 +91,8 @@ public:
     // TODO: use std::unique_ptr with custom deleter. Cleaner?
     float*  cpu;
     float*  cuda;
+    // Binding index.
+    int binding_index;
 };
 
 /* ============================================================================
@@ -221,9 +223,12 @@ protected:
     // Profiler and debugging?
     bool  m_enable_profiler;
 	bool  m_enable_debug;
+
     // CUDA input and outputs.
     tfrt::cuda_tensor  m_cuda_input;
     std::vector<tfrt::cuda_tensor>  m_cuda_outputs;
+    // Cached bindings vector.
+    std::vector<float*>  m_cached_bindings;
 
     // Temporary collection of zero tensors.
     std::vector<tfrt_pb::tensor>  m_zero_tensors;

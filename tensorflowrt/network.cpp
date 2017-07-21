@@ -57,13 +57,14 @@ inline nvinfer1::Dims tensor_shape(const tfrt_pb::tensor& t)
 /* ============================================================================
  * tfrt::cuda_tensor implementation.
  * ========================================================================== */
-cuda_tensor::cuda_tensor() : name{}, shape{}, size{0}, cpu{nullptr}, cuda{nullptr}
+cuda_tensor::cuda_tensor() :
+    name{}, shape{}, size{0}, cpu{nullptr}, cuda{nullptr}, binding_index{0}
 {
 }
 cuda_tensor::cuda_tensor(const std::string& _name, const nvinfer1::DimsNCHW& _shape) :
     name{_name}, shape{_shape},
     size{_shape.n() * _shape.c() * _shape.h() * _shape.w() * sizeof(float)},
-    cpu{nullptr}, cuda{nullptr}
+    cpu{nullptr}, cuda{nullptr}, binding_index{0}
 {
 }
 cuda_tensor::cuda_tensor(cuda_tensor&& t) :
@@ -318,7 +319,11 @@ bool network::load(std::string filename)
 	this->m_nv_engine = engine;
 	this->m_nv_context = context;
 
+    // Cached binding pointers.
     nvinfer1::DimsNCHW shape;
+    auto outputs_name = this->outputs_name(true, true);
+    m_cached_bindings.resize(1 + outputs_name.size());
+
     // CUDA allocate input memory.
     LOG(INFO) << LOG_GIE << "Allocating CUDA input memory for " << input_name(true);
     const int input_idx = m_nv_engine->getBindingIndex(input_name(true).c_str());
@@ -327,11 +332,13 @@ bool network::load(std::string filename)
 
     m_cuda_input = std::move(tfrt::cuda_tensor(input_name(true), shape));
     bool r = m_cuda_input.allocate();
-    CHECK(r) << LOG_GIE << "Could not allocate memory for CUDA input: " << dims_str(shape) << " | "<< input_name(true);
+    CHECK(r) << LOG_GIE << "Could not allocate memory for CUDA input: "
+        << dims_str(shape) << " | "<< input_name(true);
+    m_cuda_input.binding_index = input_idx;
+    m_cached_bindings[input_idx] = m_cuda_input.cuda;
 
     // CUDA allocate outputs memory.
     m_cuda_outputs.clear();
-    auto outputs_name = this->outputs_name(true, true);
     for(size_t i = 0 ; i < outputs_name.size() ; ++i) {
         LOG(INFO) << LOG_GIE << "Allocating CUDA output memory for " << outputs_name[i];
         const int output_idx = engine->getBindingIndex(outputs_name[i].c_str());
@@ -341,7 +348,10 @@ bool network::load(std::string filename)
             // Push CUDA tensor and allocate memory.
             m_cuda_outputs.push_back(tfrt::cuda_tensor(outputs_name[i], shape));
             r = m_cuda_outputs.back().allocate();
-            CHECK(r) << LOG_GIE << "Could not allocate memory for CUDA output: " << dims_str(shape) << " | "<< outputs_name[i];
+            CHECK(r) << LOG_GIE << "Could not allocate memory for CUDA output: "
+                << dims_str(shape) << " | "<< outputs_name[i];
+            m_cuda_outputs.back().binding_index = output_idx;
+            m_cached_bindings[output_idx] = m_cuda_outputs.back().cuda;
         }
         else {
             LOG(ERROR) << LOG_GIE << "Could not find binding index for output tensor: " << outputs_name[i];
