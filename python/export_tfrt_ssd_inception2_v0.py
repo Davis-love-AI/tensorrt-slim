@@ -28,6 +28,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import os
+import sys
+
 import numpy as np
 import tensorflow as tf
 
@@ -35,7 +38,6 @@ import tensorflow as tf
 import ssd_network_pb2
 import export_tfrt_network_weights as tfrt_export
 
-import sys
 sys.path.append('../')
 
 from preprocessing import ssd_vgg_preprocessing
@@ -90,18 +92,20 @@ def ssd_network_parameters(pb_ssd_network):
     return pb_ssd_network
 
 
-def ssd_feature_fullname(pb_ssd_network, featname):
-    """SSD feature fullname.
+def ssd_feature_fullname(fname):
+    """Fullname of an SSD network feature.
     """
+    # Get model name from variables...
     vname = tf.model_variables()[0].op.name
     netname = vname.split('/')[0]
-    fullname = netname + 'ssd_boxes2d_blocks/' + featname + '_boxes'
+    fullname = os.path.join(netname, 'ssd_boxes2d_blocks', fname+'_boxes')
     return fullname
 
 
-def ssd_network_anchors2d_weight(fidx, pb_ssd_network, ssd_net, ssd_anchors):
-    """Generate the scaling weights necessary to 2D anchors decoding.
+def ssd_network_anchors2d_channel_weights(fidx, pb_ssd_network, ssd_net, ssd_anchors):
+    """Generate the channel-scaling weights necessary to 2D anchors decoding.
     """
+    # Exponential approximation used. (256/512/1024/...)
     N = 256
     nanchors = np.sum([len(a[1]) for a in ssd_net.params.anchor_sizes[fidx]])
     featname = ssd_net.params.feat_layers[fidx][0]
@@ -122,52 +126,64 @@ def ssd_network_anchors2d_weight(fidx, pb_ssd_network, ssd_net, ssd_anchors):
         apower[i, 2] = N
         apower[i, 3] = N
     # Save the weights.
-    name = ssd_feature_fullname(pb_ssd_network, featname)
-    name += '/decode/scale_channel/'
-    tfrt_export.tensor_np_to_tfrt(None, name + 'drift', adrift, pb_ssd_network.network.weights.add())
-    tfrt_export.tensor_np_to_tfrt(None, name + 'scale', ascale, pb_ssd_network.network.weights.add())
-    tfrt_export.tensor_np_to_tfrt(None, name + 'power', apower, pb_ssd_network.network.weights.add())
+    name = ssd_feature_fullname(featname)
+    name = os.path.join(name, 'decode', 'scale_channel')
+    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'drift'), adrift, pb_ssd_network.network.weights.add())
+    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'scale'), ascale, pb_ssd_network.network.weights.add())
+    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'power'), apower, pb_ssd_network.network.weights.add())
 
+
+def ssd_network_anchors2d_elementwise_weights(fidx, pb_ssd_network, ssd_net, ssd_anchors):
+    """Generate the elementwise-scaling weights necessary to 2D anchors decoding.
+    """
+    nanchors = np.sum([len(a[1]) for a in ssd_net.params.anchor_sizes[fidx]])
+    featname = ssd_net.params.feat_layers[fidx][0]
     # Elementwise scaling.
     anchor_y = np.squeeze(ssd_anchors[fidx][0], axis=-1)
     anchor_x = np.squeeze(ssd_anchors[fidx][1], axis=-1)
     ashape = anchor_y.shape
-    adrift2 = np.zeros([nanchors, 4, ashape[0], ashape[1]], np.float32)
-    ascale2 = np.ones([nanchors, 4, ashape[0], ashape[1]], np.float32)
+    adrift = np.zeros([nanchors, 4, ashape[0], ashape[1]], np.float32)
+    ascale = np.ones([nanchors, 4, ashape[0], ashape[1]], np.float32)
     for i in range(nanchors):
         # Order on 2nd axis: y, x, h, w
         anchor_h = ssd_anchors[fidx][2][i]
         anchor_w = ssd_anchors[fidx][3][i]
         # y, x coordinates.
-        adrift2[i, 0] = anchor_y
-        adrift2[i, 1] = anchor_x
-        ascale2[i, 0] = anchor_h
-        ascale2[i, 1] = anchor_w
+        adrift[i, 0] = anchor_y
+        adrift[i, 1] = anchor_x
+        ascale[i, 0] = anchor_h
+        ascale[i, 1] = anchor_w
         # height, width.
-        ascale2[i, 0] = anchor_h
-        ascale2[i, 1] = anchor_w
+        ascale[i, 0] = anchor_h
+        ascale[i, 1] = anchor_w
     # Save the weights.
-    name = ssd_feature_fullname(pb_ssd_network, featname)
-    name += '/decode/scale_elementwise/'
-    tfrt_export.tensor_np_to_tfrt(None, name + 'drift', adrift2, pb_ssd_network.network.weights.add())
-    tfrt_export.tensor_np_to_tfrt(None, name + 'scale', ascale2, pb_ssd_network.network.weights.add())
+    name = ssd_feature_fullname(featname)
+    name = os.path.join(name, 'decode', 'scale_elementwise')
+    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'drift'), adrift, pb_ssd_network.network.weights.add())
+    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'scale'), ascale, pb_ssd_network.network.weights.add())
 
-    # Prediction output.
-    net_output = pb_ssd_network.network.outputs.add()
-    net_output.name = 'ssd_boxes2d_blocks/' + featname + '_boxes'
-    net_output.suffix = 'predictions'
-    net_output.h = ashape[0]
-    net_output.w = ashape[1]
-    net_output.c = 1
-    print('Output #%i name: %s/%s' % (fidx, net_output.name, net_output.suffix))
-    # 2D boxes output.
-    net_output = pb_ssd_network.network.outputs.add()
-    net_output.name = 'ssd_boxes2d_blocks/' + featname + '_boxes'
-    net_output.suffix = 'boxes'
-    net_output.h = ashape[0]
-    net_output.w = ashape[1]
-    net_output.c = 1
-    print('Output #%i name: %s/%s' % (fidx, net_output.name, net_output.suffix))
+
+def ssd_network_anchors2d_outputs(fidx, pb_ssd_network, ssd_net, ssd_anchors):
+    """Add SSD anchors outputs to the collection of outputs.
+    """
+    featname = ssd_net.params.feat_layers[fidx][0]
+    ashape = ssd_anchors[fidx][0].shape
+    nanchors = np.sum([len(a[1]) for a in ssd_net.params.anchor_sizes[fidx]])
+
+    def add_anchors2d_output(suffix, nchannels):
+        """Generic method for every output of an anchor.
+        """
+        outnet = pb_ssd_network.network.outputs.add()
+        outnet.name = 'ssd_boxes2d_blocks/' + featname + '_boxes'
+        outnet.suffix = suffix
+        outnet.h = ashape[0]
+        outnet.w = ashape[1]
+        outnet.c = nchannels
+        print('Output #%i with shape %s and name: \'%s/%s\'' % (fidx,
+            [outnet.h, outnet.w, outnet.c], outnet.name, outnet.suffix))
+    # Prediction and 2D boxes outputs.
+    add_anchors2d_output('predictions', pb_ssd_network.num_classes_2d * nanchors)
+    add_anchors2d_output('boxes', 4 * nanchors)
 
 
 def ssd_network_feature(idx, pb_ssd_network, ssd_net, ssd_anchors):
@@ -201,11 +217,14 @@ def ssd_network_tf_to_tfrt(sess, ssd_net, ssd_anchors):
     pb_ssd_network = ssd_network_pb2.ssd_network()
     # Convert basic network structure.
     tfrt_export.network_tf_to_tfrt(sess, pb_ssd_network.network)
-    # SSD components.
+    # SSD parameters.
     ssd_network_parameters(pb_ssd_network)
+    # SSD features and anchors.
     for idx, _ in enumerate(ssd_net.params.feat_layers):
         ssd_network_feature(idx, pb_ssd_network, ssd_net, ssd_anchors)
-        ssd_network_anchors2d_weight(idx, pb_ssd_network, ssd_net, ssd_anchors)
+        ssd_network_anchors2d_channel_weights(idx, pb_ssd_network, ssd_net, ssd_anchors)
+        ssd_network_anchors2d_elementwise_weights(idx, pb_ssd_network, ssd_net, ssd_anchors)
+        ssd_network_anchors2d_outputs(idx, pb_ssd_network, ssd_net, ssd_anchors)
     return pb_ssd_network
 
 

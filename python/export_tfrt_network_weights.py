@@ -173,7 +173,7 @@ def tensor_tf_to_tfrt(sess, tf_tensor, pb_tensor):
     name = tf_tensor.op.name
     # Get numpy array from tensor and convert it.
     a = sess.run(tf_tensor)
-    print('Proceeding with tensor:', name, 'with shape', a.shape)
+    print('Proceeding with tensor: \'' + name + '\' with shape', a.shape)
     tensor_np_to_tfrt(sess, name, a, pb_tensor)
 
 
