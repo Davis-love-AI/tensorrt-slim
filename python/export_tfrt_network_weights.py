@@ -218,6 +218,7 @@ def network_outputs(sess, pb_network):
         if len(o):
             net_output = pb_network.outputs.add()
             net_output.name = o
+            net_output.suffix = 'output'
             # TODO: fix this crap for SSD networks.
             net_output.h = 1
             net_output.w = 1

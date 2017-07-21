@@ -155,19 +155,19 @@ def ssd_network_anchors2d_weight(fidx, pb_ssd_network, ssd_net, ssd_anchors):
     # Prediction output.
     net_output = pb_ssd_network.network.outputs.add()
     net_output.name = 'ssd_boxes2d_blocks/' + featname + '_boxes'
-    net_output.suffix = net_output.name + '/predictions'
+    net_output.suffix = 'predictions'
     net_output.h = ashape[0]
     net_output.w = ashape[1]
     net_output.c = 1
-    print('Output #%i name: %s' % (fidx, net_output.name))
+    print('Output #%i name: %s/%s' % (fidx, net_output.name, net_output.suffix))
     # 2D boxes output.
     net_output = pb_ssd_network.network.outputs.add()
     net_output.name = 'ssd_boxes2d_blocks/' + featname + '_boxes'
-    net_output.suffix = net_output.name + '/boxes'
+    net_output.suffix = 'boxes'
     net_output.h = ashape[0]
     net_output.w = ashape[1]
     net_output.c = 1
-    print('Output #%i name: %s' % (fidx, net_output.name))
+    print('Output #%i name: %s/%s' % (fidx, net_output.name, net_output.suffix))
 
 
 def ssd_network_feature(idx, pb_ssd_network, ssd_net, ssd_anchors):

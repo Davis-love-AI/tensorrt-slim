@@ -148,6 +148,7 @@ void doInference(ICudaEngine& engine)
     // of these, but in this case we know that there is exactly one input and one output.
 
     std::vector<void*> buffers(gInputs.size() + gParams.outputs.size());
+    std::cout << "Buffers size: " << buffers.size() << std::endl;
     for (size_t i = 0; i < gInputs.size(); i++) {
         std::cout << "Input: " << i << " | " << gInputs[i] << std::endl;
         createMemory(engine, buffers, gInputs[i]);

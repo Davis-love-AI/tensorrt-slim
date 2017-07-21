@@ -26,11 +26,12 @@ namespace ssd_inception2_v0
  * SSD Inception2 V0 network: functional declaration.
  * ========================================================================== */
 typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
+typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true> separable_conv2d;
 
 /** Additional feature layer.
  */
-inline nvinfer1::ITensor* inception2_extra_feature(
-    nvinfer1::ITensor* net, tfrt::scope sc, int num_outputs, tfrt::map_tensor* end_points=nullptr)
+inline nvinfer1::ITensor* inception2_extra_feature(nvinfer1::ITensor* net, tfrt::scope sc,
+                                                   int num_outputs, tfrt::map_tensor* end_points=nullptr)
 {
     LOG(INFO) << "BLOCK SSD inception2 extra-features '" << sc.name() << "'. "
             << "Input shape: " << tfrt::dims_str(net->getDimensions());
@@ -42,12 +43,23 @@ inline nvinfer1::ITensor* inception2_extra_feature(
 }
 /** Inception2 base network.
  */
-inline nvinfer1::ITensor* inception2_base(
-    nvinfer1::ITensor* input, tfrt::scope sc, tfrt::map_tensor* end_points=nullptr)
+inline nvinfer1::ITensor* block1(nvinfer1::ITensor* net, tfrt::scope sc,
+                                 tfrt::map_tensor* end_points=nullptr)
+{
+    int depthwise_multiplier = std::min(int(64 / 3), 8);
+    // // 7x7 depthwise convolution.
+    net = separable_conv2d(sc, "Conv2d_1a_7x7")
+        .depthmul(depthwise_multiplier)
+        .noutputs(64).ksize({7, 7}).stride({2, 2})(net);
+    return net;
+}
+inline nvinfer1::ITensor* inception2_base(nvinfer1::ITensor* input, tfrt::scope sc,
+                                          tfrt::map_tensor* end_points=nullptr)
 {
     nvinfer1::ITensor* net{input};
     // Main blocks 1 to 5.
-    net = inception2::block1(net, sc, end_points);
+    // net = inception2::block1(net, sc, end_points);
+    net = block1(net, sc, end_points);
     net = inception2::block2(net, sc, end_points);
     net = inception2::block3(net, sc, end_points);
     net = inception2::block4(net, sc, end_points);
