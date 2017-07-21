@@ -95,10 +95,8 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
         << "CUDA error: " << r;
 
     // Execute TensorRT network (batch size = 1) TODO.
-    void* inferenceBuffers[] = { m_cuda_input.cuda, m_cuda_outputs[0].cuda };
-    m_nv_context->execute(1, inferenceBuffers);
-    // CUDA(cudaDeviceSynchronize());
-    // Get the features...
+    m_nv_context->execute(1, (void**)m_cached_bindings.data());
+    // Simple post-processing of outputs of every feature layer.
     const auto& features = this->features();
 
 
