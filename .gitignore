@@ -21,4 +21,5 @@ __pycache__*
 
 # Build directory.
 build/
+third_party/
 
