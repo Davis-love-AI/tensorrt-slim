@@ -71,11 +71,12 @@ for every layer. It gives a good overview on the bottlenecks and which part to i
 GLOG_logtostderr=1 ./tfrt_giexec \
     --modelName=inception2 \
     --modelFile=../data/networks/inception_v2_fused.tfrt16 \
-    --output=InceptionV2/Softmax/output \
     --batch=2 \
     --iterations=10 \
     --avgRuns=10 \
     --workspace=16 \
+    --height=300 \
+    --width=300 \
     --verbose=true
 ```
 

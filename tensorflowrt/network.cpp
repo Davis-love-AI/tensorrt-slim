@@ -159,18 +159,21 @@ const tfrt_pb::tensor& network::tensor_by_name(std::string name) const
 nvinfer1::Weights network::weights_by_name(std::string name) const
 {
     const tfrt_pb::tensor& tensor = tensor_by_name(name);
-    return tensor_to_weights(tensor);
+    return tensor_to_weights(tensor, this->datatype());
 }
 
-nvinfer1::Weights network::tensor_to_weights(const tfrt_pb::tensor& tensor)
+nvinfer1::Weights network::tensor_to_weights(
+    const tfrt_pb::tensor& tensor, nvinfer1::DataType default_dt)
 {
     nvinfer1::Weights w{
         .type = nvinfer1::DataType(int(tensor.datatype())),
         .values = tensor.data().data(),
         .count = int(tensor.size())
     };
+    // Check empty weights.
     if(w.count == 0) {
         w.values = nullptr;
+        w.type = default_dt;
     }
     return w;
 }

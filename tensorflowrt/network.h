@@ -130,7 +130,7 @@ public:
         return nvinfer1::Weights{.type = this->datatype(), .values = nullptr, .count = 0};
     }
     /** Convert TF protobuf tensor to NV weights. */
-    static nvinfer1::Weights tensor_to_weights(const tfrt_pb::tensor& tensor);
+    static nvinfer1::Weights tensor_to_weights(const tfrt_pb::tensor& tensor, nvinfer1::DataType default_dt=nvinfer1::DataType::kFLOAT);
     /** Parse a protobuf file into a message.  */
     static bool parse_protobuf(const std::string&, google::protobuf::MessageLite*);
 
