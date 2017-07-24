@@ -53,7 +53,7 @@ std::unique_ptr<tfrt::imagenet_network>&& networks_map(const std::string& key)
 int main(int argc, char** argv)
 {
     google::InitGoogleLogging(argv[0]);
-	gflags::ParseCommandLineFlags(&argc, &argv, true);
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     bool r;
     LOG(INFO) << IMGNET << "Loading network: " << FLAGS_network;

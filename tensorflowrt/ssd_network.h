@@ -115,7 +115,8 @@ public:
     /** Raw detection of 2Dobject on one image.
      */
     tfrt::boxes2d::bboxes2d raw_detect2d(
-        float* rgba, uint32_t height, uint32_t width, float threshold, size_t max_detections);
+        float* rgba, uint32_t height, uint32_t width,
+        float threshold, size_t max_detections);
 
 protected:
     /** Fill 2D bounding boxes collection from raw output tensors.

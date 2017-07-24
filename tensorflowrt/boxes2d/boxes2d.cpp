@@ -26,7 +26,9 @@ namespace boxes2d
  * Bounding boxes 2D
  * ========================================================================== */
 bboxes2d::bboxes2d(size_t size) :
-    classes{vec_int::Zero(size)}, scores{vec_float::Zero(size)}, boxes{boxes2d::Zero(size, 4)}
+    time{},
+    classes{vec_int::Zero(size)}, scores{vec_float::Zero(size)},
+    boxes{boxes2d::Zero(size, 4)}
 {}
 
 void bboxes2d::sort_by_score(bool decreasing)
