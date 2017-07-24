@@ -121,12 +121,13 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
         << "CUDA error: " << r;
 
     // Execute TensorRT network (batch size = 1) TODO.
-    DLOG(INFO) << "Execute SSD network.";
+    DLOG(INFO) << "Raw 2D detections from SSD network.";
     size_t num_batches = 1;
     m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
 
     // Post-processing of outputs of every feature layer.
-    DLOG(INFO) << "Post-processing of SSD raw outputs, selecting 2D boxes.";
+    DLOG(INFO) << "Post-processing of SSD raw outputs, selecting 2D boxes. "
+        << "Max detections: " << max_detections << " Threshold: " << threshold;
     const auto& features = this->features();
     size_t bboxes2d_idx = 0;
     tfrt::boxes2d::bboxes2d  bboxes2d{max_detections};
