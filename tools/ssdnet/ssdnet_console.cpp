@@ -81,30 +81,35 @@ int main( int argc, char** argv )
         img.cuda, img.shape.h(), img.shape.w(), threshold, max_detections);
     LOG(INFO) << SSDNET << "Raw 2D objects: " << bboxes2d;
 
+    // Save images...
+    if(FLAGS_image_save) {
+        LOG(INFO) << SSDNET << "Print 2D bounding boxes on images.";
 
+
+    }
     // else if( argc > 2 )		// if the user supplied an output filename
     // {
-    //     printf("%i bounding boxes detected\n", numBoundingBoxes);
+        // printf("%i bounding boxes detected\n", numBoundingBoxes);
 
-    //     int lastClass = 0;
-    //     int lastStart = 0;
+        // int lastClass = 0;
+        // int lastStart = 0;
 
-    //     for( int n=0; n < numBoundingBoxes; n++ )
-    //     {
-    //         const int nc = confCPU[n*2+1];
-    //         float* bb = bbCPU + (n * 4);
+        // for( int n=0; n < numBoundingBoxes; n++ )
+        // {
+        //     const int nc = confCPU[n*2+1];
+        //     float* bb = bbCPU + (n * 4);
 
-    //         printf("bounding box %i   (%f, %f)  (%f, %f)  w=%f  h=%f\n", n, bb[0], bb[1], bb[2], bb[3], bb[2] - bb[0], bb[3] - bb[1]);
+        //     printf("bounding box %i   (%f, %f)  (%f, %f)  w=%f  h=%f\n", n, bb[0], bb[1], bb[2], bb[3], bb[2] - bb[0], bb[3] - bb[1]);
 
-    //         if( nc != lastClass || n == (numBoundingBoxes - 1) )
-    //         {
-    //             if( !net->DrawBoxes(imgCUDA, imgCUDA, imgWidth, imgHeight, bbCUDA + (lastStart * 4), (n - lastStart) + 1, lastClass) )
-    //                 printf("detectnet-console:  failed to draw boxes\n");
+        //     if( nc != lastClass || n == (numBoundingBoxes - 1) )
+        //     {
+        //         if( !net->DrawBoxes(imgCUDA, imgCUDA, imgWidth, imgHeight, bbCUDA + (lastStart * 4), (n - lastStart) + 1, lastClass) )
+        //             printf("detectnet-console:  failed to draw boxes\n");
 
-    //             lastClass = nc;
-    //             lastStart = n;
-    //         }
-    //     }
+        //         lastClass = nc;
+        //         lastStart = n;
+        //     }
+        // }
 
     //     CUDA(cudaThreadSynchronize());
 
