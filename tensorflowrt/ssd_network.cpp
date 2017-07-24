@@ -117,10 +117,12 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
         << "CUDA error: " << r;
 
     // Execute TensorRT network (batch size = 1) TODO.
+    DLOG(INFO) << "Execute SSD network.";
     size_t num_batches = 1;
     m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
 
     // Post-processing of outputs of every feature layer.
+    DLOG(INFO) << "Post-processing of SSD raw outputs, selecting 2D boxes.";
     const auto& features = this->features();
     size_t bboxes2d_idx = 0;
     tfrt::boxes2d::bboxes2d  bboxes2d{max_detections};
@@ -133,6 +135,7 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
                             1, bboxes2d_idx, bboxes2d);
     }
     // Sort by decreasing score.
+    DLOG(INFO) << "Sort SSD 2D boxes by decreasing score.";
     bboxes2d.sort_by_score(true);
     // Simple post-processing of outputs of every feature layer.
     return bboxes2d;

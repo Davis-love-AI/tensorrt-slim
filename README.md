@@ -98,4 +98,12 @@ GLOG_logtostderr=1 ./tfrt_giexec \
     --imagenet_info=../data/networks/ilsvrc12_synset_words.txt
 ```
 
-## blablabla
+### SSD detection on image and video inputs
+
+```bask
+./ssdnet_console --alsologtostderr \
+    --network=ssd_inception2_v0 \
+    --network_pb=../data/networks/ssd_inception2_v0_orig.tfrt32 \
+    --image=../data/images/peds-001.jpg \
+    --image_save=0
+```
