@@ -30,7 +30,7 @@
 DEFINE_string(network, "ssd_inception2_v0", "SSD network network to test.");
 DEFINE_string(network_pb, "../data/networks/ssd_inception2_v0_orig.tfrt32",
     "Network protobuf parameter file.");
-DEFINE_string(image, "../data/images/orange_0.jpg",
+DEFINE_string(image, "../data/images/peds-001.jpg",
     "Image to use for detection..");
 DEFINE_bool(image_save, false, "Save the result in some new image.");
 
