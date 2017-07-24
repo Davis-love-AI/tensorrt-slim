@@ -41,6 +41,7 @@ ssd_feature::ssd_feature(const tfrt_pb::ssd_feature& feature) :
 
 tfrt::nachw<float>::tensor ssd_feature::predictions2d() const
 {
+    DLOG(INFO) << "Reshaping 2D predictions into NACHW tensor.";
     // Reshape NCHW tensor. Should not require memory reallocation.
     size_t nanchors2d = this->num_anchors2d_total();
     auto t = this->outputs.predictions2d->tensor();
@@ -52,6 +53,7 @@ tfrt::nachw<float>::tensor ssd_feature::predictions2d() const
 }
 tfrt::nachw<float>::tensor ssd_feature::boxes2d() const
 {
+    DLOG(INFO) << "Reshaping 2D boxes into NACHW tensor.";
     // Reshape NCHW tensor. Should not require memory reallocation.
     size_t nanchors2d = this->num_anchors2d_total();
     auto t = this->outputs.boxes2d->tensor();
