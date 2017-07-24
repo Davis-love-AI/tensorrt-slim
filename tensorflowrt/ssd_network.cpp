@@ -94,9 +94,13 @@ const std::vector<ssd_feature>& ssd_network::features() const
             auto& fout = features[i].outputs;
             auto& pb_fout = m_pb_ssd_network->features(i).outputs();
             // Find CUDA tensors.
+            DLOG(INFO) << "Find CUDA output tensor: " << pb_fout.predictions2d();
             fout.predictions2d = this->find_cuda_output(pb_fout.predictions2d());
+            DLOG(INFO) << "Find CUDA output tensor: " << pb_fout.boxes2d();
             fout.boxes2d = this->find_cuda_output(pb_fout.boxes2d());
+            DLOG(INFO) << "Find CUDA output tensor: " << pb_fout.predictions3d();
             fout.predictions3d = this->find_cuda_output(pb_fout.predictions3d());
+            DLOG(INFO) << "Find CUDA output tensor: " << pb_fout.boxes3d();
             fout.boxes3d = this->find_cuda_output(pb_fout.boxes3d());
         }
         m_cached_features = features;
