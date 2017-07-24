@@ -48,7 +48,7 @@ tfrt::nachw<float>::tensor ssd_feature::predictions2d() const
     DLOG(INFO) << "Reshaping 2D predictions with shape "
         << t.dimension(0) << " | " << t.dimension(1) << " | "
         << t.dimension(2) << " | " << t.dimension(3)
-        << " into NACHW tensor.";
+        << " into NACHW tensor. N anchors: " << nanchors2d;
 
     std::array<long, 5> shape{
         t.dimension(0), long(nanchors2d), long(t.dimension(1) / nanchors2d),
