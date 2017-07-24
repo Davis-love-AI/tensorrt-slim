@@ -74,6 +74,11 @@ size_t ssd_network::nb_features() const
 {
     return m_pb_ssd_network->features_size();
 }
+void ssd_network::clear_cache()
+{
+    m_cached_features.clear();
+}
+
 const std::vector<ssd_feature>& ssd_network::features() const
 {
     if(m_cached_features.size() == 0) {

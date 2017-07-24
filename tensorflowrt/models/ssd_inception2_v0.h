@@ -106,6 +106,8 @@ public:
             //     f.num_anchors2d_total(), this->num_classes_2d(),
             //     true, true);
         }
+        // Clear any cached stuff...
+        this->clear_cache();
         return net;
     }
 };

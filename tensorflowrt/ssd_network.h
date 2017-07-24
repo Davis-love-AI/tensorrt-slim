@@ -95,6 +95,8 @@ public:
         m_pb_ssd_network(std::make_unique<tfrt_pb::ssd_network>()) {
     }
     virtual ~ssd_network();
+    /** Clear cached variables.  */
+    virtual void clear_cache();
 
 public:
     /** Get the number of features. */
