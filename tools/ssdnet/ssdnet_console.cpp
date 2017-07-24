@@ -33,8 +33,8 @@ DEFINE_string(network_pb, "../data/networks/ssd_inception2_v0_orig.tfrt32",
 DEFINE_string(image, "../data/images/peds-001.jpg",
     "Image to use for detection..");
 DEFINE_bool(image_save, false, "Save the result in some new image.");
-DEFINE_integer(max_detections, 200, "Maximum number of raw detections.");
-DEFINE_float(threshold, 0.5, "Detection threshold.");
+DEFINE_int32(max_detections, 200, "Maximum number of raw detections.");
+DEFINE_double(threshold, 0.5, "Detection threshold.");
 
 // uint64_t current_timestamp() {
 //     struct timeval te;
@@ -75,7 +75,7 @@ int main( int argc, char** argv )
 
     // Raw 2D detections.
     tfrt::boxes2d::bboxes2d bboxes2d;
-    size_t max_detections{FLAGS_network_max_detections};
+    size_t max_detections{FLAGS_max_detections};
     float threshold = FLAGS_threshold;
     LOG(INFO) << SSDNET << "Detecting object on image...";
     bboxes2d = network->raw_detect2d(
