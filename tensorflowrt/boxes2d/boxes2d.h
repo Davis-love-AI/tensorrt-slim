@@ -15,6 +15,8 @@
 #ifndef TFRT_BOXES2D_H
 #define TFRT_BOXES2D_H
 
+#include <chrono>
+
 #include <Eigen/Core>
 #include <unsupported/Eigen/CXX11/Tensor>
 
@@ -40,6 +42,10 @@ typedef Eigen::Array<float, Eigen::Dynamic, 4>  boxes2d;
  */
 struct bboxes2d
 {
+    typedef std::chrono::high_resolution_clock clock;
+
+    /** Reference time point of the measurement.  */
+    std::chrono::time_point<clock> time;
     /** Vector of classes.  */
     vec_int  classes;
     /** Vector of scores.  */
@@ -51,6 +57,16 @@ public:
     /** Create a collection of certain size. Initialize all to members zeros.
      */
     bboxes2d(size_t size=0);
+    /** Inplace sort of 2D bboxes by score (decreasing order by default).  */
+    void sort_by_score(bool decreasing=true);
+
+public:
+    /** Get the number of bboxes.  */
+    size_t size() const {
+        assert(classes.size() == scores.size());
+        assert(classes.size() == boxes.rows());
+        return classes.size();
+    }
 };
 
 }

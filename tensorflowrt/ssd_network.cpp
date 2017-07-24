@@ -41,7 +41,7 @@ ssd_feature::ssd_feature(const tfrt_pb::ssd_feature& feature) :
 
 tfrt::nachw<float>::tensor ssd_feature::predictions2d() const
 {
-    // Reshape NCHW tensor.
+    // Reshape NCHW tensor. Should not require memory reallocation.
     size_t nanchors2d = this->num_anchors2d_total();
     auto t = this->outputs.predictions2d->tensor();
     std::array<long, 5> shape{
@@ -52,7 +52,7 @@ tfrt::nachw<float>::tensor ssd_feature::predictions2d() const
 }
 tfrt::nachw<float>::tensor ssd_feature::boxes2d() const
 {
-    // Reshape NCHW tensor.
+    // Reshape NCHW tensor. Should not require memory reallocation.
     size_t nanchors2d = this->num_anchors2d_total();
     auto t = this->outputs.boxes2d->tensor();
     std::array<long, 5> shape{
@@ -117,23 +117,23 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
         << "CUDA error: " << r;
 
     // Execute TensorRT network (batch size = 1) TODO.
-    m_nv_context->execute(1, (void**)m_cached_bindings.data());
+    size_t num_batches = 1;
+    m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
 
     // Post-processing of outputs of every feature layer.
-    tfrt::boxes2d::bboxes2d bboxes2d{max_detections};
-    const std::vector<ssd_feature>& features = this->features();
-    size_t detections = 0;
+    const auto& features = this->features();
+    size_t bboxes2d_idx = 0;
+    tfrt::boxes2d::bboxes2d  bboxes2d{max_detections};
     for(const auto& f : features) {
         // Get the Eigen output tensors.
         tfrt::nachw<float>::tensor pred2d = f.predictions2d();
         tfrt::nachw<float>::tensor boxes2d = f.boxes2d();
-        pred2d.size();
-        // pred2d(0, 0, 0, 0, 0);
-
-        // Collected everything I can!
-        if(detections >= max_detections-1)
-            break;
+        // Fill 2D bounding boxes with raw values. Stop at max detections.
+        this->fill_bboxes2d(pred2d, boxes2d, threshold, max_detections,
+                            1, bboxes2d_idx, bboxes2d);
     }
+    // Sort by decreasing score.
+    bboxes2d.sort_by_score(true);
     // Simple post-processing of outputs of every feature layer.
     return bboxes2d;
 }
@@ -147,7 +147,7 @@ void ssd_network::fill_bboxes2d(
     // No silver bullet here! Have to go the hard loop-way!
     // size_t idx{bboxes2d_idx};
     float y, x, h, w;
-    // Loop on anchors, height and width dimensions.
+    // Loop on  height, width and anchors dimensions.
     for(long i = 0 ; i < predictions2d.dimension(3) ; ++i) {
         for(long j = 0 ; j < predictions2d.dimension(4) ; ++j) {
             for(long k = 0 ; k < predictions2d.dimension(1) ; ++k) {
