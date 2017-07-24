@@ -105,5 +105,7 @@ GLOG_logtostderr=1 ./tfrt_giexec \
     --network=ssd_inception2_v0 \
     --network_pb=../data/networks/ssd_inception2_v0_orig.tfrt32 \
     --image=../data/images/peds-001.jpg \
+    --max_detections=200 \
+    --threshold=0.5 \
     --image_save=0
 ```
