@@ -140,7 +140,7 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
     }
     // Sort by decreasing score.
     DLOG(INFO) << "Sort SSD 2D boxes by decreasing score.";
-    bboxes2d.sort_by_score(true);
+    // bboxes2d.sort_by_score(true);
     // Simple post-processing of outputs of every feature layer.
     return bboxes2d;
 }
