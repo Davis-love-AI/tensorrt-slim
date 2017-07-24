@@ -79,6 +79,7 @@ int main( int argc, char** argv )
     LOG(INFO) << SSDNET << "Detecting object on image...";
     bboxes2d = network->raw_detect2d(
         img.cuda, img.shape.h(), img.shape.w(), threshold, max_detections);
+    LOG(INFO) << SSDNET << "Raw 2D objects: " << bboxes2d;
 
 
     // else if( argc > 2 )		// if the user supplied an output filename
@@ -118,8 +119,5 @@ int main( int argc, char** argv )
     // }
     // //printf("detectnet-console:  '%s' -> %2.5f%% class #%i (%s)\n", imgFilename, confidence * 100.0f, img_class, "pedestrian");
 
-    // printf("\nshutting down...\n");
-    // CUDA(cudaFreeHost(imgCPU));
-    // delete net;
     return 0;
 }

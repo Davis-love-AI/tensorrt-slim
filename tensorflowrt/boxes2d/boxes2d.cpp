@@ -65,5 +65,18 @@ void bboxes2d::sort_by_score(bool decreasing)
 }
 
 
+std::ostream& operator<< (std::ostream& stream, const bboxes2d& bboxes2d)
+{
+    stream << "2D bounding boxes (size: " << bboxes2d.size() << ")\n";
+    for(size_t i = 0 ; i < bboxes2d.size() ; ++i) {
+        if(bboxes2d.scores[i] > 0.) {
+            stream << "  class: " << bboxes2d.classes[i]
+                << " | score: " << bboxes2d.scores[i]
+                << " | bbox: " << bboxes2d.boxes.row(i) << "\n";
+        }
+    }
+    return stream;
+}
+
 }
 }

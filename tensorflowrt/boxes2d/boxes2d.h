@@ -16,6 +16,7 @@
 #define TFRT_BOXES2D_H
 
 #include <chrono>
+#include <ostream>
 
 #include <Eigen/Core>
 #include <unsupported/Eigen/CXX11/Tensor>
@@ -70,6 +71,9 @@ public:
         assert(classes.size() == boxes.rows());
         return classes.size();
     }
+
+    /** Output stream representation.  */
+    friend std::ostream& operator<< (std::ostream& stream, const bboxes2d& bboxes2d);
 };
 
 }
