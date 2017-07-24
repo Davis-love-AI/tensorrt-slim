@@ -255,7 +255,7 @@ tfrt::network& network::input_shape(const nvinfer1::DimsCHW& shape)
 tfrt::cuda_tensor* network::find_cuda_output(const std::string& name) const
 {
     DLOG(INFO) << "Finding CUDA output tensor named: \'" << name << "\'";
-    DCHECK(name.length()) << "Empty tensor name.";
+    DCHECK(name.length()) << "Empty CUDA tensor name.";
     for(auto& t : m_cuda_outputs) {
         if(t.name.find(name) != std::string::npos) {
             // A bit ugly hack!!!

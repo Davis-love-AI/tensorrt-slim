@@ -187,9 +187,9 @@ def ssd_network_anchors2d_outputs(fidx, pb_ssd_network, ssd_net, ssd_anchors):
 
     # Prediction and 2D boxes outputs.
     name = add_anchors2d_output('predictions', pb_ssd_network.num_classes_2d * nanchors)
-    pb_feature.outputs_name.predictions2d = name
+    pb_feature.outputs.predictions2d = name
     name = add_anchors2d_output('boxes', 4 * nanchors)
-    pb_feature.outputs_name.boxes2d = name
+    pb_feature.outputs.boxes2d = name
 
 
 def ssd_network_feature(idx, pb_ssd_network, ssd_net, ssd_anchors):

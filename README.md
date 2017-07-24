@@ -57,7 +57,7 @@ python export_tfrt_ssd_inception2_v0.py \
     --input_width=300 \
     --input_shift=-1 \
     --input_scale=0.00784313725490196 \
-    --num_classes=91 \
+    --num_classes_2d=91 \
     --fp16=0
 ```
 
