@@ -168,7 +168,7 @@ void ssd_network::fill_bboxes2d(
                 size_t max_pred = predictions2d(batch, k, 0, i, j);
                 // Loop over the classes!
                 for(long l = 1 ; l < predictions2d.dimension(2) ; ++l) {
-                    DLOG(INFO) << "Pred2D: " << predictions2d(batch, k, l, i, j) << " | " << max_pred;
+                    // DLOG(INFO) << "Pred2D: " << predictions2d(batch, k, l, i, j) << " | " << max_pred;
                     if(predictions2d(batch, k, l, i, j) > max_pred) {
                         max_idx = l;
                         max_pred = predictions2d(batch, k, l, i, j);
