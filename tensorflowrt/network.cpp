@@ -254,12 +254,14 @@ tfrt::network& network::input_shape(const nvinfer1::DimsCHW& shape)
 }
 tfrt::cuda_tensor* network::find_cuda_output(const std::string& name) const
 {
+    DLOG(INFO) << "Finding CUDA output tensor named: \'" << name << "\'";
     for(auto& t : m_cuda_outputs) {
         if(t.name.find(name) != std::string::npos) {
             // A bit ugly hack!!!
             return (tfrt::cuda_tensor*) &t;
         }
     }
+    LOG(WARNING) << "Could not find CUDA output tensor named: \'" << name << "\'";
     return nullptr;
 }
 
