@@ -62,6 +62,11 @@ tfrt::nachw<float>::tensor ssd_feature::boxes2d() const
     // Reshape NCHW tensor. Should not require memory reallocation.
     size_t nanchors2d = this->num_anchors2d_total();
     auto t = this->outputs.boxes2d->tensor();
+    DLOG(INFO) << "Reshaping 2D boxes with shape "
+        << t.dimension(0) << " | " << t.dimension(1) << " | "
+        << t.dimension(2) << " | " << t.dimension(3)
+        << " into NACHW tensor. N anchors: " << nanchors2d << long(t.dimension(1) / nanchors2d);
+
     std::array<long, 5> shape{
         t.dimension(0), long(nanchors2d), 4, t.dimension(2), t.dimension(3)};
     tfrt::nachw<float>::tensor a = t.reshape(shape);
