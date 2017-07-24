@@ -30,6 +30,10 @@ typedef Eigen::Array<int, Eigen::Dynamic, 1>  vec_int;
 typedef Eigen::Array<float, Eigen::Dynamic, 1>  vec_float;
 typedef Eigen::Array<float, Eigen::Dynamic, 4>  boxes2d;
 
+/** Note: 2D boxes are supposed to be stored using
+ * the CV convention ymin, xmin, ymax, xmax.
+ */
+
 /* ============================================================================
  * Bounding boxes 2D
  * ========================================================================== */
@@ -73,3 +77,6 @@ public:
 }
 
 #endif
+
+// boxes2d operations.
+#include "operations.h"
