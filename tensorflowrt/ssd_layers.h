@@ -100,6 +100,8 @@ public:
             .noutputs(m_num_anchors * m_num_classes).ksize({3, 3})(net);
         auto net_loc = conv2d(sc, "conv_loc")
             .noutputs(m_num_anchors * 4).ksize({3, 3})(net);
+        // Decode class predictions.
+        net_cls = tfrt::sigmoid(sc, "cls_sigmoid")(net_cls);
         // Decode boxes.
         if(m_decode_boxes) {
             net_loc = ssd_boxes2d_decode(sc, "decode")(net_loc);
