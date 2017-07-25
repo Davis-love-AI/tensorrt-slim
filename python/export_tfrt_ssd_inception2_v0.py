@@ -162,8 +162,8 @@ def ssd_network_anchors2d_elementwise_weights(fidx, pb_ssd_network, ssd_net, ssd
         ascale[i, 0] = anchor_h
         ascale[i, 1] = anchor_w
         # height, width.
-        ascale[i, 0] = anchor_h
-        ascale[i, 1] = anchor_w
+        ascale[i, 2] = anchor_h
+        ascale[i, 3] = anchor_w
     # Reshape to CHW format.
     adrift = np.reshape(adrift, [-1, ashape[0], ashape[1]])
     ascale = np.reshape(ascale, [-1, ashape[0], ashape[1]])
