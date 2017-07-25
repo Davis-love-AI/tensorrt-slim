@@ -134,13 +134,13 @@ def tensor_to_float(a, name=''):
     return a
 
 
-def tensor_np_to_tfrt(sess, name, np_tensor, pb_tensor):
+def tensor_np_to_tfrt(sess, name, np_tensor, pb_tensor, permutation=[3, 2, 0, 1]):
     """Convert a numpy Tensor + name to TF-RT tensor format.
     """
     a = np_tensor
     # Permutation of axes.
-    if a.ndim == 4:
-        a = np.transpose(a, axes=[3, 2, 0, 1])
+    if permutation and a.ndim == len(permutation):
+        a = np.transpose(a, axes=permutation)
     # Modify 'depthwise weights'
     if 'depthwise_weights' in name:
         # GKCRS order. G == nb inputs, K == depth multiplier.

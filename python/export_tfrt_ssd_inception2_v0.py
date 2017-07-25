@@ -54,10 +54,8 @@ tf.app.flags.DEFINE_integer('num_classes_2d', 91, 'Number of 2D classes.')
 tf.app.flags.DEFINE_integer('num_classes_3d', 0, 'Number of 3D classes.')
 tf.app.flags.DEFINE_integer('num_classes_seg', 0, 'Number of segmentation classes.')
 
-# tf.app.flags.DEFINE_string(
-#     'outputs_name', 'Sotfmax', 'Name of the output tensors.')
-# tf.app.flags.DEFINE_string(
-#     'fix_scopes', '', 'Scopes to be modify. Format: old0:new0,old1:new1')
+tf.app.flags.DEFINE_integer('fast_exp', 1024,
+    'Exponent used in fast exponential approximation')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -104,12 +102,13 @@ def ssd_feature_fullname(fname):
 
 def ssd_network_anchors2d_channel_weights(fidx, pb_ssd_network, ssd_net, ssd_anchors):
     """Generate the channel-scaling weights necessary to 2D anchors decoding.
+    Note: anchors formatted as y, x, h, w list.
     """
     # Exponential approximation used. (256/512/1024/...)
-    N = 256
+    N = FLAGS.fast_exp
     nanchors = np.sum([len(a[1]) for a in ssd_net.params.anchor_sizes[fidx]])
     featname = ssd_net.params.feat_layers[fidx][0]
-    # Channel scaling.
+    # Channel scaling: AC shape.
     adrift = np.zeros([nanchors, 4], np.float32)
     ascale = np.ones([nanchors, 4], np.float32)
     apower = np.ones([nanchors, 4], np.float32)
@@ -125,23 +124,32 @@ def ssd_network_anchors2d_channel_weights(fidx, pb_ssd_network, ssd_net, ssd_anc
         ascale[i, 3] = ssd_net.params.prior_scaling[3] / N
         apower[i, 2] = N
         apower[i, 3] = N
+    # Flattening everything...
+    adrift = np.reshape(adrift, [-1])
+    ascale = np.reshape(ascale, [-1])
+    apower = np.reshape(apower, [-1])
     # Save the weights.
     name = ssd_feature_fullname(featname)
     name = os.path.join(name, 'decode', 'scale_channel')
-    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'drift'), adrift, pb_ssd_network.network.weights.add())
-    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'scale'), ascale, pb_ssd_network.network.weights.add())
-    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'power'), apower, pb_ssd_network.network.weights.add())
+    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'drift'),
+        adrift, pb_ssd_network.network.weights.add(), permutation=None)
+    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'scale'),
+        ascale, pb_ssd_network.network.weights.add(), permutation=None)
+    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'power'),
+        apower, pb_ssd_network.network.weights.add(), permutation=None)
 
 
 def ssd_network_anchors2d_elementwise_weights(fidx, pb_ssd_network, ssd_net, ssd_anchors):
     """Generate the elementwise-scaling weights necessary to 2D anchors decoding.
+    Note: anchors formatted as y, x, h, w list.
     """
     nanchors = np.sum([len(a[1]) for a in ssd_net.params.anchor_sizes[fidx]])
     featname = ssd_net.params.feat_layers[fidx][0]
-    # Elementwise scaling.
+
     anchor_y = np.squeeze(ssd_anchors[fidx][0], axis=-1)
     anchor_x = np.squeeze(ssd_anchors[fidx][1], axis=-1)
     ashape = anchor_y.shape
+    # Elementwise scaling: ACHW format.
     adrift = np.zeros([nanchors, 4, ashape[0], ashape[1]], np.float32)
     ascale = np.ones([nanchors, 4, ashape[0], ashape[1]], np.float32)
     for i in range(nanchors):
@@ -156,11 +164,16 @@ def ssd_network_anchors2d_elementwise_weights(fidx, pb_ssd_network, ssd_net, ssd
         # height, width.
         ascale[i, 0] = anchor_h
         ascale[i, 1] = anchor_w
+    # Reshape to CHW format.
+    adrift = np.reshape(adrift, [-1, ashape[0], ashape[1]])
+    ascale = np.reshape(ascale, [-1, ashape[0], ashape[1]])
     # Save the weights.
     name = ssd_feature_fullname(featname)
     name = os.path.join(name, 'decode', 'scale_elementwise')
-    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'drift'), adrift, pb_ssd_network.network.weights.add())
-    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'scale'), ascale, pb_ssd_network.network.weights.add())
+    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'drift'),
+        adrift, pb_ssd_network.network.weights.add(), permutation=None)
+    tfrt_export.tensor_np_to_tfrt(None, os.path.join(name, 'scale'),
+        ascale, pb_ssd_network.network.weights.add(), permutation=None)
 
 
 def ssd_network_anchors2d_outputs(fidx, pb_ssd_network, ssd_net, ssd_anchors):

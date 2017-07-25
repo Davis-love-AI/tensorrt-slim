@@ -85,8 +85,6 @@ int main( int argc, char** argv )
     // Save images...
     if(FLAGS_image_save) {
         LOG(INFO) << SSDNET << "Print 2D bounding boxes on images.";
-
-
     }
     // else if( argc > 2 )		// if the user supplied an output filename
     // {
