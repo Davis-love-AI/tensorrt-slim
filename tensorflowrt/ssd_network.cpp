@@ -210,27 +210,49 @@ void ssd_network::draw_bboxes_2d(float* input, float* output,
 
 tfrt::cuda_tensor& ssd_network::colors_2d() {
     if(!m_cuda_colors_2d.is_allocated()) {
-        this->generate_colors();
+        this->generate_colors_2d();
     }
     return m_cuda_colors_2d;
 }
 tfrt::cuda_tensor& ssd_network::colors_3d() {
     if(!m_cuda_colors_3d.is_allocated()) {
-        this->generate_colors();
+        this->generate_colors_3d();
     }
     return m_cuda_colors_3d;
 }
 tfrt::cuda_tensor& ssd_network::colors_seg() {
     if(!m_cuda_colors_3d.is_allocated()) {
-        this->generate_colors();
+        this->generate_colors_seg();
     }
     return m_cuda_colors_seg;
 }
-/** Generate colors. */
-void ssd_network::generate_colors()
+
+void ssd_network::generate_colors_2d()
+{
+    // Allocate color tensor.
+    auto num_classes = this->num_classes_2d();
+    m_cuda_colors_2d.shape = {num_classes, 4, 1, 1};
+    m_cuda_colors_2d.allocate();
+    // Default colors...
+    for(int n = 0 ; n < num_classes ; n++) {
+        m_cuda_colors_2d.cpu[n*4+0] = 0.0f;	    // r
+        m_cuda_colors_2d.cpu[n*4+1] = 255.0f;	// g
+        m_cuda_colors_2d.cpu[n*4+2] = 175.0f;	// b
+        m_cuda_colors_2d.cpu[n*4+3] = 100.0f;	// a
+    }
+    // Use MS COCO colors???
+}
+void ssd_network::generate_colors_3d()
+{
+    // Allocate color tensor.
+    m_cuda_colors_3d.shape = {this->num_classes_3d(), 4, 1, 1};
+
+}
+void ssd_network::generate_colors_seg()
 {
 
 }
+
 
 // void test_values(float* ptensor, const tfrt::nachw<float>::tensor& tensor)
 // {

@@ -93,9 +93,9 @@ public:
     ssd_network(std::string name) :
         tfrt::network(name),
         m_pb_ssd_network(std::make_unique<tfrt_pb::ssd_network>()),
-        m_cuda_colors_2d{"colors_2d", {0,1,1,1}},
-        m_cuda_colors_3d{"colors_3d", {0,1,1,1}},
-        m_cuda_colors_seg{"colors_seg", {0,1,1,1}},
+        m_cuda_colors_2d{"colors_2d", {0,4,1,1}},
+        m_cuda_colors_3d{"colors_3d", {0,4,1,1}},
+        m_cuda_colors_seg{"colors_seg", {0,4,1,1}},
         m_cached_features{} {
     }
     virtual ~ssd_network();
@@ -143,14 +143,16 @@ public:
     tfrt::cuda_tensor& colors_2d();
     tfrt::cuda_tensor& colors_3d();
     tfrt::cuda_tensor& colors_seg();
-    /** Generate colors. */
-    void generate_colors();
+    /** Generate colors. Can be reimplemented. */
+    virtual void generate_colors_2d();
+    virtual void generate_colors_3d();
+    virtual void generate_colors_seg();
 
 protected:
     // Protobuf network object.
     std::unique_ptr<tfrt_pb::ssd_network>  m_pb_ssd_network;
 
-    /** CUDA colors tensors.  */
+    /** CUDA RGBA colors tensors: Nx4x1x1.  */
     tfrt::cuda_tensor m_cuda_colors_2d;
     tfrt::cuda_tensor m_cuda_colors_3d;
     tfrt::cuda_tensor m_cuda_colors_seg;
