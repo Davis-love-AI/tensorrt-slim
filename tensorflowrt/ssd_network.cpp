@@ -144,8 +144,8 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
         tfrt::nachw<float>::tensor pred2d = f.predictions2d();
         tfrt::nachw<float>::tensor boxes2d = f.boxes2d();
         // Fill 2D bounding boxes with raw values. Stop at max detections.
-        this->fill_bboxes2d(pred2d, boxes2d, threshold, max_detections,
-                            batch, bboxes2d_idx, bboxes2d);
+        this->fill_bboxes_2d(pred2d, boxes2d, threshold, max_detections,
+                             batch, bboxes2d_idx, bboxes2d);
     }
     // Sort by decreasing score.
     DLOG(INFO) << "Sort SSD raw 2D boxes by decreasing score.";
@@ -154,7 +154,7 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
     return bboxes2d;
 }
 
-void ssd_network::fill_bboxes2d(
+void ssd_network::fill_bboxes_2d(
     const tfrt::nachw<float>::tensor& predictions2d,
     const tfrt::nachw<float>::tensor& boxesd2d,
     float threshold, size_t max_detections, size_t batch,
@@ -200,6 +200,36 @@ void ssd_network::fill_bboxes2d(
             }
         }
     }
+}
+
+void ssd_network::draw_bboxes_2d(float* input, float* output,
+    uint32_t width, uint32_t height, const tfrt::boxes2d::bboxes2d& bboxes2d) const
+{
+
+}
+
+tfrt::cuda_tensor& ssd_network::colors_2d() {
+    if(!m_cuda_colors_2d.is_allocated()) {
+        this->generate_colors();
+    }
+    return m_cuda_colors_2d;
+}
+tfrt::cuda_tensor& ssd_network::colors_3d() {
+    if(!m_cuda_colors_3d.is_allocated()) {
+        this->generate_colors();
+    }
+    return m_cuda_colors_3d;
+}
+tfrt::cuda_tensor& ssd_network::colors_seg() {
+    if(!m_cuda_colors_3d.is_allocated()) {
+        this->generate_colors();
+    }
+    return m_cuda_colors_seg;
+}
+/** Generate colors. */
+void ssd_network::generate_colors()
+{
+
 }
 
 // void test_values(float* ptensor, const tfrt::nachw<float>::tensor& tensor)

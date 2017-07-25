@@ -82,9 +82,11 @@ int main( int argc, char** argv )
         img.cuda, img.shape.h(), img.shape.w(), threshold, max_detections);
     LOG(INFO) << SSDNET << "Raw 2D objects: " << bboxes2d;
 
-    // Save images...
+    // Save counding boxes to images.
     if(FLAGS_image_save) {
         LOG(INFO) << SSDNET << "Print 2D bounding boxes on images.";
+
+
     }
     // else if( argc > 2 )		// if the user supplied an output filename
     // {

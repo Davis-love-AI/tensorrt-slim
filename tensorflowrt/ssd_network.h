@@ -92,7 +92,11 @@ public:
      */
     ssd_network(std::string name) :
         tfrt::network(name),
-        m_pb_ssd_network(std::make_unique<tfrt_pb::ssd_network>()) {
+        m_pb_ssd_network(std::make_unique<tfrt_pb::ssd_network>()),
+        m_cuda_colors_2d{"colors_2d", {0,1,1,1}},
+        m_cuda_colors_3d{"colors_3d", {0,1,1,1}},
+        m_cuda_colors_seg{"colors_seg", {0,1,1,1}},
+        m_cached_features{} {
     }
     virtual ~ssd_network();
     /** Clear cached variables.  */
@@ -123,16 +127,35 @@ public:
 protected:
     /** Fill 2D bounding boxes collection from raw output tensors.
      */
-    void fill_bboxes2d(
+    void fill_bboxes_2d(
         const tfrt::nachw<float>::tensor& predictions2d,
         const tfrt::nachw<float>::tensor& boxesd2d,
         float threshold, size_t max_detections, size_t batch,
         size_t& bboxes2d_idx, tfrt::boxes2d::bboxes2d& bboxes2d) const;
 
+public:
+    /** Draw 2D boxes on some CUDA image.
+     */
+    void draw_bboxes_2d(float* input, float* output, uint32_t width, uint32_t height,
+        const tfrt::boxes2d::bboxes2d& bboxes2d) const;
+
+    /** Get the CUDA color tensors. */
+    tfrt::cuda_tensor& colors_2d();
+    tfrt::cuda_tensor& colors_3d();
+    tfrt::cuda_tensor& colors_seg();
+    /** Generate colors. */
+    void generate_colors();
+
 protected:
     // Protobuf network object.
     std::unique_ptr<tfrt_pb::ssd_network>  m_pb_ssd_network;
-    // Cached features.
+
+    /** CUDA colors tensors.  */
+    tfrt::cuda_tensor m_cuda_colors_2d;
+    tfrt::cuda_tensor m_cuda_colors_3d;
+    tfrt::cuda_tensor m_cuda_colors_seg;
+
+    // Cached parameters.
     mutable std::vector<ssd_feature>  m_cached_features;
 };
 

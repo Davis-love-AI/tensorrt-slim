@@ -76,6 +76,10 @@ public:
     bool allocate();
     /** Free allocated memory and reset pointers. */
     void free();
+    /** Is the tensor allocated. */
+    bool is_allocated() const {
+        return (cpu != nullptr && cuda != nullptr);
+    }
 
 public:
     /** Get an Eigen tensor representation of the CPU tensor. */
