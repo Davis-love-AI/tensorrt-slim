@@ -113,6 +113,7 @@ bool ssd_network::load_weights(const std::string& filename)
     return r;
 }
 
+
 tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
         float* rgba, uint32_t height, uint32_t width, float threshold, size_t max_detections)
 {
@@ -136,17 +137,18 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
     const auto& features = this->features();
     size_t bboxes2d_idx = 0;
     tfrt::boxes2d::bboxes2d  bboxes2d{max_detections};
-    for(const auto& f : features) {
+    for(auto& f : features) {
+        DLOG(INFO) << "Extracting raw 2D boxes from feature: " << f.name;
         // Get the Eigen output tensors.
         tfrt::nachw<float>::tensor pred2d = f.predictions2d();
         tfrt::nachw<float>::tensor boxes2d = f.boxes2d();
         // Fill 2D bounding boxes with raw values. Stop at max detections.
         this->fill_bboxes2d(pred2d, boxes2d, threshold, max_detections,
-                            1, bboxes2d_idx, bboxes2d);
+                            0, bboxes2d_idx, bboxes2d);
     }
     // Sort by decreasing score.
-    DLOG(INFO) << "Sort SSD 2D boxes by decreasing score.";
-    // bboxes2d.sort_by_score(true);
+    DLOG(INFO) << "Sort SSD raw 2D boxes by decreasing score.";
+    bboxes2d.sort_by_score(true);
     // Simple post-processing of outputs of every feature layer.
     return bboxes2d;
 }
@@ -170,10 +172,9 @@ void ssd_network::fill_bboxes2d(
                 }
                 // Initialize with no-object class.
                 size_t max_idx = 0;
-                size_t max_pred = predictions2d(batch, k, 0, i, j);
+                float max_pred = predictions2d(batch, k, 0, i, j);
                 // Loop over the classes!
                 for(long l = 1 ; l < predictions2d.dimension(2) ; ++l) {
-                    // DLOG(INFO) << "Pred2D: " << predictions2d(batch, k, l, i, j) << " | " << max_pred;
                     if(predictions2d(batch, k, l, i, j) > max_pred) {
                         max_idx = l;
                         max_pred = predictions2d(batch, k, l, i, j);
@@ -199,5 +200,15 @@ void ssd_network::fill_bboxes2d(
         }
     }
 }
+
+// void test_values(float* ptensor, const tfrt::nachw<float>::tensor& tensor)
+// {
+//     LOG(INFO) << "Looking at values...";
+//     LOG(INFO) << "#0 " << ptensor[0] << " | " << tensor(0,0,0,0,0);
+//     LOG(INFO) << "#1 " << ptensor[1] << " | " << tensor(0,0,0,0,1);
+//     LOG(INFO) << "#2 " << ptensor[2];
+//     LOG(INFO) << "#3 " << ptensor[3];
+// }
+
 
 }
