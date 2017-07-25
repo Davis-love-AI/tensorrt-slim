@@ -135,6 +135,7 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
     DLOG(INFO) << "Post-processing of SSD raw outputs, selecting 2D boxes. "
         << "Max detections: " << max_detections << " Threshold: " << threshold;
     const auto& features = this->features();
+    size_t batch = 0;
     size_t bboxes2d_idx = 0;
     tfrt::boxes2d::bboxes2d  bboxes2d{max_detections};
     for(auto& f : features) {
@@ -144,7 +145,7 @@ tfrt::boxes2d::bboxes2d ssd_network::raw_detect2d(
         tfrt::nachw<float>::tensor boxes2d = f.boxes2d();
         // Fill 2D bounding boxes with raw values. Stop at max detections.
         this->fill_bboxes2d(pred2d, boxes2d, threshold, max_detections,
-                            0, bboxes2d_idx, bboxes2d);
+                            batch, bboxes2d_idx, bboxes2d);
     }
     // Sort by decreasing score.
     DLOG(INFO) << "Sort SSD raw 2D boxes by decreasing score.";
