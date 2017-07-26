@@ -16,7 +16,10 @@
 
 #include "utils.h"
 #include "ssd_network.h"
+
 #include "cuda/cudaImageNet.h"
+#include "cuda/cudaOverlay.h"
+#include "cuda/cudaResize.h"
 
 namespace tfrt
 {
@@ -203,9 +206,28 @@ void ssd_network::fill_bboxes_2d(
 }
 
 void ssd_network::draw_bboxes_2d(float* input, float* output,
-    uint32_t width, uint32_t height, const tfrt::boxes2d::bboxes2d& bboxes2d) const
+    uint32_t height, uint32_t width, const tfrt::boxes2d::bboxes2d& bboxes2d) const
 {
-
+    CHECK_NOTNULL(input);
+    CHECK(bool(width) && bool(height)) << "Provide an image with positive dimensions.";
+    // TODO: Optimize this crap!
+    for(size_t i = 0 ; i < bboxes2d.size_notnull() ; ++i) {
+        DLOG(INFO) << "Drawing 2D bounding box #" << i;
+        int n = bboxes2d.classes[i];
+        // color and bbox CUDA float4.
+        const float4 color = make_float4(m_cuda_colors_2d.cpu[n*4+0],
+                                         m_cuda_colors_2d.cpu[n*4+1],
+                                         m_cuda_colors_2d.cpu[n*4+2],
+                                         m_cuda_colors_2d.cpu[n*4+3]);
+        float4 box2d = make_float4(bboxes2d.boxes(i, 0),
+                                  bboxes2d.boxes(i, 1),
+                                  bboxes2d.boxes(i, 2),
+                                  bboxes2d.boxes(i, 3));
+        // CUDA box2d printing.
+        bool r = CUDA_FAILED(cudaRectOutlineOverlay((float4*)input, (float4*)output,
+            width, height, &box2d, 1, color));
+        CHECK(r) << "CUDA failing to draw the 2D box overlay";
+    }
 }
 
 tfrt::cuda_tensor& ssd_network::colors_2d() {

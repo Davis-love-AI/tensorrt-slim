@@ -136,7 +136,7 @@ protected:
 public:
     /** Draw 2D boxes on some CUDA image.
      */
-    void draw_bboxes_2d(float* input, float* output, uint32_t width, uint32_t height,
+    void draw_bboxes_2d(float* input, float* output, uint32_t height, uint32_t width,
         const tfrt::boxes2d::bboxes2d& bboxes2d) const;
 
     /** Get the CUDA color tensors. */
@@ -153,6 +153,7 @@ protected:
     std::unique_ptr<tfrt_pb::ssd_network>  m_pb_ssd_network;
 
     /** CUDA RGBA colors tensors: Nx4x1x1.  */
+    // Do I really need CUDA tensors???
     tfrt::cuda_tensor m_cuda_colors_2d;
     tfrt::cuda_tensor m_cuda_colors_3d;
     tfrt::cuda_tensor m_cuda_colors_seg;

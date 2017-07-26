@@ -71,6 +71,18 @@ public:
         assert(classes.size() == boxes.rows());
         return classes.size();
     }
+    /** Get the number of non-empty bounding boxes (i.e. score=0) */
+    size_t size_notnull() const {
+        // TODO: optimise this shit!
+        size_t _size = 0;
+        for(int i = 0 ; i < scores.size() ; ++i) {
+            if(scores[i] == 0.) {
+                return _size;
+            }
+            _size++;
+        }
+        return _size;
+    }
 
     /** Output stream representation.  */
     friend std::ostream& operator<< (std::ostream& stream, const bboxes2d& bboxes2d);
