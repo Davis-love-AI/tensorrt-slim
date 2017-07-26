@@ -224,8 +224,8 @@ void ssd_network::draw_bboxes_2d(float* input, float* output,
                                   bboxes2d.boxes(i, 2),
                                   bboxes2d.boxes(i, 3));
         // CUDA box2d printing.
-        bool r = CUDA_FAILED(cudaRectOutlineOverlay((float4*)input, (float4*)output,
-            width, height, &box2d, 1, color));
+        bool r = CUDA_FAILED(cuda2DBoxOutlineOverlay((float4*)input, (float4*)output,
+            width, height, box2d, color));
         CHECK(r) << "CUDA failing to draw the 2D box overlay";
     }
 }
