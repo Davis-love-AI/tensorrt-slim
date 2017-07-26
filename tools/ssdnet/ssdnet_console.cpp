@@ -53,6 +53,15 @@ std::unique_ptr<tfrt::ssd_network>&& networks_map(const std::string& key)
     }
     return std::move(nets.at(key));
 }
+/** Generate the export filename for image with 2D bboxes. */
+std::string  filename_image_bboxes2d(std::string filename)
+{
+    auto ext = filename.substr(filename.length()-4, 4);
+    filename = filename.substr(0, filename.length()-4);
+    filename += ".bboxes2d";
+    filename += ext;
+    return filename;
+}
 
 // main entry point
 int main( int argc, char** argv )
@@ -85,45 +94,14 @@ int main( int argc, char** argv )
     // Save counding boxes to images.
     if(FLAGS_image_save) {
         LOG(INFO) << SSDNET << "Print 2D bounding boxes on images.";
+        network->draw_bboxes_2d(img.cuda, img.cuda, img.shape.h(), img.shape.w(), bboxes2d);
+        CUDA(cudaThreadSynchronize());
 
-
+        auto filename = filename_image_bboxes2d(FLAGS_image);
+        LOG(INFO) << SSDNET << "Save image with 2D boxes into: " << filename;
+        r = saveImageRGBA(filename.c_str(), (float4*)img.cpu,
+            img.shape.w(), img.shape.h(), 255.0f);
+        CHECK(r) << "Failed to save back image with 2D boxes overlay.";
     }
-    // else if( argc > 2 )		// if the user supplied an output filename
-    // {
-        // printf("%i bounding boxes detected\n", numBoundingBoxes);
-
-        // int lastClass = 0;
-        // int lastStart = 0;
-
-        // for( int n=0; n < numBoundingBoxes; n++ )
-        // {
-        //     const int nc = confCPU[n*2+1];
-        //     float* bb = bbCPU + (n * 4);
-
-        //     printf("bounding box %i   (%f, %f)  (%f, %f)  w=%f  h=%f\n", n, bb[0], bb[1], bb[2], bb[3], bb[2] - bb[0], bb[3] - bb[1]);
-
-        //     if( nc != lastClass || n == (numBoundingBoxes - 1) )
-        //     {
-        //         if( !net->DrawBoxes(imgCUDA, imgCUDA, imgWidth, imgHeight, bbCUDA + (lastStart * 4), (n - lastStart) + 1, lastClass) )
-        //             printf("detectnet-console:  failed to draw boxes\n");
-
-        //         lastClass = nc;
-        //         lastStart = n;
-        //     }
-        // }
-
-    //     CUDA(cudaThreadSynchronize());
-
-    //     // save image to disk
-    //     printf("detectnet-console:  writing %ix%i image to '%s'\n", imgWidth, imgHeight, argv[2]);
-
-    //     if( !saveImageRGBA(argv[2], (float4*)imgCPU, imgWidth, imgHeight, 255.0f) )
-    //         printf("detectnet-console:  failed saving %ix%i image to '%s'\n", imgWidth, imgHeight, argv[2]);
-    //     else
-    //         printf("detectnet-console:  successfully wrote %ix%i image to '%s'\n", imgWidth, imgHeight, argv[2]);
-
-    // }
-    // //printf("detectnet-console:  '%s' -> %2.5f%% class #%i (%s)\n", imgFilename, confidence * 100.0f, img_class, "pedestrian");
-
     return 0;
 }
