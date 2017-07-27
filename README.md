@@ -27,6 +27,13 @@ export CPLUS_INCLUDE_PATH=/usr/lib/x86_64-linux-gnu/glib-2.0/include:$CPLUS_INCL
 export CPLUS_INCLUDE_PATH=/usr/lib/x86_64-linux-gnu/gstreamer-1.0/include:$CPLUS_INCLUDE_PATH
 ```
 
+Fix a weird OpenGL linking problem:
+```bash
+sudo rm /usr/lib/aarch64-linux-gnu/libGL.so
+sudo ln -s /usr/lib/aarch64-linux-gnu/tegra/libGL.so /usr/lib/aarch64-linux-gnu/libGL.so
+```
+Trick coming from the `jetson-inference` examples.
+
 ## Python converting script TF -> TF-RT protobufs
 
 One may first need to generate the protobuf python sources:
