@@ -152,8 +152,22 @@ def tensor_np_to_tfrt(sess, name, np_tensor, pb_tensor, permutation=[3, 2, 0, 1]
         # Need the variance to fix the coefficient...
         v = tf_get_model_variable(sess, str.replace(name, 'moving_mean', 'moving_variance'))
         a = -a / np.sqrt(v)
+        # Incorporate gamma and beta coef.
+        b = tf_get_model_variable(sess, str.replace(name, 'moving_mean', 'beta'))
+        g = tf_get_model_variable(sess, str.replace(name, 'moving_mean', 'gamma'))
+        a = a * g + b
     if 'BatchNorm/moving_variance' in name:
+        # Change to scale convention.
         a = 1. / np.sqrt(a)
+        # Incorporate gamma coef.
+        g = tf_get_model_variable(sess, str.replace(name, 'moving_variance', 'gamma'))
+        a = a * g
+    if 'BatchNorm/beta' in name:
+        a = np.array([], np.float32)
+    if 'BatchNorm/gamma' in name:
+        a = np.array([], np.float32)
+
+    # BatchNorm/gamma beta
     # TODO: fuse with scaling parameters beta and gamma...
 
     # Convert to half-precision if necessary.
