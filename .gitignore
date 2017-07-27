@@ -22,5 +22,5 @@ __pycache__*
 # Build directory.
 build/
 3rdparty/eigen/
-3rdparty/half/
+# 3rdparty/half/
 
