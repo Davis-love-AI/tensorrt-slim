@@ -126,13 +126,13 @@ network::~network()
 {
     // TODO: unique_ptr + custom deleter.
     if(m_nv_engine) {
-		m_nv_engine->destroy();
-		m_nv_engine = nullptr;
-	}
-	if(m_nv_infer) {
-		m_nv_infer->destroy();
-		m_nv_infer = nullptr;
-	}
+        m_nv_engine->destroy();
+        m_nv_engine = nullptr;
+    }
+    if(m_nv_infer) {
+        m_nv_infer->destroy();
+        m_nv_infer = nullptr;
+    }
 }
 void network::clear()
 {
@@ -298,29 +298,32 @@ void network::clear_weights()
 bool network::load(std::string filename)
 {
     // Serialize model.
-    std::stringstream model_stream;
-    this->serialize_model(filename, model_stream, true);
+    // std::stringstream model_stream;
+    // nvinfer1::IHostMemory* model_stream{nullptr};
+    std::string model_buffer;
+    this->serialize_model(filename, model_buffer, true);
 
     // Inference runtime + engine + execution context.
-	nvinfer1::IRuntime* infer = createInferRuntime(m_gie_logger);
+    nvinfer1::IRuntime* infer = nvinfer1::createInferRuntime(m_gie_logger);
     CHECK_NOTNULL(infer);
-	nvinfer1::ICudaEngine* engine = infer->deserializeCudaEngine(model_stream);
+    nvinfer1::ICudaEngine* engine = infer->deserializeCudaEngine(
+        model_buffer.data(), model_buffer.size(), nullptr);
     CHECK_NOTNULL(engine);
-	nvinfer1::IExecutionContext* context = engine->createExecutionContext();
+    nvinfer1::IExecutionContext* context = engine->createExecutionContext();
     CHECK_NOTNULL(context);
 
     // Debug and profiler options.
-	if(m_enable_debug) {
+    if(m_enable_debug) {
         LOG(INFO) << LOG_GIE << "Enabling context debug sync.";
-		context->setDebugSync(true);
-	}
-	if(m_enable_profiler) {
-		context->setProfiler(&m_gie_profiler);
+        context->setDebugSync(true);
+    }
+    if(m_enable_profiler) {
+        context->setProfiler(&m_gie_profiler);
     }
     LOG(INFO) << LOG_GIE << "CUDA engine context initialized with #bindings: " << engine->getNbBindings();
-	this->m_nv_infer = infer;
-	this->m_nv_engine = engine;
-	this->m_nv_context = context;
+    this->m_nv_infer = infer;
+    this->m_nv_engine = engine;
+    this->m_nv_context = context;
 
     // Cached binding pointers.
     nvinfer1::DimsNCHW shape;
@@ -330,7 +333,8 @@ bool network::load(std::string filename)
     // CUDA allocate input memory.
     LOG(INFO) << LOG_GIE << "Allocating CUDA input memory for " << input_name(true);
     const int input_idx = m_nv_engine->getBindingIndex(input_name(true).c_str());
-	nvinfer1::DimsCHW inshape = engine->getBindingDimensions(input_idx);
+    nvinfer1::DimsCHW inshape =
+        static_cast<nvinfer1::DimsCHW&&>(engine->getBindingDimensions(input_idx));
     shape = nvinfer1::DimsNCHW{int(m_max_batch_size), inshape.c(), inshape.h(), inshape.w()};
 
     m_cuda_input = std::move(tfrt::cuda_tensor(input_name(true), shape));
@@ -346,7 +350,8 @@ bool network::load(std::string filename)
         LOG(INFO) << LOG_GIE << "Allocating CUDA output memory for " << outputs_name[i];
         const int output_idx = engine->getBindingIndex(outputs_name[i].c_str());
         if(output_idx > -1) {
-            nvinfer1::DimsCHW outshape = engine->getBindingDimensions(output_idx);
+            nvinfer1::DimsCHW outshape =
+                static_cast<nvinfer1::DimsCHW&&>(engine->getBindingDimensions(output_idx));
             shape = nvinfer1::DimsNCHW{int(m_max_batch_size), outshape.c(), outshape.h(), outshape.w()};
             // Push CUDA tensor and allocate memory.
             m_cuda_outputs.push_back(tfrt::cuda_tensor(outputs_name[i], shape));
@@ -369,13 +374,11 @@ nvinfer1::ITensor* network::build(tfrt::scope sc)
 {
     return nullptr;
 }
-bool network::serialize_model(const std::string& filename, std::stringstream& model_stream, bool caching)
+bool network::serialize_model(const std::string& filename, std::string& model_buffer, bool caching)
 {
     // Load model parameters and weights.
     this->load_weights(filename);
 
-    // Set model stream back to beginning.
-    model_stream.seekg(0, model_stream.beg);
     // Try to read serialized model from cache.
     std::ostringstream  filename_cache;
     filename_cache << filename << "."  << m_max_batch_size << ".cache";
@@ -384,35 +387,44 @@ bool network::serialize_model(const std::string& filename, std::stringstream& mo
         // Successful read of cached file => load and return.
         std::ifstream model_cached(filename_cache.str());
         if(model_cached) {
+            // Set model stream back to beginning.
+            std::stringstream model_stream;
+            model_stream.seekg(0, model_stream.beg);
             LOG(INFO) << LOG_GIE << "Loading network profile from cache...";
             model_stream << model_cached.rdbuf();
             model_cached.close();
+            // UGLY copy!!!
+            model_buffer = model_stream.str();
             return true;
         }
         LOG(WARNING) << LOG_GIE << "Could not read cached model. Back to th' old way.";
     }
     LOG(INFO) << LOG_GIE << "Building and profiling the network model.";
-    this->profile_model(model_stream);
+    nvinfer1::IHostMemory* nv_model_stream{nullptr};
+    this->profile_model(&nv_model_stream);
     this->clear_weights();
+    // TODO: fix this ugly copy of buffer!
+    model_buffer.assign((char*)nv_model_stream->data(), nv_model_stream->size());
+    nv_model_stream->destroy();
 
     if(caching) {
         LOG(INFO) << LOG_GIE << "Writing cached model to: " << filename_cache.str();
         std::ofstream model_cached;
-		model_cached.open(filename_cache.str());
-		model_cached << model_stream.rdbuf();
-		model_cached.close();
-		model_stream.seekg(0, model_stream.beg);
+        model_cached.open(filename_cache.str());
+        model_cached << model_buffer;
+        model_cached.close();
+        // model_stream.seekg(0, model_stream.beg);
     }
     return true;
 }
-bool network::profile_model(std::stringstream& model_stream)
+bool network::profile_model(nvinfer1::IHostMemory** nv_model_stream)
 {
     // Create API root class - must span the lifetime of the engine usage.
-	nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(m_gie_logger);
-	nvinfer1::INetworkDefinition* network = builder->createNetwork();
+    nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(m_gie_logger);
+    nvinfer1::INetworkDefinition* network = builder->createNetwork();
 
-	builder->setDebugSync(m_enable_debug);
-	builder->setMinFindIterations(10);	    // allow time for TX1/2 GPU to spin up.
+    builder->setDebugSync(m_enable_debug);
+    builder->setMinFindIterations(10);	    // allow time for TX1/2 GPU to spin up.
     builder->setAverageFindIterations(5);
 
     // Build the network.
@@ -422,10 +434,10 @@ bool network::profile_model(std::stringstream& model_stream)
     LOG(INFO) << LOG_GIE << "Network successfully built."
         << " #Inputs: " << network->getNbInputs() << " #Outputs: " << network->getNbOutputs();
 
-	// Build the engine
+    // Build the engine
     LOG(INFO) << LOG_GIE << "Configuring CUDA engine.";
-	builder->setMaxBatchSize(m_max_batch_size);
-	builder->setMaxWorkspaceSize(m_workspace_size);
+    builder->setMaxBatchSize(m_max_batch_size);
+    builder->setMaxWorkspaceSize(m_workspace_size);
     // Set up the floating mode.
     bool compatibleType = (this->datatype() == nvinfer1::DataType::kFLOAT ||
                            builder->platformHasFastFp16());
@@ -439,13 +451,13 @@ bool network::profile_model(std::stringstream& model_stream)
 
     nvinfer1::ICudaEngine* engine = builder->buildCudaEngine(*network);
     CHECK_NOTNULL(engine);
-
-	network->destroy();
-	// Serialize the engine, then close everything down
-	LOG(INFO) << LOG_GIE << "Serializing the engine.";
-    engine->serialize(model_stream);
-	engine->destroy();
-	builder->destroy();
+    network->destroy();
+    // Serialize the engine, then close everything down
+    LOG(INFO) << LOG_GIE << "Serializing the engine.";
+    // engine->serialize(model_stream);
+    (*nv_model_stream) = engine->serialize();
+    engine->destroy();
+    builder->destroy();
     return true;
 }
 

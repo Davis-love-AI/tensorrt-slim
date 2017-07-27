@@ -167,10 +167,10 @@ public:
     /** Serialize a network model. If caching=True, try to first load from
      * a cached file. If no file, construct the usual way and save the cache.
      */
-    bool serialize_model(const std::string& filename, std::stringstream& model_stream, bool caching=true);
+    bool serialize_model(const std::string& filename, std::string& model_buffer, bool caching=true);
     /** Build and profile a model.
      */
-    bool profile_model(std::stringstream& model_stream);
+    bool profile_model(nvinfer1::IHostMemory** model_stream);
 
 protected:
     /** Find a output CUDA tensor from the all collection! Return first partial match.
