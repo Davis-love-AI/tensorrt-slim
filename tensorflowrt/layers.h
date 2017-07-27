@@ -131,6 +131,7 @@ public:
     /** Input construction */
     virtual nvinfer1::ITensor* operator()() {
         auto dt = m_scope.tfrt_network()->datatype();
+        dt = nvinfer1::DataType::kFLOAT;
         // TensorRT input.
         nvinfer1::ITensor* input = m_scope.network()->addInput(
             m_scope.name().c_str(), dt, DIMRT(this->m_shape));
