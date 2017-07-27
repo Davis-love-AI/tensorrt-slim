@@ -14,6 +14,7 @@
 # =========================================================================== */
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <sys/stat.h>
 #include <time.h>
 #include <chrono>
@@ -39,11 +40,11 @@ int main(int argc, char **argv)
     // Half precision tests.
     LOG(INFO) << "Half size: " << sizeof(half_float::half);
     // Convert a vector of float to half.
-    std::vector<float> vec_f = {1.0};
+    std::vector<float> vec_f = {FLAGS_value};
     std::vector<float> vec_f2 = {0.0};
     std::vector<uint16_t> vec_h = {0};
 
-    LOG(INFO) << "Original data: " << << std::setprecision(10) << vec_f[0] << " | " << vec_f2[0];
+    LOG(INFO) << "Original data: " << std::setprecision(10) << vec_f[0] << " | " << vec_f2[0];
     cuda_float2half_array(vec_f.data(), vec_h.data(), vec_f.size());
     cuda_half2float_array(vec_h.data(), vec_f2.data(), vec_f.size());
     LOG(INFO) << "Half data: " << std::setprecision(10) << vec_f[0] << " | " << vec_f2[0];
