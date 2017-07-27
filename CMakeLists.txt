@@ -65,7 +65,8 @@ include_directories(/usr/lib/aarch64-linux-gnu/glib-2.0/include /usr/lib/aarch64
 include_directories(/usr/lib/x86_64-linux-gnu/glib-2.0/include /usr/lib/x86_64-linux-gnu/gstreamer-1.0/include)
 
 # Third party libraries.
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/third_party/eigen)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/eigen)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/half/include)
 
 # Build TensorFlowRT library.
 add_subdirectory(tensorflowrt)
