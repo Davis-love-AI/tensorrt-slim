@@ -27,7 +27,9 @@
 DEFINE_double(value, 1.0, "Float value.");
 
 // CUDA methods...
-void cuda_half2float_array(float* input, uint16_t* output, uint32_t size);
+void cuda_float2half_array(float* host_input, uint16_t* host_output, uint32_t size);
+void cuda_half2float_array(uint16_t* host_input, float* host_output, uint32_t size);
+
 
 int main(int argc, char **argv)
 {
@@ -38,11 +40,13 @@ int main(int argc, char **argv)
     LOG(INFO) << "Half size: " << sizeof(half_float::half);
     // Convert a vector of float to half.
     std::vector<float> vec_f = {1.0};
+    std::vector<float> vec_f2 = {0.0};
     std::vector<uint16_t> vec_h = {0};
 
-    cuda_half2float_array(vec_f.data(), vec_h.data(), vec_f.size());
-
-
+    LOG(INFO) << "Original data: " << vec_f[0] << " | " << vec_f2[0];
+    cuda_float2half_array(vec_f.data(), vec_h.data(), vec_f.size());
+    cuda_half2float_array(vec_h.data(), vec_f2.data(), vec_f.size());
+    LOG(INFO) << "Half data: " << vec_f[0] << " | " << vec_f2[0];
 
     return 0;
 }

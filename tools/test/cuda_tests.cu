@@ -42,15 +42,17 @@ __global__ void half_scale_kernel(float *din, float *dout, int dsize){
     }
 }
 
-__global__ void half2float_array(float* din, half* dout, uint32_t dsize)
+/* ============================================================================
+ * float2half and half2float
+ * ========================================================================== */
+__global__ void float2half_array(float* din, half* dout, uint32_t dsize)
 {
     int idx = threadIdx.x+blockDim.x*blockIdx.x;
     if (idx < dsize){
         dout[idx] = __float2half(din[idx]);
     }
 }
-
-void cuda_half2float_array(float* host_input, uint16_t* host_output, uint32_t size)
+void cuda_float2half_array(float* host_input, uint16_t* host_output, uint32_t size)
 {
     // Allocate memory on device.
     float* d_in;
@@ -60,8 +62,30 @@ void cuda_half2float_array(float* host_input, uint16_t* host_output, uint32_t si
     // Copy input.
     cudaMemcpy(d_in, host_input, size*sizeof(float), cudaMemcpyHostToDevice);
     // Call the convertion kernel...
-    half2float_array<<<(iDivUp(size, nTPB)),nTPB>>>(host_input, (half*)host_output, size);
+    float2half_array<<<(iDivUp(size, nTPB)),nTPB>>>(d_in, d_out, size);
     // Copy back.
     cudaMemcpy(host_output, d_out, size*sizeof(half), cudaMemcpyDeviceToHost);
+}
+
+__global__ void half2float_array(half* din, float* dout, uint32_t dsize)
+{
+    int idx = threadIdx.x+blockDim.x*blockIdx.x;
+    if (idx < dsize){
+        dout[idx] = __half2float(din[idx]);
+    }
+}
+void cuda_half2float_array(uint16_t* host_input, float* host_output, uint32_t size)
+{
+    // Allocate memory on device.
+    half* d_in;
+    float* d_out;
+    cudaMalloc(&d_in, size * sizeof(half));
+    cudaMalloc(&d_out, size * sizeof(float));
+    // Copy input.
+    cudaMemcpy(d_in, host_input, size*sizeof(half), cudaMemcpyHostToDevice);
+    // Call the convertion kernel...
+    half2float_array<<<(iDivUp(size, nTPB)),nTPB>>>(d_in, d_out, size);
+    // Copy back.
+    cudaMemcpy(host_output, d_out, size*sizeof(float), cudaMemcpyDeviceToHost);
 }
 // half_scale_kernel<<<(DSIZE+nTPB-1)/nTPB,nTPB>>>(din, dout, DSIZE);
