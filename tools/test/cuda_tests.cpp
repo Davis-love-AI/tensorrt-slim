@@ -43,10 +43,10 @@ int main(int argc, char **argv)
     std::vector<float> vec_f2 = {0.0};
     std::vector<uint16_t> vec_h = {0};
 
-    LOG(INFO) << "Original data: " << vec_f[0] << " | " << vec_f2[0];
+    LOG(INFO) << "Original data: " << << std::setprecision(10) << vec_f[0] << " | " << vec_f2[0];
     cuda_float2half_array(vec_f.data(), vec_h.data(), vec_f.size());
     cuda_half2float_array(vec_h.data(), vec_f2.data(), vec_f.size());
-    LOG(INFO) << "Half data: " << vec_f[0] << " | " << vec_f2[0];
+    LOG(INFO) << "Half data: " << std::setprecision(10) << vec_f[0] << " | " << vec_f2[0];
 
     return 0;
 }
