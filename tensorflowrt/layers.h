@@ -460,6 +460,8 @@ public:
             << "Input shape: " << dims_str(net->getDimensions());
         // Number of groups: input channel size.
         int ngroups = dims_channels(net->getDimensions());
+        // TODO: TensorRT bug. Replace group conv. by classic convolution.
+        ngroups = 1;
         // Depthwise convolution, with depth multiplier.
         separable_convolution2d dw_conv2d(*this);
         dw_conv2d.noutputs(ngroups * m_depth_multiplier);
