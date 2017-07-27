@@ -13,6 +13,7 @@
 # from Robik AI Ltd.
 # =========================================================================== */
 #include <fstream>
+#include <iostream>
 #include <sys/stat.h>
 #include <time.h>
 #include <chrono>
@@ -122,8 +123,9 @@ void createMemory(const ICudaEngine& engine, std::vector<void*>& buffers, const 
 {
     size_t bindingIndex = engine.getBindingIndex(name.c_str());
     assert(bindingIndex < buffers.size());
-    Dims3 dimensions = engine.getBindingDimensions((int)bindingIndex);
-    size_t eltCount = dimensions.c*dimensions.h*dimensions.w*gParams.batchSize, memSize = eltCount * sizeof(float);
+    DimsCHW dimensions =
+        static_cast<nvinfer1::DimsCHW&&>(engine.getBindingDimensions((int)bindingIndex));
+    size_t eltCount = dimensions.c()*dimensions.h()*dimensions.w()*gParams.batchSize, memSize = eltCount * sizeof(float);
 
     float* localMem = new float[eltCount];
     for (size_t i = 0; i < eltCount; i++) {
@@ -316,16 +318,16 @@ int main(int argc, char** argv)
         std::cerr << "Engine could not be created" << std::endl;
         return -1;
     }
-    if (!gParams.engine.empty())
-    {
-        std::ofstream p(gParams.engine);
-        if (!p)
-        {
-            std::cerr << "could not open plan output file" << std::endl;
-            return -1;
-        }
-        engine->serialize(p);
-    }
+    // if (!gParams.engine.empty())
+    // {
+    //     std::ofstream p(gParams.engine);
+    //     if (!p)
+    //     {
+    //         std::cerr << "could not open plan output file" << std::endl;
+    //         return -1;
+    //     }
+    //     engine->serialize(p);
+    // }
 
     doInference(*engine);
     engine->destroy();
