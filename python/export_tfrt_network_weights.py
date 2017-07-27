@@ -144,8 +144,21 @@ def tensor_np_to_tfrt(sess, name, np_tensor, pb_tensor, permutation=[3, 2, 0, 1]
     # Modify 'depthwise weights'
     if 'depthwise_weights' in name:
         # GKCRS order. G == nb inputs, K == depth multiplier.
-        a = np.expand_dims(a, axis=0)
-        a = np.transpose(a, axes=[2, 1, 0, 3, 4])
+        # a = np.expand_dims(a, axis=0)
+        # a = np.transpose(a, axes=[2, 1, 0, 3, 4])
+
+        # BUG: problem with group convolution in TensorRT 2.1?
+        # Switch to normal one: reshape weights accordingly.
+        # output_depth = multiplier * input.
+        print('Fixing TensorRT bug in group convolution by switching to classic convolution.')
+        shape = a.shape
+        shape_conv = [shape[0]*shape[1], shape[1], shape[2], shape[3]]
+        a_conv = np.zeros(shape_conv, a.dtype)
+        # Reconstruct classic convolution weights.
+        for i in range(shape[1]):
+            a_conv[i*shape[0]:(i+1)*shape[0], i] = a[:, i]
+        a = a_conv
+
     # Batch norm moving variables: transform into scaling parameters.
     # Must satisfy the equation y = s*x + b
     if 'BatchNorm/moving_mean' in name:
