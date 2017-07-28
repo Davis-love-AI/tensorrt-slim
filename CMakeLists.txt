@@ -67,6 +67,8 @@ include_directories(/usr/lib/x86_64-linux-gnu/glib-2.0/include /usr/lib/x86_64-l
 # Third party libraries.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/eigen)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/half/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/glfw3/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/opengl)
 
 # Build TensorFlowRT library.
 add_subdirectory(tensorflowrt)
