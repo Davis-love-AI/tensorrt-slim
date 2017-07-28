@@ -17,6 +17,8 @@ set(BUILD_DEPS "YES" CACHE BOOL "If YES, will install dependencies into sandbox.
 find_package(Qt4 REQUIRED)
 include(${QT_USE_FILE})
 add_definitions(${QT_DEFINITIONS})
+# Find freetype
+find_package(Freetype REQUIRED)
 
 # Set-up CUDA
 find_package(CUDA)
@@ -34,7 +36,7 @@ set(
 MACRO(BUILD_COPY_HEADERS DIRS_LIST)
     foreach(HEADER_DIR ${${DIRS_LIST}})
         message("-- Copying headers from ${HEADER_DIR}")
-	    file(GLOB TMP_TFRT_HEADERS ${HEADER_DIR}/*.h)
+	    file(GLOB TMP_TFRT_HEADERS ${HEADER_DIR}/*.h ${HEADER_DIR}/*.hpp)
         foreach(HEADER ${TMP_TFRT_HEADERS})
             message("-- Copying ${HEADER}")
             set(HEADERS_DIR_BUILD ${PROJECT_INCLUDE_DIR}/${HEADER_DIR})
