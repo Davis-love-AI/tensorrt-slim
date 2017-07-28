@@ -23,8 +23,8 @@ find_package(CUDA)
 set(
 	CUDA_NVCC_FLAGS
 	${CUDA_NVCC_FLAGS};
-    -O3
-    # -G -g
+    # -O3
+    -G -g
 	-gencode arch=compute_52,code=sm_52
 	-gencode arch=compute_53,code=sm_53
 	-gencode arch=compute_62,code=sm_62
