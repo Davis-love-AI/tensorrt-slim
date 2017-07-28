@@ -176,12 +176,11 @@ def tensor_np_to_tfrt(sess, name, np_tensor, pb_tensor, permutation=[3, 2, 0, 1]
         g = tf_get_model_variable(sess, str.replace(name, 'moving_variance', 'gamma'))
         a = a * g
     if 'BatchNorm/beta' in name:
+        # Not needed anymore after fusion.
         a = np.array([], np.float32)
     if 'BatchNorm/gamma' in name:
+        # Not needed anymore after fusion.
         a = np.array([], np.float32)
-
-    # BatchNorm/gamma beta
-    # TODO: fuse with scaling parameters beta and gamma...
 
     # Convert to half-precision if necessary.
     a = tensor_to_float(a, name=name)
