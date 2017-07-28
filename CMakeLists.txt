@@ -70,6 +70,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/half/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/glfw3/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/opengl)
 
+# Build NVXIO dependency
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/nvxio/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/nvxio/src)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/nvxio/src/NVX)
+add_subdirectory(nvxio)
+
 # Build TensorFlowRT library.
 add_subdirectory(tensorflowrt)
 add_subdirectory(util)

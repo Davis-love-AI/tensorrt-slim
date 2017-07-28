@@ -6,7 +6,7 @@ Implementation of the SSD network using TensorRT. Hopefully, should be very fast
 
 Check the following packages are installed, in addition to CUDA and TensorRT 1.0.
 ```bash
-sudo apt-get install -y cmake libqt4-dev qt4-dev-tools libglew-dev glew-utils libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libglib2.0-dev libgflags-dev libgoogle-glog-dev protobuf-compiler libprotobuf-dev
+sudo apt-get install -y cmake libqt4-dev qt4-dev-tools libglew-dev glew-utils libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libglib2.0-dev libgflags-dev libgoogle-glog-dev protobuf-compiler libprotobuf-dev libfreetype6-dev
 ```
 
 Then, use `cmake` & `make` to build the binaries.

@@ -51,6 +51,8 @@
 
 namespace ovxio
 {
+using nvxio::makeUP;
+
 
 std::unique_ptr<Render> createVideoRender(vx_context context, const std::string& path,
                                           vx_uint32 width, vx_uint32 height, vx_uint32 format)
