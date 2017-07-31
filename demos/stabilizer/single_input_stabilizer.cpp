@@ -117,10 +117,9 @@ int main(int argc, char* argv[])
         nvxio::Application &app = nvxio::Application::get();
         ovxio::printVersionInfo();
 
-        //
-        // Parse command line arguments
-        //
-
+        /* ============================================================================
+         * Parse command line arguments. TODO: gflags?
+         * ========================================================================== */
         std::string videoFilePath = app.findSampleFilePath("parking.avi");
         unsigned numOfSmoothingFrames = 5;
         float cropMargin = 0.07f;
@@ -133,97 +132,86 @@ int main(int argc, char* argv[])
                       nvxio::OptionHandler::real(&cropMargin, nvxio::ranges::lessThan(0.5f)));
         app.init(argc, argv);
 
-        //
-        // Create OpenVX context
-        //
-
+        /* ============================================================================
+         * Create OpenVX context
+         * ========================================================================== */
         ovxio::ContextGuard context;
         vxRegisterLogCallback(context, &ovxio::stdoutLogCallback, vx_false_e);
+        // Performance config. TODO: enable logging too?
         vxDirective(context, VX_DIRECTIVE_ENABLE_PERFORMANCE);
 
-        //
-        // Create FrameSource and Render
-        //
-
+        /* ============================================================================
+         * Create FrameSource and Render
+         * ========================================================================== */
         std::unique_ptr<ovxio::FrameSource> source(
             ovxio::createDefaultFrameSource(context, videoFilePath));
-
-        if (!source || !source->open())
-        {
+        if (!source || !source->open()) {
             std::cerr << "Error: Can't open source file: " << videoFilePath << std::endl;
             return nvxio::Application::APP_EXIT_CODE_NO_RESOURCE;
         }
-
-        if (source->getSourceType() == ovxio::FrameSource::SINGLE_IMAGE_SOURCE)
-        {
+        if (source->getSourceType() == ovxio::FrameSource::SINGLE_IMAGE_SOURCE) {
             std::cerr << "Error: Can't work on a single image." << std::endl;
             return nvxio::Application::APP_EXIT_CODE_INVALID_FORMAT;
         }
-
+        // Size, format and fps (video only).
         ovxio::FrameSource::Parameters sourceParams = source->getConfiguration();
 
+        // Render window.
         vx_int32 demoImgWidth = 2 * sourceParams.frameWidth;
         vx_int32 demoImgHeight = sourceParams.frameHeight;
-
         std::unique_ptr<ovxio::Render> renderer(ovxio::createDefaultRender(
             context, "Video Stabilization Demo", demoImgWidth, demoImgHeight));
-
-        if (!renderer)
-        {
+        if (!renderer) {
             std::cerr << "Error: Can't create a renderer" << std::endl;
             return nvxio::Application::APP_EXIT_CODE_NO_RENDER;
         }
-
         EventData eventData;
         renderer->setOnKeyboardEventCallback(eventCallback, &eventData);
 
-        //
-        // Create OpenVX Image to hold frames from video source
-        //
-
+        /* ============================================================================
+         * Create OpenVX Image to hold frames from video source
+         * ========================================================================== */
         vx_image demoImg = vxCreateImage(context, demoImgWidth,
-                                       demoImgHeight, VX_DF_IMAGE_RGBX);
+                                         demoImgHeight, VX_DF_IMAGE_RGBX);
         NVXIO_CHECK_REFERENCE(demoImg);
 
         vx_image frameExemplar = vxCreateImage(context,
                                                sourceParams.frameWidth, sourceParams.frameHeight, VX_DF_IMAGE_RGBX);
         vx_size orig_frame_delay_size = numOfSmoothingFrames + 2; //must have such size to be synchronized with the stabilized frames
+        // RGBX buffer of images.
         vx_delay orig_frame_delay = vxCreateDelay(context, (vx_reference)frameExemplar, orig_frame_delay_size);
         NVXIO_CHECK_REFERENCE(orig_frame_delay);
         NVXIO_SAFE_CALL( nvx::initDelayOfImages(context, orig_frame_delay) );
         NVXIO_SAFE_CALL(vxReleaseImage(&frameExemplar));
 
         vx_image frame = (vx_image)vxGetReferenceFromDelay(orig_frame_delay, 0);
-        vx_image lastFrame = (vx_image)vxGetReferenceFromDelay(orig_frame_delay,
-                                                               1 - static_cast<vx_int32>(orig_frame_delay_size));
+        vx_image lastFrame = (vx_image)vxGetReferenceFromDelay(
+            orig_frame_delay, 1 - static_cast<vx_int32>(orig_frame_delay_size));
 
-        //
-        // Create VideoStabilizer instance
-        //
-
+        /* ============================================================================
+         * Create VideoStabilizer instance
+         * ========================================================================== */
         nvx::VideoStabilizer::VideoStabilizerParams params;
         params.numOfSmoothingFrames_ = numOfSmoothingFrames;
         params.cropMargin_ = cropMargin;
         std::unique_ptr<nvx::VideoStabilizer> stabilizer(nvx::VideoStabilizer::createImageBasedVStab(context, params));
 
+        // Get rid of timeout frames + check source not closed.
         ovxio::FrameSource::FrameStatus frameStatus;
-
-        do
-        {
+        do {
             frameStatus = source->fetch(frame);
-        } while (frameStatus == ovxio::FrameSource::TIMEOUT);
-
-        if (frameStatus == ovxio::FrameSource::CLOSED)
-        {
+        }
+        while (frameStatus == ovxio::FrameSource::TIMEOUT);
+        if (frameStatus == ovxio::FrameSource::CLOSED) {
             std::cerr << "Error: Source has no frames" << std::endl;
             return nvxio::Application::APP_EXIT_CODE_NO_FRAMESOURCE;
         }
-
+        // A few initial checks on input frame.
         stabilizer->init(frame);
 
+        // Left and right sub-images...
         vx_rectangle_t leftRect;
         NVXIO_SAFE_CALL( vxGetValidRegionImage(frame, &leftRect) );
-
         vx_rectangle_t rightRect;
         rightRect.start_x = leftRect.end_x;
         rightRect.start_y = leftRect.start_y;
@@ -235,10 +223,9 @@ int main(int argc, char* argv[])
         vx_image rightRoi = vxCreateImageFromROI(demoImg, &rightRect);
         NVXIO_CHECK_REFERENCE(rightRoi);
 
-        //
-        // Run processing loop
-        //
-
+        /* ============================================================================
+         * Run processing loop
+         * ========================================================================== */
         std::unique_ptr<nvxio::SyncTimer> syncTimer = nvxio::createSyncTimer();
         syncTimer->arm(1. / app.getFPSLimit());
 
@@ -246,14 +233,9 @@ int main(int argc, char* argv[])
         totalTimer.tic();
         double proc_ms = 0;
 
-        while (!eventData.shouldStop)
-        {
-            if (!eventData.pause)
-            {
-                //
+        while (!eventData.shouldStop) {
+            if (!eventData.pause) {
                 // Process
-                //
-
                 nvx::Timer procTimer;
                 procTimer.tic();
                 stabilizer->process(frame);
@@ -265,24 +247,16 @@ int main(int argc, char* argv[])
                 NVXIO_SAFE_CALL( nvxuCopyImage(context, stabImg, rightRoi) );
                 NVXIO_SAFE_CALL( nvxuCopyImage(context, lastFrame, leftRoi) );
 
-                //
                 // Print performance results
-                //
-
                 stabilizer->printPerfs();
 
-                //
                 // Read frame
-                //
-
                 frameStatus = source->fetch(frame);
-
-                if (frameStatus == ovxio::FrameSource::TIMEOUT)
+                if (frameStatus == ovxio::FrameSource::TIMEOUT) {
                     continue;
-                else if (frameStatus == ovxio::FrameSource::CLOSED)
-                {
-                    if (!source->open())
-                    {
+                }
+                else if (frameStatus == ovxio::FrameSource::CLOSED) {
+                    if (!source->open()) {
                         std::cerr << "Error: Failed to reopen the source" << std::endl;
                         break;
                     }
@@ -290,30 +264,21 @@ int main(int argc, char* argv[])
             }
 
             renderer->putImage(demoImg);
-
             double total_ms = totalTimer.toc();
-
             std::cout << "Display Time : " << total_ms << " ms" << std::endl << std::endl;
 
             syncTimer->synchronize();
-
             total_ms = totalTimer.toc();
             totalTimer.tic();
-
             displayState(renderer.get(), sourceParams, proc_ms, total_ms, cropMargin);
 
-            if (!renderer->flush())
-            {
+            if (!renderer->flush()) {
                 eventData.shouldStop = true;
             }
         }
 
-        //
         // Release all objects
-        //
-
         renderer->close();
-
         vxReleaseImage(&demoImg);
         vxReleaseImage(&leftRoi);
         vxReleaseImage(&rightRoi);
