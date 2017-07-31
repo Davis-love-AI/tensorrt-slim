@@ -1,0 +1,3 @@
+# Demo of video stabilisation module.
+cuda_add_executable(demo_single_input_stabilizer single_input_stabilizer.cpp)
+target_link_libraries(demo_single_input_stabilizer tfrt_stabilization tensorflowrt)

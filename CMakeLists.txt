@@ -80,11 +80,12 @@ add_subdirectory(nvxio)
 
 # Build TensorFlowRT library.
 add_subdirectory(tensorflowrt)
+add_subdirectory(modules)
 add_subdirectory(util)
 
 # Build several small tools...
 add_subdirectory(tools)
-
+add_subdirectory(demos)
 
 # install
 # foreach(include ${inferenceIncludes})
