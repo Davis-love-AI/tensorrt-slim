@@ -43,14 +43,17 @@ DEFINE_string(source, "../data/parking.avi", "Video source URI, webcam camera or
 DEFINE_int32(source_width, 1280, "Source width. Only for camera.");
 DEFINE_int32(source_height, 720, "Source height. Only for camera.");
 DEFINE_int32(source_fps, 60, "Source fps. Only for camera.");
-
 // Stabilization parameters.
 DEFINE_double(stab_crop_margin, 0.1, "Stabilization crop margin.");
 DEFINE_int32(stab_num_frames, 5, "Number of frames used for smoothing the stabilization algorithm.");
-
 // Network parameters.
 DEFINE_string(network, "ssd_inception2_v0", "SSD network network to use.");
-DEFINE_string(network_pb, "../data/networks/ssd_inception2_v0_orig.tfrt32", "Network protobuf parameter file.");
+DEFINE_string(network_pb, "../data/networks/ssd_inception2_v0_orig.tfrt32",
+    "Network protobuf parameter file.");
+// Display parameters.
+DEFINE_bool(display_scale, true, "Scale display?");
+DEFINE_bool(display_fullscreen, true, "Fullscreen display?");
+
 
 // DEFINE_bool(image_save, false, "Save the result in some new image.");
 // DEFINE_double(threshold, 0.5, "Detection threshold.");
@@ -174,13 +177,11 @@ int main(int argc, char* argv[])
         auto sourceParams = source->getConfiguration();
 
         // Render window.
-        bool scale = true;
-        bool fullscreen = true;
         vx_int32 demoImgWidth = 2 * sourceParams.frameWidth;
         vx_int32 demoImgHeight = sourceParams.frameHeight;
         std::unique_ptr<ovxio::Render> renderer(ovxio::createDefaultRender(
             context, "Video Stabilization Demo", demoImgWidth, demoImgHeight,
-             VX_DF_IMAGE_RGBX, scale, fullscreen));
+             VX_DF_IMAGE_RGBX, FLAGS_display_scale, FLAGS_display_fullscreen));
         if (!renderer) {
             std::cerr << "Error: Can't create a renderer" << std::endl;
             return nvxio::Application::APP_EXIT_CODE_NO_RENDER;
