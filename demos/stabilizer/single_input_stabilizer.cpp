@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
         vx_int32 demoImgWidth = 2 * sourceParams.frameWidth;
         vx_int32 demoImgHeight = sourceParams.frameHeight;
         std::unique_ptr<ovxio::Render> renderer(ovxio::createDefaultRender(
-            context, "Video Stabilization Demo", demoImgWidth,
+            context, "Video Stabilization Demo", demoImgWidth, demoImgHeight,
              VX_DF_IMAGE_RGBX, scale, fullscreen));
         if (!renderer) {
             std::cerr << "Error: Can't create a renderer" << std::endl;
