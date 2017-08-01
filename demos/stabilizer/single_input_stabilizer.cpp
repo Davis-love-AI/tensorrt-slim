@@ -38,19 +38,21 @@
 /* ============================================================================
  * Demo flags.
  * ========================================================================== */
-DEFINE_string(source, "../data/parking.avi", "Video source, webcam camera or video file.");
+// Source parameters.
+DEFINE_string(source, "../data/parking.avi", "Video source URI, webcam camera or video file.");
 DEFINE_int32(source_width, 1280, "Source width. Only for camera.");
 DEFINE_int32(source_height, 720, "Source height. Only for camera.");
-DEFINE_int32(source_fps, 1280, "Source fps. Only for camera.");
+DEFINE_int32(source_fps, 60, "Source fps. Only for camera.");
 
+// Stabilization parameters.
+DEFINE_double(stab_crop_margin, 0.1, "Stabilization crop margin.");
+DEFINE_int32(stab_num_frames, 5, "Number of frames used for smoothing the stabilization algorithm.");
+
+// Network parameters.
 DEFINE_string(network, "ssd_inception2_v0", "SSD network network to use.");
 DEFINE_string(network_pb, "../data/networks/ssd_inception2_v0_orig.tfrt32", "Network protobuf parameter file.");
 
-
-// DEFINE_string(image, "../data/images/peds-001.jpg",
-//     "Image to use for detection..");
 // DEFINE_bool(image_save, false, "Save the result in some new image.");
-// DEFINE_int32(max_detections, 200, "Maximum number of raw detections.");
 // DEFINE_double(threshold, 0.5, "Detection threshold.");
 
 /* ============================================================================
@@ -152,60 +154,23 @@ int main(int argc, char* argv[])
 {
     google::InitGoogleLogging(argv[0]);
     gflags::ParseCommandLineFlags(&argc, &argv, true);
-
     try
     {
         nvxio::Application &app = nvxio::Application::get();
         ovxio::printVersionInfo();
-
-        /* ============================================================================
-         * Parse command line arguments. TODO: gflags?
-         * ========================================================================== */
-        // std::string videoFilePath;
-        std::string videoFilePath = app.findSampleFilePath("parking.avi");
-        unsigned numOfSmoothingFrames = 5;
-        float cropMargin = 0.07f;
-
-        app.setDescription("This demo demonstrates Video Stabilization algorithm");
-        // app.addOption('s', "source", "Input URI", nvxio::OptionHandler::string(&videoFilePath));
-        // app.addOption('n', "", "Number of smoothing frames",
-        //               nvxio::OptionHandler::unsignedInteger(&numOfSmoothingFrames, nvxio::ranges::atLeast(1u) & nvxio::ranges::atMost(6u)));
-        // app.addOption(0, "crop", "Crop margin for stabilized frames. If it is negative then the frame cropping is turned off",
-        //               nvxio::OptionHandler::real(&cropMargin, nvxio::ranges::lessThan(0.5f)));
+        app.setDescription("Demo of video stabilization + SSD neural net.");
         app.init(argc, argv);
 
         /* ============================================================================
-         * Create OpenVX context
+         * Create OpenVX context, frame source and render.
          * ========================================================================== */
         ovxio::ContextGuard context;
         vxRegisterLogCallback(context, &ovxio::stdoutLogCallback, vx_false_e);
         // Performance config. TODO: enable logging too?
         vxDirective(context, VX_DIRECTIVE_ENABLE_PERFORMANCE);
 
-        /* ============================================================================
-         * Create FrameSource and Render
-         * ========================================================================== */
-        // ovxio::FrameSource::Parameters sourceParams;
-        // std::unique_ptr<ovxio::FrameSource> source(
-        //     ovxio::createDefaultFrameSource(context, videoFilePath));
-
-        // // Set the parameters.
-        // sourceParams = source->getConfiguration();
-        // sourceParams.frameHeight = 1280;
-        // sourceParams.frameWidth = 720;
-        // sourceParams.fps = 60;
-        // source->setConfiguration(sourceParams);
-
-        // if (!source || !source->open()) {
-        //     std::cerr << "Error: Can't open source file: " << videoFilePath << std::endl;
-        //     return nvxio::Application::APP_EXIT_CODE_NO_RESOURCE;
-        // }
-        // if (source->getSourceType() == ovxio::FrameSource::SINGLE_IMAGE_SOURCE) {
-        //     std::cerr << "Error: Can't work on a single image." << std::endl;
-        //     return nvxio::Application::APP_EXIT_CODE_INVALID_FORMAT;
-        // }
-        // Size, format and fps (video only).
-        auto source = get_frame_source(context);
+        // Get the default frame source on URI.
+        std::unique_ptr<ovxio::FrameSource> source = get_frame_source(context);
         auto sourceParams = source->getConfiguration();
 
         // Render window.
@@ -232,7 +197,7 @@ int main(int argc, char* argv[])
 
         vx_image frameExemplar = vxCreateImage(context,
                                                sourceParams.frameWidth, sourceParams.frameHeight, VX_DF_IMAGE_RGBX);
-        vx_size orig_frame_delay_size = numOfSmoothingFrames + 2; //must have such size to be synchronized with the stabilized frames
+        vx_size orig_frame_delay_size = FLAGS_stab_num_frames + 2; //must have such size to be synchronized with the stabilized frames
         // RGBX buffer of images.
         vx_delay orig_frame_delay = vxCreateDelay(context, (vx_reference)frameExemplar, orig_frame_delay_size);
         NVXIO_CHECK_REFERENCE(orig_frame_delay);
@@ -247,8 +212,8 @@ int main(int argc, char* argv[])
          * Create VideoStabilizer instance
          * ========================================================================== */
         nvx::VideoStabilizer::VideoStabilizerParams params;
-        params.numOfSmoothingFrames_ = numOfSmoothingFrames;
-        params.cropMargin_ = cropMargin;
+        params.numOfSmoothingFrames_ = FLAGS_stab_num_frames;
+        params.cropMargin_ = FLAGS_stab_crop_margin;
         std::unique_ptr<nvx::VideoStabilizer> stabilizer(nvx::VideoStabilizer::createImageBasedVStab(context, params));
 
         // Get rid of timeout frames + check source not closed.
@@ -325,7 +290,7 @@ int main(int argc, char* argv[])
             syncTimer->synchronize();
             total_ms = totalTimer.toc();
             totalTimer.tic();
-            displayState(renderer.get(), sourceParams, proc_ms, total_ms, cropMargin);
+            displayState(renderer.get(), sourceParams, proc_ms, total_ms, FLAGS_stab_crop_margin);
 
             if (!renderer->flush()) {
                 eventData.shouldStop = true;
