@@ -120,8 +120,8 @@ int main(int argc, char* argv[])
         /* ============================================================================
          * Parse command line arguments. TODO: gflags?
          * ========================================================================== */
-        std::string videoFilePath;
-        // std::string videoFilePath = app.findSampleFilePath("parking.avi");
+        // std::string videoFilePath;
+        std::string videoFilePath = app.findSampleFilePath("parking.avi");
         unsigned numOfSmoothingFrames = 5;
         float cropMargin = 0.07f;
 
