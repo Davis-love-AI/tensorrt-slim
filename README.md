@@ -136,3 +136,14 @@ sudo apt install v4l-utils
 v4l2-ctl --list-formats-ext -d 1
 ```
 
+## Robik AI demos!
+
+```bash
+./aarch64/bin/demo_single_input_stabilizer --alsologtostderr \
+    --stab_crop_margin=-1 \
+    --stab_num_frames=5 \
+    --source "device:///v4l2?index=1" \
+    --source_width=1280 \
+    --source_height=720 \
+    --source_fps=60
+```
