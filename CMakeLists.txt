@@ -17,8 +17,11 @@ set(BUILD_DEPS "YES" CACHE BOOL "If YES, will install dependencies into sandbox.
 find_package(Qt4 REQUIRED)
 include(${QT_USE_FILE})
 add_definitions(${QT_DEFINITIONS})
-# Find freetype
+
+# Find freetype, X11
 find_package(Freetype REQUIRED)
+find_package(X11 REQUIRED)
+# find_package(Xrandr REQUIRED)
 
 # Set-up CUDA
 find_package(CUDA)
@@ -65,6 +68,7 @@ include_directories(${PROJECT_INCLUDE_DIR} ${GIE_PATH}/include)
 include_directories(/usr/include/gstreamer-1.0 /usr/include/glib-2.0 /usr/include/libxml2)
 include_directories(/usr/lib/aarch64-linux-gnu/glib-2.0/include /usr/lib/aarch64-linux-gnu/gstreamer-1.0/include)
 include_directories(/usr/lib/x86_64-linux-gnu/glib-2.0/include /usr/lib/x86_64-linux-gnu/gstreamer-1.0/include)
+# /usr/lib/x86_64-linux-gnu
 
 # Third party libraries.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/eigen)
