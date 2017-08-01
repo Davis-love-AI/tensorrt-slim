@@ -84,6 +84,9 @@ std::unique_ptr<ovxio::FrameSource> get_frame_source(const ovxio::ContextGuard& 
     std::unique_ptr<ovxio::FrameSource> source(
         ovxio::createDefaultFrameSource(context, FLAGS_source));
     CHECK(source) << DEMONET << "ERROR: can't open source: " << FLAGS_source;
+    CHECK(source->open()) << DEMONET << "ERROR: can't open source: " << FLAGS_source;
+    CHECK(source->getSourceType() != ovxio::FrameSource::SINGLE_IMAGE_SOURCE)
+        << DEMONET << "ERROR: Can't work on a single image.";
     // Set the parameters for camera source.
     if(source->getSourceType() != ovxio::FrameSource::CAMERA_SOURCE) {
         LOG(INFO) << DEMONET << "Setting frame source parameters.";
@@ -93,9 +96,6 @@ std::unique_ptr<ovxio::FrameSource> get_frame_source(const ovxio::ContextGuard& 
         sourceParams.fps = FLAGS_source_fps;
         source->setConfiguration(sourceParams);
     }
-    CHECK(source->open()) << DEMONET << "ERROR: can't open source: " << FLAGS_source;
-    CHECK(source->getSourceType() != ovxio::FrameSource::SINGLE_IMAGE_SOURCE)
-        << DEMONET << "ERROR: Can't work on a single image.";
     return source;
 }
 
