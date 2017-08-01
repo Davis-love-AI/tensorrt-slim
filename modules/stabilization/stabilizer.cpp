@@ -323,37 +323,37 @@ void ImageBasedVideoStabilizer::printPerfs() const
     vx_perf_t perf;
 
     NVXIO_SAFE_CALL( vxQueryGraph(graph_, VX_GRAPH_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "Graph Time : " << perf.tmp / 1000000.0 << " ms" << std::endl;
+    std::cout << "Graph Time : " << perf.avg / 1000000.0 << " ms" << std::endl;
 
     NVXIO_SAFE_CALL( vxQueryNode(convert_to_gray_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t RGB to gray time : " << perf.tmp / 1000000.0 << " ms" << std::endl;
+    std::cout << "\t RGB to gray time : " << perf.avg / 1000000.0 << " ms" << std::endl;
 
     NVXIO_SAFE_CALL( vxQueryNode(copy_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Copy time : " << perf.tmp / 1000000.0 << " ms" << std::endl;
+    std::cout << "\t Copy time : " << perf.avg / 1000000.0 << " ms" << std::endl;
 
     NVXIO_SAFE_CALL( vxQueryNode(pyr_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Pyramid time : " << perf.tmp / 1000000.0 << " ms" << std::endl;
+    std::cout << "\t Pyramid time : " << perf.avg / 1000000.0 << " ms" << std::endl;
 
     NVXIO_SAFE_CALL( vxQueryNode(opt_flow_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Optical Flow time : " << perf.tmp / 1000000.0 << " ms" << std::endl;
+    std::cout << "\t Optical Flow time : " << perf.avg / 1000000.0 << " ms" << std::endl;
 
     NVXIO_SAFE_CALL( vxQueryNode(find_homography_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Find Homography time : " << perf.tmp / 1000000.0 << " ms" << std::endl;
+    std::cout << "\t Find Homography time : " << perf.avg / 1000000.0 << " ms" << std::endl;
 
     NVXIO_SAFE_CALL( vxQueryNode(homography_filter_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Homography Filter time : " << perf.tmp / 1000000.0 << " ms" << std::endl;
+    std::cout << "\t Homography Filter time : " << perf.avg / 1000000.0 << " ms" << std::endl;
 
     NVXIO_SAFE_CALL( vxQueryNode(matrix_smoother_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Matrices Smoothing time : " << perf.tmp / 1000000.0 << " ms" << std::endl;
+    std::cout << "\t Matrices Smoothing time : " << perf.avg / 1000000.0 << " ms" << std::endl;
 
     NVXIO_SAFE_CALL( vxQueryNode(truncate_stab_transform_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Truncate Stab Transform time : " << perf.tmp / 1000000.0 << " ms" << std::endl;
+    std::cout << "\t Truncate Stab Transform time : " << perf.avg / 1000000.0 << " ms" << std::endl;
 
     NVXIO_SAFE_CALL( vxQueryNode(warp_perspective_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Warp Perspective time: " << perf.tmp / 1000000.0 << " ms" << std::endl;
+    std::cout << "\t Warp Perspective time: " << perf.avg / 1000000.0 << " ms" << std::endl;
 
     NVXIO_SAFE_CALL( vxQueryNode(feature_track_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Feature Track time : " << perf.tmp / 1000000.0 << " ms" << std::endl;
+    std::cout << "\t Feature Track time : " << perf.avg / 1000000.0 << " ms" << std::endl;
 }
 
 static vx_status initDelayOfMatrices(vx_delay delayOfMatrices)
