@@ -269,7 +269,7 @@ namespace
                                                       NVX_FIND_HOMOGRAPHY_METHOD_RANSAC,
                                                       3.0f,
                                                       500, 10,
-                                                      0.95f, 0.45f,
+                                                      0.9f, 0.45f,
                                                       mask);
         NVXIO_CHECK_REFERENCE(find_homography_node_);
 
