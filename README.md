@@ -116,3 +116,15 @@ GLOG_logtostderr=1 ./tfrt_giexec \
     --threshold=0.5 \
     --image_save=0
 ```
+
+## Video encoding
+
+Install `ffmpeg` and additional libraries:
+```bash
+sudo apt-get install yasm libvpx. libx264. ffmpeg
+```
+Convert the video to `h264` format:
+```bash
+ffmpeg -i camera1-7JUN17.avi -acodec aac -vcodec libx264  camera1-7JUN17-enc.avi
+```
+
