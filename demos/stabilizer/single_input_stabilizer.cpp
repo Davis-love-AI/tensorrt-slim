@@ -158,10 +158,13 @@ int main(int argc, char* argv[])
         ovxio::FrameSource::Parameters sourceParams = source->getConfiguration();
 
         // Render window.
+        bool scale = true;
+        bool fullscreen = true;
         vx_int32 demoImgWidth = 2 * sourceParams.frameWidth;
         vx_int32 demoImgHeight = sourceParams.frameHeight;
         std::unique_ptr<ovxio::Render> renderer(ovxio::createDefaultRender(
-            context, "Video Stabilization Demo", demoImgWidth, demoImgHeight));
+            context, "Video Stabilization Demo", demoImgWidth, demoImgHeight,
+            scale, fullscreen));
         if (!renderer) {
             std::cerr << "Error: Can't create a renderer" << std::endl;
             return nvxio::Application::APP_EXIT_CODE_NO_RENDER;
