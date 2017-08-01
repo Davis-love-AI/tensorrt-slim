@@ -266,11 +266,10 @@ namespace
         find_homography_node_ = nvxFindHomographyNode(graph_, (vx_array)vxGetReferenceFromDelay(pts_delay_, -1),
                                                       kp_curr_list,
                                                       homography,
-                                                    //   NVX_FIND_HOMOGRAPHY_METHOD_RANSAC,
-                                                      NVX_FIND_HOMOGRAPHY_METHOD_LMEDS,
+                                                      NVX_FIND_HOMOGRAPHY_METHOD_RANSAC,
                                                       3.0f,
                                                       2000, 10,
-                                                      0.995f, 0.45f,
+                                                      0.95f, 0.45f,
                                                       mask);
         NVXIO_CHECK_REFERENCE(find_homography_node_);
 
