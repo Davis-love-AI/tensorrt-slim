@@ -22,5 +22,6 @@ __pycache__*
 # Build directory.
 build/
 3rdparty/eigen/
+3rdparty/glfw3/lib/libglfw3.a
 # 3rdparty/half/
 

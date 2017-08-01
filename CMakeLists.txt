@@ -8,20 +8,16 @@ message("-- CMAKE modules path:  ${CMAKE_MODULE_PATH}")
 find_package(glog REQUIRED)
 find_package(gflags REQUIRED)
 
-# TensorRT flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -std=c++11")	# -std=gnu++11
-# set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -w -Xcompiler -fPIC -std=c++11" )
-set(BUILD_DEPS "YES" CACHE BOOL "If YES, will install dependencies into sandbox.  Automatically reset to NO after dependencies are installed.")
-
+# Find freetype, X11
+find_package(Freetype REQUIRED)
+find_package(X11 REQUIRED)
 # Qt is used to load images
 find_package(Qt4 REQUIRED)
 include(${QT_USE_FILE})
 add_definitions(${QT_DEFINITIONS})
-
-# Find freetype, X11
-find_package(Freetype REQUIRED)
-find_package(X11 REQUIRED)
-# find_package(Xrandr REQUIRED)
+# Find GLIB and GStreamer
+find_package(GLIB REQUIRED)
+find_package(GStreamer REQUIRED)
 
 # Set-up CUDA
 find_package(CUDA)
@@ -35,7 +31,10 @@ set(
 	-gencode arch=compute_62,code=sm_62
 )
 
-
+# Main CXX flags
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -std=c++11")	# -std=gnu++11
+# set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -w -Xcompiler -fPIC -std=c++11" )
+set(BUILD_DEPS "YES" CACHE BOOL "If YES, will install dependencies into sandbox.  Automatically reset to NO after dependencies are installed.")
 
 # Setup project output paths
 set(PROJECT_OUTPUT_DIR  ${PROJECT_BINARY_DIR}/${CMAKE_SYSTEM_PROCESSOR})
@@ -52,20 +51,22 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_OUTPUT_DIR}/lib)
 
 # C/C++ include paths.
 include_directories(${PROJECT_INCLUDE_DIR} ${GIE_PATH}/include)
-# Additional weird directories for Gstreamer and Glib
-include_directories(/usr/include/gstreamer-1.0 /usr/include/glib-2.0 /usr/include/libxml2)
-include_directories(/usr/lib/aarch64-linux-gnu/glib-2.0/include /usr/lib/aarch64-linux-gnu/gstreamer-1.0/include)
-include_directories(/usr/lib/x86_64-linux-gnu/glib-2.0/include /usr/lib/x86_64-linux-gnu/gstreamer-1.0/include)
-# OpenCV include dir
+include_directories(${GLIB_INCLUDE_DIRS})
+include_directories(${GSTREAMER_INCLUDE_DIRS})
 include_directories(/usr/include/opencv)
+include_directories(/usr/include/freetype2)
 
-# /usr/lib/x86_64-linux-gnu
+# include_directories(/usr/include/gstreamer-1.0 /usr/include/glib-2.0 /usr/include/libxml2)
+# include_directories(/usr/lib/aarch64-linux-gnu/glib-2.0/include /usr/lib/aarch64-linux-gnu/gstreamer-1.0/include)
+# include_directories(/usr/lib/x86_64-linux-gnu/glib-2.0/include /usr/lib/x86_64-linux-gnu/gstreamer-1.0/include)
+# OpenCV and freetype2 include dir
 
 # Third party libraries.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/eigen)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/half/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/glfw3/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/opengl)
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/glfw3/lib)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/nvxio/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/nvxio/src)

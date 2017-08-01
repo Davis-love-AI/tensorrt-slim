@@ -40,7 +40,7 @@
 
 namespace ovxio
 {
-using nvxio::makeUP;
+// using nvxio::makeUP;
 
 std::unique_ptr<Render3D> createDefaultRender3D(vx_context context, int xPos, int yPos,
                                                 const std::string& title, vx_uint32 width, vx_uint32 height)
