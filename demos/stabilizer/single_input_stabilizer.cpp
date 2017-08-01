@@ -154,8 +154,16 @@ int main(int argc, char* argv[])
         /* ============================================================================
          * Create FrameSource and Render
          * ========================================================================== */
+        ovxio::FrameSource::Parameters sourceParams;
         std::unique_ptr<ovxio::FrameSource> source(
             ovxio::createDefaultFrameSource(context, videoFilePath));
+
+        // Set the parameters.
+        sourceParams = source->getConfiguration();
+        sourceParams.frameHeight = 1280;
+        sourceParams.frameWidth = 720;
+        source->setConfiguration(sourceParams);
+
         if (!source || !source->open()) {
             std::cerr << "Error: Can't open source file: " << videoFilePath << std::endl;
             return nvxio::Application::APP_EXIT_CODE_NO_RESOURCE;
@@ -165,7 +173,7 @@ int main(int argc, char* argv[])
             return nvxio::Application::APP_EXIT_CODE_INVALID_FORMAT;
         }
         // Size, format and fps (video only).
-        ovxio::FrameSource::Parameters sourceParams = source->getConfiguration();
+        sourceParams = source->getConfiguration();
 
         // Render window.
         bool scale = true;
