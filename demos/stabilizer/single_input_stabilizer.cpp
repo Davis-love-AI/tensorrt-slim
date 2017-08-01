@@ -1,31 +1,17 @@
-/*
-# Copyright (c) 2014-2016, NVIDIA CORPORATION. All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#  * Neither the name of NVIDIA CORPORATION nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-# OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+/* ============================================================================
+# [2017] - Robik AI Ltd - Paul Balanca
+# All Rights Reserved.
 
+# NOTICE: All information contained herein is, and remains
+# the property of Robik AI Ltd, and its suppliers
+# if any.  The intellectual and technical concepts contained
+# herein are proprietary to Robik AI Ltd
+# and its suppliers and may be covered by U.S., European and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from Robik AI Ltd.
+# =========================================================================== */
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -42,6 +28,27 @@
 #include <OVX/UtilityOVX.hpp>
 
 #include <stabilization/stabilizer.hpp>
+
+#include <tensorflowrt.h>
+#include <tensorflowrt_util.h>
+#include <tensorflowrt_ssd_models.h>
+
+#define DEMONET "<demo-single-input> "
+
+/* ============================================================================
+ * Demo flags.
+ * ========================================================================== */
+DEFINE_string(network, "ssd_inception2_v0",
+    "SSD network network to use.");
+DEFINE_string(network_pb, "../data/networks/ssd_inception2_v0_orig.tfrt32",
+    "Network protobuf parameter file.");
+
+
+DEFINE_string(image, "../data/images/peds-001.jpg",
+    "Image to use for detection..");
+DEFINE_bool(image_save, false, "Save the result in some new image.");
+DEFINE_int32(max_detections, 200, "Maximum number of raw detections.");
+DEFINE_double(threshold, 0.5, "Detection threshold.");
 
 struct EventData
 {
@@ -76,7 +83,7 @@ static void displayState(ovxio::Render *renderer,
     const vx_int32 borderSize = 10;
     ovxio::Render::TextBoxStyle style = {{255, 255, 255, 255}, {0, 0, 0, 127}, {renderWidth / 2 + borderSize, borderSize}};
 
-    txt << "Source size: " << sourceParams.frameWidth << 'x' << sourceParams.frameHeight << std::endl;
+    txt << "Input: " << sourceParams.frameWidth << 'x' << sourceParams.frameHeight << " | " << sourceParams.fps << " | " << sourceParams.format << std::endl;
     txt << "Algorithm: " << proc_ms << " ms / " << 1000.0 / proc_ms << " FPS" << std::endl;
     txt << "Display: " << total_ms  << " ms / " << 1000.0 / total_ms << " FPS" << std::endl;
 
@@ -112,6 +119,9 @@ static void displayState(ovxio::Render *renderer,
 
 int main(int argc, char* argv[])
 {
+    // google::InitGoogleLogging(argv[0]);
+    // gflags::ParseCommandLineFlags(&argc, &argv, true);
+
     try
     {
         nvxio::Application &app = nvxio::Application::get();

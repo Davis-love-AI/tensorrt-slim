@@ -128,3 +128,11 @@ Convert the video to `h264` format:
 ffmpeg -i camera1-7JUN17.avi -acodec aac -vcodec libx264  camera1-7JUN17-enc.avi
 ```
 
+### Camera output format
+
+How to get the list of output formats supported by a camera:
+```bash
+sudo apt install v4l-utils
+v4l2-ctl --list-formats-ext -d 1
+```
+
