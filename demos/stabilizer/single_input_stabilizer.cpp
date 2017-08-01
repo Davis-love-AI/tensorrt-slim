@@ -159,7 +159,7 @@ int main(int argc, char* argv[])
 
         // Render window.
         bool scale = true;
-        bool fullscreen = true;
+        bool fullscreen = false;
         vx_int32 demoImgWidth = 2 * sourceParams.frameWidth;
         vx_int32 demoImgHeight = sourceParams.frameHeight;
         std::unique_ptr<ovxio::Render> renderer(ovxio::createDefaultRender(
