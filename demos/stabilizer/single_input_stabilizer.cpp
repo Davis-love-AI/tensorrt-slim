@@ -88,7 +88,7 @@ std::unique_ptr<ovxio::FrameSource> get_frame_source(const ovxio::ContextGuard& 
     CHECK(source->getSourceType() != ovxio::FrameSource::SINGLE_IMAGE_SOURCE)
         << DEMONET << "ERROR: Can't work on a single image.";
     // Set the parameters for camera source.
-    if(source->getSourceType() != ovxio::FrameSource::CAMERA_SOURCE) {
+    if(source->getSourceType() == ovxio::FrameSource::CAMERA_SOURCE) {
         LOG(INFO) << DEMONET << "Setting frame source parameters.";
         sourceParams = source->getConfiguration();
         sourceParams.frameHeight = FLAGS_source_height;
