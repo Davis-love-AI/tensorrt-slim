@@ -162,6 +162,7 @@ int main(int argc, char* argv[])
         sourceParams = source->getConfiguration();
         sourceParams.frameHeight = 1280;
         sourceParams.frameWidth = 720;
+        sourceParams.fps = 60;
         source->setConfiguration(sourceParams);
 
         if (!source || !source->open()) {
