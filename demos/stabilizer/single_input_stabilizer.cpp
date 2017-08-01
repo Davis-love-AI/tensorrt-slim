@@ -38,39 +38,70 @@
 /* ============================================================================
  * Demo flags.
  * ========================================================================== */
-DEFINE_string(network, "ssd_inception2_v0",
-    "SSD network network to use.");
-DEFINE_string(network_pb, "../data/networks/ssd_inception2_v0_orig.tfrt32",
-    "Network protobuf parameter file.");
+DEFINE_string(source, "../data/parking.avi", "Video source, webcam camera or video file.");
+DEFINE_int32(source_width, 1280, "Source width. Only for camera.");
+DEFINE_int32(source_height, 720, "Source height. Only for camera.");
+DEFINE_int32(source_fps, 1280, "Source fps. Only for camera.");
+
+DEFINE_string(network, "ssd_inception2_v0", "SSD network network to use.");
+DEFINE_string(network_pb, "../data/networks/ssd_inception2_v0_orig.tfrt32", "Network protobuf parameter file.");
 
 
-DEFINE_string(image, "../data/images/peds-001.jpg",
-    "Image to use for detection..");
-DEFINE_bool(image_save, false, "Save the result in some new image.");
-DEFINE_int32(max_detections, 200, "Maximum number of raw detections.");
-DEFINE_double(threshold, 0.5, "Detection threshold.");
+// DEFINE_string(image, "../data/images/peds-001.jpg",
+//     "Image to use for detection..");
+// DEFINE_bool(image_save, false, "Save the result in some new image.");
+// DEFINE_int32(max_detections, 200, "Maximum number of raw detections.");
+// DEFINE_double(threshold, 0.5, "Detection threshold.");
 
+/* ============================================================================
+ * (simple )Event management: pause or quit!
+ * ========================================================================== */
 struct EventData
 {
     EventData(): shouldStop(false), pause(false) {}
     bool shouldStop;
     bool pause;
 };
-
 static void eventCallback(void* eventData, vx_char key, vx_uint32, vx_uint32)
 {
     EventData* data = static_cast<EventData*>(eventData);
-
-    if (key == 27)
-    {
+    if (key == 27) {
         data->shouldStop = true;
     }
-    else if (key == 32)
-    {
+    else if (key == 32) {
         data->pause = !data->pause;
     }
 }
 
+/* ============================================================================
+ * sub-routines: create frame source, ...
+ * ========================================================================== */
+std::unique_ptr<ovxio::FrameSource> get_frame_source(const ovxio::ContextGuard& context)
+{
+    LOG(INFO) << DEMONET << "Opening frame source: " << FLAGS_source;
+    // Get default frame source.
+    ovxio::FrameSource::Parameters sourceParams;
+    std::unique_ptr<ovxio::FrameSource> source(
+        ovxio::createDefaultFrameSource(context, FLAGS_source));
+    CHECK(source) << DEMONET << "ERROR: can't open source: " << FLAGS_source;
+    // Set the parameters for camera source.
+    if(source->getSourceType() != ovxio::FrameSource::CAMERA_SOURCE) {
+        LOG(INFO) << DEMONET << "Setting frame source parameters.";
+        sourceParams = source->getConfiguration();
+        sourceParams.frameHeight = FLAGS_source_height;
+        sourceParams.frameWidth = FLAGS_source_width;
+        sourceParams.fps = FLAGS_source_fps;
+        source->setConfiguration(sourceParams);
+    }
+    CHECK(source->open()) << DEMONET << "ERROR: can't open source: " << FLAGS_source;
+    CHECK(source->getSourceType() != ovxio::FrameSource::SINGLE_IMAGE_SOURCE)
+        << DEMONET << "ERROR: Can't work on a single image.";
+    return source;
+}
+
+/* ============================================================================
+ * Display information on the screen.
+ * ========================================================================== */
 static void displayState(ovxio::Render *renderer,
                          const ovxio::FrameSource::Parameters &sourceParams,
                          double proc_ms, double total_ms, float cropMargin)
@@ -119,8 +150,8 @@ static void displayState(ovxio::Render *renderer,
 
 int main(int argc, char* argv[])
 {
-    // google::InitGoogleLogging(argv[0]);
-    // gflags::ParseCommandLineFlags(&argc, &argv, true);
+    google::InitGoogleLogging(argv[0]);
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     try
     {
@@ -136,11 +167,11 @@ int main(int argc, char* argv[])
         float cropMargin = 0.07f;
 
         app.setDescription("This demo demonstrates Video Stabilization algorithm");
-        app.addOption('s', "source", "Input URI", nvxio::OptionHandler::string(&videoFilePath));
-        app.addOption('n', "", "Number of smoothing frames",
-                      nvxio::OptionHandler::unsignedInteger(&numOfSmoothingFrames, nvxio::ranges::atLeast(1u) & nvxio::ranges::atMost(6u)));
-        app.addOption(0, "crop", "Crop margin for stabilized frames. If it is negative then the frame cropping is turned off",
-                      nvxio::OptionHandler::real(&cropMargin, nvxio::ranges::lessThan(0.5f)));
+        // app.addOption('s', "source", "Input URI", nvxio::OptionHandler::string(&videoFilePath));
+        // app.addOption('n', "", "Number of smoothing frames",
+        //               nvxio::OptionHandler::unsignedInteger(&numOfSmoothingFrames, nvxio::ranges::atLeast(1u) & nvxio::ranges::atMost(6u)));
+        // app.addOption(0, "crop", "Crop margin for stabilized frames. If it is negative then the frame cropping is turned off",
+        //               nvxio::OptionHandler::real(&cropMargin, nvxio::ranges::lessThan(0.5f)));
         app.init(argc, argv);
 
         /* ============================================================================
@@ -154,27 +185,28 @@ int main(int argc, char* argv[])
         /* ============================================================================
          * Create FrameSource and Render
          * ========================================================================== */
-        ovxio::FrameSource::Parameters sourceParams;
-        std::unique_ptr<ovxio::FrameSource> source(
-            ovxio::createDefaultFrameSource(context, videoFilePath));
+        // ovxio::FrameSource::Parameters sourceParams;
+        // std::unique_ptr<ovxio::FrameSource> source(
+        //     ovxio::createDefaultFrameSource(context, videoFilePath));
 
-        // Set the parameters.
-        sourceParams = source->getConfiguration();
-        sourceParams.frameHeight = 1280;
-        sourceParams.frameWidth = 720;
-        sourceParams.fps = 60;
-        source->setConfiguration(sourceParams);
+        // // Set the parameters.
+        // sourceParams = source->getConfiguration();
+        // sourceParams.frameHeight = 1280;
+        // sourceParams.frameWidth = 720;
+        // sourceParams.fps = 60;
+        // source->setConfiguration(sourceParams);
 
-        if (!source || !source->open()) {
-            std::cerr << "Error: Can't open source file: " << videoFilePath << std::endl;
-            return nvxio::Application::APP_EXIT_CODE_NO_RESOURCE;
-        }
-        if (source->getSourceType() == ovxio::FrameSource::SINGLE_IMAGE_SOURCE) {
-            std::cerr << "Error: Can't work on a single image." << std::endl;
-            return nvxio::Application::APP_EXIT_CODE_INVALID_FORMAT;
-        }
+        // if (!source || !source->open()) {
+        //     std::cerr << "Error: Can't open source file: " << videoFilePath << std::endl;
+        //     return nvxio::Application::APP_EXIT_CODE_NO_RESOURCE;
+        // }
+        // if (source->getSourceType() == ovxio::FrameSource::SINGLE_IMAGE_SOURCE) {
+        //     std::cerr << "Error: Can't work on a single image." << std::endl;
+        //     return nvxio::Application::APP_EXIT_CODE_INVALID_FORMAT;
+        // }
         // Size, format and fps (video only).
-        sourceParams = source->getConfiguration();
+        auto source = get_frame_source(context);
+        auto sourceParams = source->getConfiguration();
 
         // Render window.
         bool scale = true;
