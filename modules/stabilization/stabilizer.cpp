@@ -291,7 +291,7 @@ namespace
         //vxWarpPerspectiveNode
         warp_perspective_node_ = vxWarpPerspectiveNode(graph_,
                 (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 1 - static_cast<vx_int32>(frames_delay_size_)),
-                truncated,
+                smoothed_,
                 VX_INTERPOLATION_TYPE_BILINEAR, stabilized_RGBX_frame_);
         NVXIO_CHECK_REFERENCE(warp_perspective_node_);
 
