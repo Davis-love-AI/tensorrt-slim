@@ -14,86 +14,8 @@
 # =========================================================================== */
 #include "vstab_nodes.hpp"
 
-// 0 - x
-// 1 - y
-// 2 - width
-// 3 - height
-typedef Eigen::Vector4f Rectanglef;
-
-// 0 - x
-// 1 - y
-typedef Eigen::Vector2f Point2f;
 
 static const char KERNEL_CROP_STAB_TRANSFORM_NAME[VX_MAX_KERNEL_NAME] = "example.nvx.crop_stab_transform";
-
-static void transformPoint(const Matrix3x3f_rm &H, const Point2f & p, Point2f & newP)
-{
-    float x = H(0, 0) * p(0) + H(0, 1) * p(1) + H(0, 2);
-    float y = H(1, 0) * p(0) + H(1, 1) * p(1) + H(1, 2);
-    float z = H(2, 0) * p(0) + H(2, 1) * p(1) + H(2, 2);
-
-    newP(0) = x / z;
-    newP(1) = y / z;
-}
-
-static bool rectContains(const Rectanglef & rect, const Point2f & pt)
-{
-    return rect(0) <= pt(0) && pt(0) < rect(0) + rect(2) &&
-           rect(1) <= pt(1) && pt(1) < rect(1) + rect(3);
-}
-
-static bool isPointInsideCroppingRect(const Rectanglef & rect, const Matrix3x3f_rm & H, const Point2f & p)
-{
-    Point2f newP;
-    transformPoint(H, p, newP);
-
-    return rectContains(rect, newP);
-}
-
-static bool isMotionGood(const Matrix3x3f_rm & transform,
-                         int frameWidth, int frameHeight,
-                         const Matrix3x3f_rm & resizeMat, float factor)
-{
-    Rectanglef rect;
-    rect << 0.0f, 0.0f,
-            static_cast<float>(frameWidth - 1),
-            static_cast<float>(frameHeight - 1);
-
-    Matrix3x3f_rm H = (1 - factor) * transform + factor * resizeMat;
-
-    Point2f p1, p2, p3, p4;
-    p1 << 0.0f, 0.0f;
-    p2 << static_cast<float>(frameWidth - 1), 0.0f;
-    p3 << static_cast<float>(frameWidth - 1), static_cast<float>(frameHeight - 1);
-    p4 << 0.0f, static_cast<float>(frameHeight - 1);
-
-    return isPointInsideCroppingRect(rect, H, p1) && isPointInsideCroppingRect(rect, H, p2) &&
-           isPointInsideCroppingRect(rect, H, p3) && isPointInsideCroppingRect(rect, H, p4);
-}
-
-static bool cropTransform(const Matrix3x3f_rm & transform, int frameWidth, int frameHeight,
-                              const Matrix3x3f_rm & resizeMat, Matrix3x3f_rm & truncatedTransform)
-{
-    float t = 0;
-    if ( isMotionGood(transform, frameWidth, frameHeight, resizeMat, t) )
-    {
-        return false;
-    }
-
-    float l = 0, r = 1;
-    while (r - l > 1e-2f)
-    {
-        t = (l + r) * 0.5f;
-        if ( isMotionGood(transform, frameWidth, frameHeight, resizeMat, t) )
-            r = t;
-        else
-            l = t;
-    }
-
-    truncatedTransform = (1 - t) * transform + t * resizeMat;
-
-    return true;
-}
 
 /** Implementation of the real kernel!
  */
@@ -115,7 +37,8 @@ static vx_status VX_CALLBACK cropStabTransform_kernel(
     // Copy to host as EIGEN matrix.
     vx_float32 stabTransformData[9] = {0};
     status |= vxCopyMatrix(vxStabTransform, stabTransformData, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    Matrix3x3f_rm stabTransform = Matrix3x3f_rm::Map(stabTransformData, 3, 3), invStabTransform;
+    Matrix3x3f_rm stabTransform = Matrix3x3f_rm::Map(stabTransformData, 3, 3);
+    Matrix3x3f_rm invStabTransform;
     // Copy cropping parameters too.
     vx_float32 crop_top, crop_left, crop_bottom, crop_right, cropMargin{-1};
     status |= vxCopyScalar(sc_crop_top, &crop_top, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
@@ -123,41 +46,27 @@ static vx_status VX_CALLBACK cropStabTransform_kernel(
     status |= vxCopyScalar(sc_crop_bottom, &crop_bottom, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     status |= vxCopyScalar(sc_crop_right, &crop_right, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
 
-    if (cropMargin < 0) // without truncation
-    {
-        invStabTransform = stabTransform.inverse(); // inverse the matrix for vxWarpPerspectiveNode
-        status |= vxCopyMatrix(vxTruncatedTransform, invStabTransform.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-        return status;
-    }
-
+    // Get input image size.
     vx_uint32 width = 0, height = 0;
     status |= vxQueryImage(image, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width));
     status |= vxQueryImage(image, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height));
-
+    // Compute affine transformation matrix (scaling + translation).
     Matrix3x3f_rm resizeMat = Matrix3x3f_rm::Identity();
-    float scale = 1.0f / (1.0f - 2 * cropMargin);
-    resizeMat(0, 0) = resizeMat(1, 1) = scale;
-    resizeMat(0, 2) = - scale * width * cropMargin;
-    resizeMat(1, 2) = - scale * height * cropMargin;
+    float scale_x = 1.0f / (1.0f - crop_left - crop_right);
+    float scale_y = 1.0f / (1.0f - crop_top - crop_bottom);
+    resizeMat(0, 0) = scale_x;
+    resizeMat(1, 1) = scale_y;
+    resizeMat(0, 2) = - scale_x * width * crop_left;
+    resizeMat(1, 2) = - scale_y * height * crop_top;
 
-    stabTransform.transposeInPlace(); // transpose to the standart form like resizeMat
+    // Transpose to the standart form like resizeMat and combine.
+    stabTransform.transposeInPlace();
     stabTransform = resizeMat * stabTransform;
-
+    stabTransform.transposeInPlace();
+    // Inverse the matrix for vxWarpPerspectiveNode
     invStabTransform = stabTransform.inverse();
-    Matrix3x3f_rm invResizeMat = resizeMat.inverse();
-
-    Matrix3x3f_rm invTruncatedTransform;
-    bool isTruncated = cropTransform(invStabTransform, width, height, invResizeMat, invTruncatedTransform);
-
-    if (isTruncated)
-    {
-        stabTransform = invTruncatedTransform.inverse();
-    }
-
-    stabTransform.transposeInPlace(); // inverse transpose
-    invStabTransform = stabTransform.inverse(); // inverse the matrix for vxWarpPerspectiveNode
-    status |= vxCopyMatrix(vxTruncatedTransform, invStabTransform.data(), VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-
+    status |= vxCopyMatrix(vxTruncatedTransform, invStabTransform.data(),
+        VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
     return status;
 }
 
@@ -198,7 +107,6 @@ static vx_status VX_CALLBACK cropStabTransform_validate(
     if (crop_type != VX_TYPE_FLOAT32)   status = VX_ERROR_INVALID_TYPE;
     vxQueryScalar(crop_right, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
     if (crop_type != VX_TYPE_FLOAT32)   status = VX_ERROR_INVALID_TYPE;
-
 
     vx_meta_format cropTransformMeta = metas[1];
     vx_enum cropTransformType = VX_TYPE_FLOAT32;
