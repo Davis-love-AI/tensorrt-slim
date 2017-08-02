@@ -27,30 +27,33 @@ typedef Eigen::Matrix<vx_float32, 3, 4, Eigen::RowMajor> Matrix3x4f_rm;
 
 // Register homographyFilter kernel in OpenVX context
 vx_status registerHomographyFilterKernel(vx_context context);
-
 // Create homographyFilter node
 vx_node homographyFilterNode(vx_graph graph, vx_matrix input,
                              vx_matrix homography, vx_image image,
                              vx_array mask);
 
-
 // Register matrixSmoother kernel in OpenVX context
 vx_status registerMatrixSmootherKernel(vx_context context);
-
 // Create matrixSmoother node
-vx_node matrixSmootherNode(vx_graph graph,
-                      vx_delay matrices, vx_matrix smoothed);
+vx_node matrixSmootherNode(vx_graph graph, vx_delay matrices, vx_matrix smoothed);
 
+// Register cropStabTransform kernel in OpenVX context
+vx_status registerCropStabTransformKernel(vx_context context);
+/* Create cropStabTransform node.
+ */
+vx_node cropStabTransformNode(
+    vx_graph graph, vx_matrix stab_transform, vx_matrix crop_transform, vx_image image,
+    vx_scalar crop_top, vx_scalar crop_left, vx_scalar crop_bottom, vx_scalar crop_right);
 
 // Register truncateStabTransform kernel in OpenVX context
 vx_status registerTruncateStabTransformKernel(vx_context context);
-
 /* Create truncateStabTransform node.
  * cropMargin - proportion of the width(height) of the frame
  * that is allowed to be cropped for stabilizing of the frames. The value should be less than 0.5.
  * If cropMargin is negative then the truncation procedure is turned off.
  */
-vx_node truncateStabTransformNode(vx_graph graph, vx_matrix stabTransform, vx_matrix truncatedTransform,
-                                  vx_image image, vx_scalar cropMargin);
+vx_node truncateStabTransformNode(
+    vx_graph graph, vx_matrix stabTransform, vx_matrix truncatedTransform,
+    vx_image image, vx_scalar cropMargin);
 
 #endif
