@@ -32,6 +32,10 @@
  * Stabilization parameters.
  * ========================================================================== */
 DEFINE_double(stab_crop_margin, -1, "Stabilization crop margin.");
+DEFINE_double(stab_crop_left, 0.0, "Perc. to crop on left after stabilization.");
+DEFINE_double(stab_crop_right, 0.0, "Perc. to crop on right after stabilization.");
+DEFINE_double(stab_crop_top, 0.0, "Perc. to crop on top after stabilization.");
+DEFINE_double(stab_crop_bottom, 0.0, "Perc. to crop on bottom after stabilization.");
 DEFINE_int32(stab_num_smoothing_frames, 5,
     "Number of frames used for smoothing the stabilization algorithm.");
 
