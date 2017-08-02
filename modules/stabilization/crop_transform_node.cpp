@@ -207,16 +207,14 @@ static vx_status VX_CALLBACK cropStabTransform_validate(
 vx_status registerCropStabTransformKernel(vx_context context)
 {
     vx_status status = VX_SUCCESS;
-
     vx_enum id;
     status = vxAllocateUserKernelId(context, &id);
-    if (status != VX_SUCCESS)
-    {
-        vxAddLogEntry((vx_reference)context, status, "[%s:%u] Failed to allocate an ID for the CropStabTransform kernel",
-                      __FUNCTION__, __LINE__);
+    if (status != VX_SUCCESS) {
+        vxAddLogEntry((vx_reference)context, status,
+            "[%s:%u] Failed to allocate an ID for the CropStabTransform kernel",
+            __FUNCTION__, __LINE__);
         return status;
     }
-
     vx_kernel kernel = vxAddUserKernel(context, KERNEL_CROP_STAB_TRANSFORM_NAME,
                                        id,
                                        cropStabTransform_kernel,
@@ -225,55 +223,60 @@ vx_status registerCropStabTransformKernel(vx_context context)
                                        NULL,
                                        NULL
                                        );
-
     status = vxGetStatus((vx_reference)kernel);
-    if (status != VX_SUCCESS)
-    {
-        vxAddLogEntry((vx_reference)context, status, "[%s:%u] Failed to create CropStabTransform Kernel", __FUNCTION__, __LINE__);
+    if (status != VX_SUCCESS) {
+        vxAddLogEntry((vx_reference)context, status,
+            "[%s:%u] Failed to create CropStabTransform Kernel",
+            __FUNCTION__, __LINE__);
         return status;
     }
 
     status |= vxAddParameterToKernel(kernel, 0, VX_INPUT, VX_TYPE_MATRIX, VX_PARAMETER_STATE_REQUIRED);  // stabTransform
     status |= vxAddParameterToKernel(kernel, 1, VX_OUTPUT, VX_TYPE_MATRIX, VX_PARAMETER_STATE_REQUIRED); // truncatedTransform
     status |= vxAddParameterToKernel(kernel, 2, VX_INPUT, VX_TYPE_IMAGE, VX_PARAMETER_STATE_REQUIRED);   // image
-    status |= vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED);  // cropMargin
-
-    if (status != VX_SUCCESS)
-    {
+    status |= vxAddParameterToKernel(kernel, 3, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED);  // crop top
+    status |= vxAddParameterToKernel(kernel, 4, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED);  // crop left
+    status |= vxAddParameterToKernel(kernel, 5, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED);  // crop bottom
+    status |= vxAddParameterToKernel(kernel, 6, VX_INPUT, VX_TYPE_SCALAR, VX_PARAMETER_STATE_REQUIRED);  // crop right
+    if (status != VX_SUCCESS) {
         vxReleaseKernel(&kernel);
-        vxAddLogEntry((vx_reference)context, status, "[%s:%u] Failed to initialize CropStabTransform Kernel parameters", __FUNCTION__, __LINE__);
+        vxAddLogEntry((vx_reference)context, status,
+            "[%s:%u] Failed to initialize CropStabTransform Kernel parameters",
+            __FUNCTION__, __LINE__);
         return VX_FAILURE;
     }
 
     status = vxFinalizeKernel(kernel);
     vxReleaseKernel(&kernel);
-
-    if (status != VX_SUCCESS)
-    {
-        vxAddLogEntry((vx_reference)context, status, "[%s:%u] Failed to finalize CropStabTransform Kernel", __FUNCTION__, __LINE__);
+    if (status != VX_SUCCESS) {
+        vxAddLogEntry((vx_reference)context, status,
+            "[%s:%u] Failed to finalize CropStabTransform Kernel",
+            __FUNCTION__, __LINE__);
         return VX_FAILURE;
     }
-
     return status;
 }
 
-vx_node cropStabTransformNode(vx_graph graph, vx_matrix stabTransform, vx_matrix truncatedTransform, vx_image image, vx_scalar cropMargin)
+vx_node cropStabTransformNode(
+    vx_graph graph,
+    vx_matrix stab_transform, vx_matrix crop_transform, vx_image image,
+    vx_scalar crop_top, vx_scalar crop_left, vx_scalar crop_bottom, vx_scalar crop_right)
 {
     vx_node node = NULL;
+    vx_kernel kernel = vxGetKernelByName(
+        vxGetContext((vx_reference)graph), KERNEL_CROP_STAB_TRANSFORM_NAME);
 
-    vx_kernel kernel = vxGetKernelByName(vxGetContext((vx_reference)graph), KERNEL_CROP_STAB_TRANSFORM_NAME);
-
-    if (vxGetStatus((vx_reference)kernel) == VX_SUCCESS)
-    {
+    if (vxGetStatus((vx_reference)kernel) == VX_SUCCESS) {
         node = vxCreateGenericNode(graph, kernel);
         vxReleaseKernel(&kernel);
-
-        if (vxGetStatus((vx_reference)node) == VX_SUCCESS)
-        {
-            vxSetParameterByIndex(node, 0, (vx_reference)stabTransform);
-            vxSetParameterByIndex(node, 1, (vx_reference)truncatedTransform);
+        if (vxGetStatus((vx_reference)node) == VX_SUCCESS) {
+            vxSetParameterByIndex(node, 0, (vx_reference)stab_transform);
+            vxSetParameterByIndex(node, 1, (vx_reference)crop_transform);
             vxSetParameterByIndex(node, 2, (vx_reference)image);
-            vxSetParameterByIndex(node, 3, (vx_reference)cropMargin);
+            vxSetParameterByIndex(node, 3, (vx_reference)crop_top);
+            vxSetParameterByIndex(node, 4, (vx_reference)crop_left);
+            vxSetParameterByIndex(node, 5, (vx_reference)crop_bottom);
+            vxSetParameterByIndex(node, 6, (vx_reference)crop_right);
         }
     }
 
