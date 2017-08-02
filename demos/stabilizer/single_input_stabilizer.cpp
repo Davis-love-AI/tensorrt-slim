@@ -85,7 +85,7 @@ static void eventCallback(void* eventData, vx_char key, vx_uint32, vx_uint32)
 /* ============================================================================
  * sub-routines: create frame source, ...
  * ========================================================================== */
-std::unique_ptr<ovxio::FrameSource> get_frame_source(const ovxio::ContextGuard& context)
+static std::unique_ptr<ovxio::FrameSource> create_frame_source(const ovxio::ContextGuard& context)
 {
     LOG(INFO) << DEMONET << "Opening frame source: " << FLAGS_source;
     // Get default frame source.
@@ -111,9 +111,19 @@ std::unique_ptr<ovxio::FrameSource> get_frame_source(const ovxio::ContextGuard& 
 /* ============================================================================
  * Display information on the screen.
  * ========================================================================== */
-static void displayState(ovxio::Render *renderer,
-                         const ovxio::FrameSource::Parameters &sourceParams,
-                         double proc_ms, double total_ms, float cropMargin)
+static std::unique_ptr<ovxio::Render> create_display(
+    const ovxio::ContextGuard& context,
+    vx_int32 height, vx_int32 width)
+{
+    std::unique_ptr<ovxio::Render> renderer(ovxio::createDefaultRender(
+        context, "Video Stabilization Demo", width, height,
+            VX_DF_IMAGE_RGBX, FLAGS_display_scale, FLAGS_display_fullscreen));
+    CHECK(renderer) << DEMONET << "ERROR: Can't create a display renderer.";
+    return renderer;
+}
+static void update_display(
+    ovxio::Render *renderer, const ovxio::FrameSource::Parameters& sourceParams,
+    double proc_ms, double total_ms, float cropMargin)
 {
     vx_uint32 renderWidth = renderer->getViewportWidth();
 
@@ -170,25 +180,18 @@ int main(int argc, char* argv[])
         /* ============================================================================
          * Create OpenVX context, frame source and render.
          * ========================================================================== */
+        // Performance config. TODO: enable logging too?
         ovxio::ContextGuard context;
         vxRegisterLogCallback(context, &ovxio::stdoutLogCallback, vx_false_e);
-        // Performance config. TODO: enable logging too?
         vxDirective(context, VX_DIRECTIVE_ENABLE_PERFORMANCE);
 
-        // Get the default frame source on URI.
-        std::unique_ptr<ovxio::FrameSource> source = get_frame_source(context);
+        // Create the default frame source on URI.
+        auto source = create_frame_source(context);
         auto sourceParams = source->getConfiguration();
 
-        // Render window.
-        vx_int32 demoImgWidth = 2 * sourceParams.frameWidth;
-        vx_int32 demoImgHeight = sourceParams.frameHeight;
-        std::unique_ptr<ovxio::Render> renderer(ovxio::createDefaultRender(
-            context, "Video Stabilization Demo", demoImgWidth, demoImgHeight,
-             VX_DF_IMAGE_RGBX, FLAGS_display_scale, FLAGS_display_fullscreen));
-        if (!renderer) {
-            std::cerr << "Error: Can't create a renderer" << std::endl;
-            return nvxio::Application::APP_EXIT_CODE_NO_RENDER;
-        }
+        // Create the render window.
+        auto renderer = create_display(context,
+            sourceParams.frameHeight, 2*sourceParams.frameWidth);
         EventData eventData;
         renderer->setOnKeyboardEventCallback(eventCallback, &eventData);
 
@@ -200,17 +203,17 @@ int main(int argc, char* argv[])
         params.output_height = FLAGS_net_height;
         params.output_width = FLAGS_net_width;
 
-        vx_image demoImg = vxCreateImage(context, demoImgWidth,
-                                         demoImgHeight, VX_DF_IMAGE_RGBX);
+        vx_image demoImg = vxCreateImage(context, 2*sourceParams.frameWidth,
+                                         sourceParams.frameHeight, VX_DF_IMAGE_RGBX);
         NVXIO_CHECK_REFERENCE(demoImg);
-
         vx_image frameExemplar = vxCreateImage(context,
                                                sourceParams.frameWidth, sourceParams.frameHeight, VX_DF_IMAGE_RGBX);
-        vx_size orig_frame_delay_size = params.num_smoothing_frames + 2; //must have such size to be synchronized with the stabilized frames
-        // RGBX buffer of images.
-        vx_delay orig_frame_delay = vxCreateDelay(context, (vx_reference)frameExemplar, orig_frame_delay_size);
+        // must have such size to be synchronized with the stabilized frames.
+        vx_size orig_frame_delay_size = params.num_smoothing_frames + 2;
+        vx_delay orig_frame_delay = vxCreateDelay(
+            context, (vx_reference)frameExemplar, orig_frame_delay_size);
         NVXIO_CHECK_REFERENCE(orig_frame_delay);
-        NVXIO_SAFE_CALL( nvx::initDelayOfImages(context, orig_frame_delay) );
+        NVXIO_SAFE_CALL(nvx::initDelayOfImages(context, orig_frame_delay));
         NVXIO_SAFE_CALL(vxReleaseImage(&frameExemplar));
 
         vx_image frame = (vx_image)vxGetReferenceFromDelay(orig_frame_delay, 0);
@@ -220,8 +223,7 @@ int main(int argc, char* argv[])
         /* ============================================================================
          * Create VideoStabilizer instance
          * ========================================================================== */
-        std::unique_ptr<nvx::VideoStabilizer> stabilizer(nvx::VideoStabilizer::createImageBasedVStab(context, params));
-
+        auto stabilizer = nvx::VideoStabilizer::createImageBasedVStab(context, params);
         // Get rid of timeout frames + check source not closed.
         ovxio::FrameSource::FrameStatus frameStatus;
         do {
@@ -232,7 +234,7 @@ int main(int argc, char* argv[])
             std::cerr << "Error: Source has no frames" << std::endl;
             return nvxio::Application::APP_EXIT_CODE_NO_FRAMESOURCE;
         }
-        // A few initial checks on input frame.
+        // A few initial checks and initializaition on input frame.
         stabilizer->init(frame);
 
         // Left and right sub-images...
@@ -296,7 +298,7 @@ int main(int argc, char* argv[])
             syncTimer->synchronize();
             total_ms = totalTimer.toc();
             totalTimer.tic();
-            displayState(renderer.get(), sourceParams, proc_ms, total_ms, params.crop_margin);
+            update_display(renderer.get(), sourceParams, proc_ms, total_ms, params.crop_margin);
 
             if (!renderer->flush()) {
                 eventData.shouldStop = true;

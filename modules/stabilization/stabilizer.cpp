@@ -513,9 +513,10 @@ ImageBasedVideoStabilizer::HarrisPyrLKParams::HarrisPyrLKParams()
     lk_win_size = 10;
 }
 
-nvx::VideoStabilizer* nvx::VideoStabilizer::createImageBasedVStab(vx_context context, const VideoStabilizerParams &params)
+std::unique_ptr<nvx::VideoStabilizer> nvx::VideoStabilizer::createImageBasedVStab(
+    vx_context context, const VideoStabilizerParams &params)
 {
-    return new ImageBasedVideoStabilizer(context, params);
+    return std::unique_ptr<nvx::VideoStabilizer>(new ImageBasedVideoStabilizer(context, params));
 }
 
 vx_image ImageBasedVideoStabilizer::getStabilizedFrame() const
