@@ -449,7 +449,9 @@ void ImageBasedVideoStabilizer::createDataObjects(vx_image frame)
 
     vxReleaseImage(&image_exemplar);
 
-    stabilized_RGBX_frame_ = vxCreateImage(context_, width_, height_, VX_DF_IMAGE_RGBX);
+    // Stabilized output image.
+    stabilized_RGBX_frame_ = vxCreateImage(
+        context_, vstabParams_.output_width, vstabParams_.output_height, VX_DF_IMAGE_RGBX);
     NVXIO_CHECK_REFERENCE(stabilized_RGBX_frame_);
 
     vx_float32 lk_epsilon = 0.01f;
