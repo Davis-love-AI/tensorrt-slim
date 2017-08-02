@@ -233,9 +233,10 @@ void ImageBasedVideoStabilizer::process(vx_image newFrame)
 
 void ImageBasedVideoStabilizer::createMainGraph(vx_image frame)
 {
+    // Register additional kernels
     NVXIO_SAFE_CALL( registerMatrixSmootherKernel(context_) );
     NVXIO_SAFE_CALL( registerHomographyFilterKernel(context_) );
-    NVXIO_SAFE_CALL( registerTruncateStabTransformKernel(context_) );
+    NVXIO_SAFE_CALL( registerCropStabTransformKernel(context_) );
 
     graph_ = vxCreateGraph(context_);
     NVXIO_CHECK_REFERENCE(graph_);

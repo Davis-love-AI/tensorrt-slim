@@ -13,7 +13,7 @@
 # from Robik AI Ltd.
 # =========================================================================== */
 #include "vstab_nodes.hpp"
-
+#define KERNEL_NUM_PARAMS 7
 
 static const char KERNEL_CROP_STAB_TRANSFORM_NAME[VX_MAX_KERNEL_NAME] = "example.nvx.crop_stab_transform";
 
@@ -23,7 +23,7 @@ static vx_status VX_CALLBACK cropStabTransform_kernel(
     vx_node, const vx_reference* parameters, vx_uint32 num_params)
 {
     // Check the number of parameters provided!
-    if (num_params != 7)  return VX_FAILURE;
+    if (num_params != KERNEL_NUM_PARAMS)  return VX_FAILURE;
     vx_status status = VX_SUCCESS;
     // Get the main parameter objects.
     vx_matrix vxStabTransform = (vx_matrix)parameters[0];
@@ -77,7 +77,7 @@ static vx_status VX_CALLBACK cropStabTransform_validate(
 {
     vx_status status = VX_SUCCESS;
     // Number: stab + crop tr, image, crop box.
-    if(numParams != 7)  return VX_ERROR_INVALID_PARAMETERS;
+    if(numParams != KERNEL_NUM_PARAMS)  return VX_ERROR_INVALID_PARAMETERS;
 
     vx_matrix stab_transform = (vx_matrix)parameters[0];
     // ''ymin, xmin, ymax, xmax'' format for margin scalars.
@@ -134,7 +134,7 @@ vx_status registerCropStabTransformKernel(vx_context context)
     vx_kernel kernel = vxAddUserKernel(context, KERNEL_CROP_STAB_TRANSFORM_NAME,
                                        id,
                                        cropStabTransform_kernel,
-                                       4,
+                                       KERNEL_NUM_PARAMS,
                                        cropStabTransform_validate,
                                        NULL,
                                        NULL
