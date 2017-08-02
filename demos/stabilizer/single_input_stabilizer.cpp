@@ -46,10 +46,14 @@ DEFINE_string(source, "../data/parking.avi", "Video source URI, webcam camera or
 DEFINE_int32(source_width, 1280, "Source width. Only for camera.");
 DEFINE_int32(source_height, 720, "Source height. Only for camera.");
 DEFINE_int32(source_fps, 60, "Source fps. Only for camera.");
+
 // Network parameters.
-DEFINE_string(network, "ssd_inception2_v0", "SSD network network to use.");
-DEFINE_string(network_pb, "../data/networks/ssd_inception2_v0_orig.tfrt32",
-    "Network protobuf parameter file.");
+DEFINE_string(net_name, "ssd_inception2_v0", "SSD network network to use.");
+DEFINE_string(net_checkpoint, "../data/networks/ssd_inception2_v0_orig.tfrt32",
+    "Network protobuf checkpoint file.");
+DEFINE_int32(net_height, 225, "Network input height.");
+DEFINE_int32(net_width, 400, "Network input width.");
+
 // Display parameters.
 DEFINE_bool(display_scale, true, "Scale display?");
 DEFINE_bool(display_fullscreen, true, "Fullscreen display?");
@@ -149,10 +153,9 @@ static void displayState(ovxio::Render *renderer,
     }
 }
 
-//
-// main - Application entry point
-//
-
+/* ============================================================================
+ * Main entry point...
+ * ========================================================================== */
 int main(int argc, char* argv[])
 {
     google::InitGoogleLogging(argv[0]);
@@ -192,7 +195,10 @@ int main(int argc, char* argv[])
         /* ============================================================================
          * Create OpenVX Image to hold frames from video source
          * ========================================================================== */
+        // Stabilization parameters + update neural net shape.
         nvx::VideoStabilizer::VideoStabilizerParams params;
+        params.output_height = FLAGS_net_height;
+        params.output_width = FLAGS_net_width;
 
         vx_image demoImg = vxCreateImage(context, demoImgWidth,
                                          demoImgHeight, VX_DF_IMAGE_RGBX);
@@ -214,8 +220,6 @@ int main(int argc, char* argv[])
         /* ============================================================================
          * Create VideoStabilizer instance
          * ========================================================================== */
-        // params.num_smoothing_frames = FLAGS_stab_num_frames;
-        // params.crop_margin = FLAGS_stab_crop_margin;
         std::unique_ptr<nvx::VideoStabilizer> stabilizer(nvx::VideoStabilizer::createImageBasedVStab(context, params));
 
         // Get rid of timeout frames + check source not closed.

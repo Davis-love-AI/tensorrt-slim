@@ -31,288 +31,288 @@
 /* ============================================================================
  * Stabilization parameters.
  * ========================================================================== */
-DEFINE_double(stab_crop_margin, 0.1, "Stabilization crop margin.");
-DEFINE_int32(stab_num_frames, 5,
+DEFINE_double(stab_crop_margin, -1, "Stabilization crop margin.");
+DEFINE_int32(stab_num_smoothing_frames, 5,
     "Number of frames used for smoothing the stabilization algorithm.");
 
 
 namespace
 {
-    class ImageBasedVideoStabilizer : public nvx::VideoStabilizer
+class ImageBasedVideoStabilizer : public nvx::VideoStabilizer
+{
+public:
+    ImageBasedVideoStabilizer(vx_context context, const VideoStabilizerParams& params);
+    ~ImageBasedVideoStabilizer();
+
+    void init(vx_image firstFrame);
+    void process(vx_image newFrame);
+
+    vx_image getStabilizedFrame() const;
+
+    void printPerfs() const;
+
+private:
+
+    struct HarrisPyrLKParams
     {
-    public:
-        ImageBasedVideoStabilizer(vx_context context, const VideoStabilizerParams& params);
-        ~ImageBasedVideoStabilizer();
+        vx_size pyr_levels;
 
-        void init(vx_image firstFrame);
-        void process(vx_image newFrame);
+        vx_float32 harris_k;
+        vx_float32 harris_thresh;
+        vx_uint32 harris_cell_size;
 
-        vx_image getStabilizedFrame() const;
+        vx_uint32 lk_num_iters;
+        vx_size lk_win_size;
 
-        void printPerfs() const;
-
-    private:
-
-        struct HarrisPyrLKParams
-        {
-            vx_size pyr_levels;
-
-            vx_float32 harris_k;
-            vx_float32 harris_thresh;
-            vx_uint32 harris_cell_size;
-
-            vx_uint32 lk_num_iters;
-            vx_size lk_win_size;
-
-            HarrisPyrLKParams();
-        };
-
-        void processFirstFrame(vx_image frame);
-        void createMainGraph(vx_image frame);
-
-        void createDataObjects(vx_image frame);
-        void release();
-
-        VideoStabilizerParams vstabParams_;
-        HarrisPyrLKParams harrisParams_;
-
-        vx_graph graph_;
-        vx_context context_;
-
-        // Format for current frames
-        vx_df_image format_;
-        vx_uint32 width_;
-        vx_uint32 height_;
-
-        // Node from main graph (used to print performance results)
-        vx_node convert_to_gray_node_;
-        vx_node copy_node_;
-        vx_node pyr_node_;
-        vx_node opt_flow_node_;
-        vx_node feature_track_node_;
-        vx_node find_homography_node_;
-        vx_node homography_filter_node_;
-        vx_node matrix_smoother_node_;
-        vx_node truncate_stab_transform_node_;
-        vx_node warp_perspective_node_;
-
-        vx_delay pyr_delay_;
-        vx_delay pts_delay_;
-        vx_delay matrices_delay_;
-        vx_delay frames_RGBX_delay_;
-
-        vx_matrix smoothed_;
-
-        vx_image stabilized_RGBX_frame_;
-
-        vx_scalar s_lk_epsilon_;
-        vx_scalar s_lk_num_iters_;
-        vx_scalar s_lk_use_init_est_;
-        vx_scalar s_crop_margin_;
-
-        vx_size matrices_delay_size_;
-        vx_size frames_delay_size_;
+        HarrisPyrLKParams();
     };
 
-    ImageBasedVideoStabilizer::ImageBasedVideoStabilizer(vx_context context, const VideoStabilizerParams &params):
-        vstabParams_(params)
-    {
-        context_ = context;
-        graph_ = 0;
+    void processFirstFrame(vx_image frame);
+    void createMainGraph(vx_image frame);
 
-        format_ = VX_DF_IMAGE_VIRT;
-        width_ = 0;
-        height_ = 0;
+    void createDataObjects(vx_image frame);
+    void release();
 
-        convert_to_gray_node_ = 0;
-        copy_node_ = 0;
-        pyr_node_ = 0;
-        opt_flow_node_ = 0;
-        feature_track_node_ = 0;
-        find_homography_node_ = 0;
-        homography_filter_node_ = 0;
-        matrix_smoother_node_ = 0;
-        truncate_stab_transform_node_ = 0;
-        warp_perspective_node_ = 0;
+    VideoStabilizerParams vstabParams_;
+    HarrisPyrLKParams harrisParams_;
 
-        pyr_delay_ = 0;
-        pts_delay_ = 0;
-        matrices_delay_ = 0;
-        frames_RGBX_delay_ = 0;
+    vx_graph graph_;
+    vx_context context_;
 
-        smoothed_ = 0;
-        stabilized_RGBX_frame_ = 0;
+    // Format for current frames
+    vx_df_image format_;
+    vx_uint32 width_;
+    vx_uint32 height_;
 
-        s_lk_epsilon_ = 0;
-        s_lk_num_iters_ = 0;
-        s_lk_use_init_est_ = 0;
-        s_crop_margin_ = 0;
+    // Node from main graph (used to print performance results)
+    vx_node convert_to_gray_node_;
+    vx_node copy_node_;
+    vx_node pyr_node_;
+    vx_node opt_flow_node_;
+    vx_node feature_track_node_;
+    vx_node find_homography_node_;
+    vx_node homography_filter_node_;
+    vx_node matrix_smoother_node_;
+    vx_node truncate_stab_transform_node_;
+    vx_node warp_perspective_node_;
 
-        matrices_delay_size_ = 0;
-        frames_delay_size_ = 0;
-    }
+    vx_delay pyr_delay_;
+    vx_delay pts_delay_;
+    vx_delay matrices_delay_;
+    vx_delay frames_RGBX_delay_;
 
-    void ImageBasedVideoStabilizer::init(vx_image firstFrame)
-    {
-        vx_df_image format = VX_DF_IMAGE_VIRT;
-        vx_uint32 width = 0;
-        vx_uint32 height = 0;
+    vx_matrix smoothed_;
 
-        NVXIO_SAFE_CALL( vxQueryImage(firstFrame, VX_IMAGE_ATTRIBUTE_FORMAT, &format, sizeof(format)) );
-        NVXIO_SAFE_CALL( vxQueryImage(firstFrame, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width)) );
-        NVXIO_SAFE_CALL( vxQueryImage(firstFrame, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)) );
+    vx_image stabilized_RGBX_frame_;
 
-        NVXIO_ASSERT(format == VX_DF_IMAGE_RGBX);
+    vx_scalar s_lk_epsilon_;
+    vx_scalar s_lk_num_iters_;
+    vx_scalar s_lk_use_init_est_;
+    vx_scalar s_crop_margin_;
 
-        release();
+    vx_size matrices_delay_size_;
+    vx_size frames_delay_size_;
+};
 
-        format_ = format;
-        width_ = width;
-        height_ = height;
+ImageBasedVideoStabilizer::ImageBasedVideoStabilizer(vx_context context, const VideoStabilizerParams &params):
+    vstabParams_(params)
+{
+    context_ = context;
+    graph_ = 0;
 
-        createDataObjects(firstFrame);
-        createMainGraph(firstFrame);
+    format_ = VX_DF_IMAGE_VIRT;
+    width_ = 0;
+    height_ = 0;
 
-        processFirstFrame(firstFrame);
-    }
+    convert_to_gray_node_ = 0;
+    copy_node_ = 0;
+    pyr_node_ = 0;
+    opt_flow_node_ = 0;
+    feature_track_node_ = 0;
+    find_homography_node_ = 0;
+    homography_filter_node_ = 0;
+    matrix_smoother_node_ = 0;
+    truncate_stab_transform_node_ = 0;
+    warp_perspective_node_ = 0;
 
-    void ImageBasedVideoStabilizer::processFirstFrame(vx_image frame)
-    {
-        vx_image gray = vxCreateImage(context_, width_, height_, VX_DF_IMAGE_U8);
-        NVXIO_CHECK_REFERENCE(gray);
+    pyr_delay_ = 0;
+    pts_delay_ = 0;
+    matrices_delay_ = 0;
+    frames_RGBX_delay_ = 0;
 
-        NVXIO_SAFE_CALL( vxuColorConvert(context_, frame, gray) );
-        NVXIO_SAFE_CALL( nvxuCopyImage(context_, frame, (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 0)) );
+    smoothed_ = 0;
+    stabilized_RGBX_frame_ = 0;
 
-        NVXIO_SAFE_CALL( vxuGaussianPyramid(context_, gray,
-                                        (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, 0)) );
-        NVXIO_SAFE_CALL( nvxuHarrisTrack(context_, gray,
-                                         (vx_array)vxGetReferenceFromDelay(pts_delay_, 0), NULL, 0,
-                                         harrisParams_.harris_k, harrisParams_.harris_thresh, harrisParams_.harris_cell_size, NULL) );
+    s_lk_epsilon_ = 0;
+    s_lk_num_iters_ = 0;
+    s_lk_use_init_est_ = 0;
+    s_crop_margin_ = 0;
 
-        vxReleaseImage(&gray);
-    }
+    matrices_delay_size_ = 0;
+    frames_delay_size_ = 0;
+}
 
-    void ImageBasedVideoStabilizer::process(vx_image newFrame)
-    {
-        // Check input format
-        vx_df_image format = VX_DF_IMAGE_VIRT;
-        vx_uint32 width = 0;
-        vx_uint32 height = 0;
+void ImageBasedVideoStabilizer::init(vx_image firstFrame)
+{
+    vx_df_image format = VX_DF_IMAGE_VIRT;
+    vx_uint32 width = 0;
+    vx_uint32 height = 0;
 
-        NVXIO_SAFE_CALL( vxQueryImage(newFrame, VX_IMAGE_ATTRIBUTE_FORMAT, &format, sizeof(format)) );
-        NVXIO_SAFE_CALL( vxQueryImage(newFrame, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width)) );
-        NVXIO_SAFE_CALL( vxQueryImage(newFrame, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)) );
+    NVXIO_SAFE_CALL( vxQueryImage(firstFrame, VX_IMAGE_ATTRIBUTE_FORMAT, &format, sizeof(format)) );
+    NVXIO_SAFE_CALL( vxQueryImage(firstFrame, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width)) );
+    NVXIO_SAFE_CALL( vxQueryImage(firstFrame, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)) );
 
-        NVXIO_ASSERT(format == format_);
-        NVXIO_ASSERT(width == width_);
-        NVXIO_ASSERT(height == height_);
+    NVXIO_ASSERT(format == VX_DF_IMAGE_RGBX);
 
-        // Update frame queue
-        NVXIO_SAFE_CALL( vxAgeDelay(pyr_delay_) );
-        NVXIO_SAFE_CALL( vxAgeDelay(pts_delay_) );
-        NVXIO_SAFE_CALL( vxAgeDelay(matrices_delay_) );
-        NVXIO_SAFE_CALL( vxAgeDelay(frames_RGBX_delay_) );
+    release();
 
-        // Process graph
-        NVXIO_SAFE_CALL( vxSetParameterByIndex(convert_to_gray_node_, 0, (vx_reference)newFrame) );
-        NVXIO_SAFE_CALL( vxSetParameterByIndex(copy_node_, 0, (vx_reference)newFrame) );
+    format_ = format;
+    width_ = width;
+    height_ = height;
 
-        NVXIO_SAFE_CALL( vxProcessGraph(graph_) );
-    }
+    createDataObjects(firstFrame);
+    createMainGraph(firstFrame);
 
-    void ImageBasedVideoStabilizer::createMainGraph(vx_image frame)
-    {
-        NVXIO_SAFE_CALL( registerMatrixSmootherKernel(context_) );
-        NVXIO_SAFE_CALL( registerHomographyFilterKernel(context_) );
-        NVXIO_SAFE_CALL( registerTruncateStabTransformKernel(context_) );
+    processFirstFrame(firstFrame);
+}
 
-        graph_ = vxCreateGraph(context_);
-        NVXIO_CHECK_REFERENCE(graph_);
+void ImageBasedVideoStabilizer::processFirstFrame(vx_image frame)
+{
+    vx_image gray = vxCreateImage(context_, width_, height_, VX_DF_IMAGE_U8);
+    NVXIO_CHECK_REFERENCE(gray);
 
-        vx_image gray = vxCreateVirtualImage(graph_, 0, 0, VX_DF_IMAGE_U8);
-        NVXIO_CHECK_REFERENCE(gray);
+    NVXIO_SAFE_CALL( vxuColorConvert(context_, frame, gray) );
+    NVXIO_SAFE_CALL( nvxuCopyImage(context_, frame, (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 0)) );
 
-        //vxColorConvertNode
-        convert_to_gray_node_ = vxColorConvertNode(graph_, frame, gray);
-        NVXIO_CHECK_REFERENCE(convert_to_gray_node_);
+    NVXIO_SAFE_CALL( vxuGaussianPyramid(context_, gray,
+                                    (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, 0)) );
+    NVXIO_SAFE_CALL( nvxuHarrisTrack(context_, gray,
+                                        (vx_array)vxGetReferenceFromDelay(pts_delay_, 0), NULL, 0,
+                                        harrisParams_.harris_k, harrisParams_.harris_thresh, harrisParams_.harris_cell_size, NULL) );
 
-        //nvxCopyImageNode
-        copy_node_ = nvxCopyImageNode(graph_, frame, (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 0));
-        NVXIO_CHECK_REFERENCE(copy_node_);
+    vxReleaseImage(&gray);
+}
 
-        //vxGaussianPyramidNode
-        pyr_node_ = vxGaussianPyramidNode(graph_, gray,
-                                          (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, 0));
-        NVXIO_CHECK_REFERENCE(pyr_node_);
+void ImageBasedVideoStabilizer::process(vx_image newFrame)
+{
+    // Check input format
+    vx_df_image format = VX_DF_IMAGE_VIRT;
+    vx_uint32 width = 0;
+    vx_uint32 height = 0;
 
-        vx_array kp_curr_list = vxCreateVirtualArray(graph_, NVX_TYPE_POINT2F, 1000);
-        NVXIO_CHECK_REFERENCE(kp_curr_list);
+    NVXIO_SAFE_CALL( vxQueryImage(newFrame, VX_IMAGE_ATTRIBUTE_FORMAT, &format, sizeof(format)) );
+    NVXIO_SAFE_CALL( vxQueryImage(newFrame, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width)) );
+    NVXIO_SAFE_CALL( vxQueryImage(newFrame, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)) );
 
-        //vxOpticalFlowPyrLKNode
-        opt_flow_node_ = vxOpticalFlowPyrLKNode(graph_,
-            (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, -1), (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, 0),
-            (vx_array)vxGetReferenceFromDelay(pts_delay_, -1), (vx_array)vxGetReferenceFromDelay(pts_delay_, -1),
-            kp_curr_list, VX_TERM_CRITERIA_BOTH, s_lk_epsilon_, s_lk_num_iters_, s_lk_use_init_est_, harrisParams_.lk_win_size);
-        NVXIO_CHECK_REFERENCE(opt_flow_node_);
+    NVXIO_ASSERT(format == format_);
+    NVXIO_ASSERT(width == width_);
+    NVXIO_ASSERT(height == height_);
 
-        //nvxFindHomographyNode
-        vx_matrix homography = vxCreateMatrix(context_, VX_TYPE_FLOAT32, 3, 3);
-        vx_array mask = vxCreateVirtualArray(graph_, VX_TYPE_UINT8, 1000);
-        find_homography_node_ = nvxFindHomographyNode(graph_, (vx_array)vxGetReferenceFromDelay(pts_delay_, -1),
-                                                      kp_curr_list,
-                                                      homography,
-                                                      NVX_FIND_HOMOGRAPHY_METHOD_RANSAC,
-                                                      3.0f,
-                                                      500, 10,
-                                                      0.9f, 0.45f,
-                                                      mask);
-        NVXIO_CHECK_REFERENCE(find_homography_node_);
+    // Update frame queue
+    NVXIO_SAFE_CALL( vxAgeDelay(pyr_delay_) );
+    NVXIO_SAFE_CALL( vxAgeDelay(pts_delay_) );
+    NVXIO_SAFE_CALL( vxAgeDelay(matrices_delay_) );
+    NVXIO_SAFE_CALL( vxAgeDelay(frames_RGBX_delay_) );
 
-        //homographyFilterNode
+    // Process graph
+    NVXIO_SAFE_CALL( vxSetParameterByIndex(convert_to_gray_node_, 0, (vx_reference)newFrame) );
+    NVXIO_SAFE_CALL( vxSetParameterByIndex(copy_node_, 0, (vx_reference)newFrame) );
 
-        homography_filter_node_ = homographyFilterNode(graph_, homography,
-                                                       (vx_matrix)vxGetReferenceFromDelay(matrices_delay_, 0),
-                                                       frame, mask);
-        NVXIO_CHECK_REFERENCE(homography_filter_node_);
+    NVXIO_SAFE_CALL( vxProcessGraph(graph_) );
+}
 
-        //matrixSmootherNode
-        matrix_smoother_node_ = matrixSmootherNode(graph_, matrices_delay_, smoothed_);
-        NVXIO_CHECK_REFERENCE(matrix_smoother_node_);
+void ImageBasedVideoStabilizer::createMainGraph(vx_image frame)
+{
+    NVXIO_SAFE_CALL( registerMatrixSmootherKernel(context_) );
+    NVXIO_SAFE_CALL( registerHomographyFilterKernel(context_) );
+    NVXIO_SAFE_CALL( registerTruncateStabTransformKernel(context_) );
 
-        //truncateStabTransformNode
-        vx_matrix truncated = vxCreateMatrix(context_, VX_TYPE_FLOAT32, 3, 3);
-        truncate_stab_transform_node_ = truncateStabTransformNode(graph_, smoothed_, truncated, frame, s_crop_margin_);
-        NVXIO_CHECK_REFERENCE(truncate_stab_transform_node_);
+    graph_ = vxCreateGraph(context_);
+    NVXIO_CHECK_REFERENCE(graph_);
 
-        //vxWarpPerspectiveNode
-        warp_perspective_node_ = vxWarpPerspectiveNode(graph_,
-                (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 1 - static_cast<vx_int32>(frames_delay_size_)),
-                truncated,
-                // VX_INTERPOLATION_TYPE_BILINEAR,
-                VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR,
-                stabilized_RGBX_frame_);
-        NVXIO_CHECK_REFERENCE(warp_perspective_node_);
+    vx_image gray = vxCreateVirtualImage(graph_, 0, 0, VX_DF_IMAGE_U8);
+    NVXIO_CHECK_REFERENCE(gray);
 
-        //nvxHarrisTrackNode
-        feature_track_node_ = nvxHarrisTrackNode(graph_, gray,
-                                                 (vx_array)vxGetReferenceFromDelay(pts_delay_, 0), NULL,
-                                                 kp_curr_list, harrisParams_.harris_k, harrisParams_.harris_thresh, harrisParams_.harris_cell_size, NULL);
-        NVXIO_CHECK_REFERENCE(feature_track_node_);
+    //vxColorConvertNode
+    convert_to_gray_node_ = vxColorConvertNode(graph_, frame, gray);
+    NVXIO_CHECK_REFERENCE(convert_to_gray_node_);
 
-        // Ensure highest graph optimization level
-        const char* option = "-O3";
-        NVXIO_SAFE_CALL( vxSetGraphAttribute(graph_, NVX_GRAPH_VERIFY_OPTIONS, option, strlen(option)) );
+    //nvxCopyImageNode
+    copy_node_ = nvxCopyImageNode(graph_, frame, (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 0));
+    NVXIO_CHECK_REFERENCE(copy_node_);
 
-        NVXIO_SAFE_CALL( vxVerifyGraph(graph_) );
+    //vxGaussianPyramidNode
+    pyr_node_ = vxGaussianPyramidNode(graph_, gray,
+                                        (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, 0));
+    NVXIO_CHECK_REFERENCE(pyr_node_);
 
-        vxReleaseMatrix(&homography);
-        vxReleaseMatrix(&truncated);
+    vx_array kp_curr_list = vxCreateVirtualArray(graph_, NVX_TYPE_POINT2F, 1000);
+    NVXIO_CHECK_REFERENCE(kp_curr_list);
 
-        vxReleaseArray(&kp_curr_list);
-        vxReleaseArray(&mask);
-        vxReleaseImage(&gray);
-    }
+    //vxOpticalFlowPyrLKNode
+    opt_flow_node_ = vxOpticalFlowPyrLKNode(graph_,
+        (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, -1), (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, 0),
+        (vx_array)vxGetReferenceFromDelay(pts_delay_, -1), (vx_array)vxGetReferenceFromDelay(pts_delay_, -1),
+        kp_curr_list, VX_TERM_CRITERIA_BOTH, s_lk_epsilon_, s_lk_num_iters_, s_lk_use_init_est_, harrisParams_.lk_win_size);
+    NVXIO_CHECK_REFERENCE(opt_flow_node_);
+
+    //nvxFindHomographyNode
+    vx_matrix homography = vxCreateMatrix(context_, VX_TYPE_FLOAT32, 3, 3);
+    vx_array mask = vxCreateVirtualArray(graph_, VX_TYPE_UINT8, 1000);
+    find_homography_node_ = nvxFindHomographyNode(graph_, (vx_array)vxGetReferenceFromDelay(pts_delay_, -1),
+                                                    kp_curr_list,
+                                                    homography,
+                                                    NVX_FIND_HOMOGRAPHY_METHOD_RANSAC,
+                                                    3.0f,
+                                                    500, 10,
+                                                    0.9f, 0.45f,
+                                                    mask);
+    NVXIO_CHECK_REFERENCE(find_homography_node_);
+
+    //homographyFilterNode
+
+    homography_filter_node_ = homographyFilterNode(graph_, homography,
+                                                    (vx_matrix)vxGetReferenceFromDelay(matrices_delay_, 0),
+                                                    frame, mask);
+    NVXIO_CHECK_REFERENCE(homography_filter_node_);
+
+    //matrixSmootherNode
+    matrix_smoother_node_ = matrixSmootherNode(graph_, matrices_delay_, smoothed_);
+    NVXIO_CHECK_REFERENCE(matrix_smoother_node_);
+
+    //truncateStabTransformNode
+    vx_matrix truncated = vxCreateMatrix(context_, VX_TYPE_FLOAT32, 3, 3);
+    truncate_stab_transform_node_ = truncateStabTransformNode(graph_, smoothed_, truncated, frame, s_crop_margin_);
+    NVXIO_CHECK_REFERENCE(truncate_stab_transform_node_);
+
+    //vxWarpPerspectiveNode
+    warp_perspective_node_ = vxWarpPerspectiveNode(graph_,
+            (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 1 - static_cast<vx_int32>(frames_delay_size_)),
+            truncated,
+            // VX_INTERPOLATION_TYPE_BILINEAR,
+            VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR,
+            stabilized_RGBX_frame_);
+    NVXIO_CHECK_REFERENCE(warp_perspective_node_);
+
+    //nvxHarrisTrackNode
+    feature_track_node_ = nvxHarrisTrackNode(graph_, gray,
+                                                (vx_array)vxGetReferenceFromDelay(pts_delay_, 0), NULL,
+                                                kp_curr_list, harrisParams_.harris_k, harrisParams_.harris_thresh, harrisParams_.harris_cell_size, NULL);
+    NVXIO_CHECK_REFERENCE(feature_track_node_);
+
+    // Ensure highest graph optimization level
+    const char* option = "-O3";
+    NVXIO_SAFE_CALL( vxSetGraphAttribute(graph_, NVX_GRAPH_VERIFY_OPTIONS, option, strlen(option)) );
+
+    NVXIO_SAFE_CALL( vxVerifyGraph(graph_) );
+
+    vxReleaseMatrix(&homography);
+    vxReleaseMatrix(&truncated);
+
+    vxReleaseArray(&kp_curr_list);
+    vxReleaseArray(&mask);
+    vxReleaseImage(&gray);
+}
 }
 
 void ImageBasedVideoStabilizer::printPerfs() const
@@ -533,6 +533,9 @@ ImageBasedVideoStabilizer::~ImageBasedVideoStabilizer()
  * ========================================================================== */
 nvx::VideoStabilizer::VideoStabilizerParams::VideoStabilizerParams()
 {
-    num_smoothing_frames = 5;
-    crop_margin = 0.05f;
+    num_smoothing_frames = FLAGS_stab_num_smoothing_frames;
+    crop_margin = FLAGS_stab_crop_margin;
+    // Don't really care about default output size.
+    output_height = 480;
+    output_width = 640;
 }
