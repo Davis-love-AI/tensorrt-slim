@@ -40,7 +40,7 @@ static vx_status VX_CALLBACK cropStabTransform_kernel(
     Matrix3x3f_rm stabTransform = Matrix3x3f_rm::Map(stabTransformData, 3, 3);
     Matrix3x3f_rm invStabTransform;
     // Copy cropping parameters too.
-    vx_float32 crop_top, crop_left, crop_bottom, crop_right, cropMargin{-1};
+    vx_float32 crop_top, crop_left, crop_bottom, crop_right;
     status |= vxCopyScalar(sc_crop_top, &crop_top, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     status |= vxCopyScalar(sc_crop_left, &crop_left, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     status |= vxCopyScalar(sc_crop_bottom, &crop_bottom, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
@@ -195,6 +195,5 @@ vx_node cropStabTransformNode(
             vxSetParameterByIndex(node, 6, (vx_reference)crop_right);
         }
     }
-
     return node;
 }

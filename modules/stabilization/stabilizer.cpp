@@ -97,7 +97,7 @@ private:
     vx_node find_homography_node_;
     vx_node homography_filter_node_;
     vx_node matrix_smoother_node_;
-    vx_node truncate_stab_transform_node_;
+    vx_node crop_stab_transform_node_;
     vx_node warp_perspective_node_;
 
     vx_delay pyr_delay_;
@@ -112,7 +112,11 @@ private:
     vx_scalar s_lk_epsilon_;
     vx_scalar s_lk_num_iters_;
     vx_scalar s_lk_use_init_est_;
-    vx_scalar s_crop_margin_;
+    // Croping scalar parameters.
+    vx_scalar s_crop_top_;
+    vx_scalar s_crop_left_;
+    vx_scalar s_crop_bottom_;
+    vx_scalar s_crop_right_;
 
     vx_size matrices_delay_size_;
     vx_size frames_delay_size_;
@@ -136,7 +140,7 @@ ImageBasedVideoStabilizer::ImageBasedVideoStabilizer(vx_context context, const V
     find_homography_node_ = 0;
     homography_filter_node_ = 0;
     matrix_smoother_node_ = 0;
-    truncate_stab_transform_node_ = 0;
+    crop_stab_transform_node_ = 0;
     warp_perspective_node_ = 0;
 
     pyr_delay_ = 0;
@@ -150,7 +154,11 @@ ImageBasedVideoStabilizer::ImageBasedVideoStabilizer(vx_context context, const V
     s_lk_epsilon_ = 0;
     s_lk_num_iters_ = 0;
     s_lk_use_init_est_ = 0;
-    s_crop_margin_ = 0;
+
+    s_crop_top_ = 0;
+    s_crop_left_ = 0;
+    s_crop_bottom_ = 0;
+    s_crop_right_ = 0;
 
     matrices_delay_size_ = 0;
     frames_delay_size_ = 0;
@@ -167,7 +175,6 @@ void ImageBasedVideoStabilizer::init(vx_image firstFrame)
     NVXIO_SAFE_CALL( vxQueryImage(firstFrame, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)) );
 
     NVXIO_ASSERT(format == VX_DF_IMAGE_RGBX);
-
     release();
 
     format_ = format;
@@ -176,7 +183,6 @@ void ImageBasedVideoStabilizer::init(vx_image firstFrame)
 
     createDataObjects(firstFrame);
     createMainGraph(firstFrame);
-
     processFirstFrame(firstFrame);
 }
 
@@ -184,16 +190,16 @@ void ImageBasedVideoStabilizer::processFirstFrame(vx_image frame)
 {
     vx_image gray = vxCreateImage(context_, width_, height_, VX_DF_IMAGE_U8);
     NVXIO_CHECK_REFERENCE(gray);
-
     NVXIO_SAFE_CALL( vxuColorConvert(context_, frame, gray) );
-    NVXIO_SAFE_CALL( nvxuCopyImage(context_, frame, (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 0)) );
-
-    NVXIO_SAFE_CALL( vxuGaussianPyramid(context_, gray,
-                                    (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, 0)) );
-    NVXIO_SAFE_CALL( nvxuHarrisTrack(context_, gray,
-                                        (vx_array)vxGetReferenceFromDelay(pts_delay_, 0), NULL, 0,
-                                        harrisParams_.harris_k, harrisParams_.harris_thresh, harrisParams_.harris_cell_size, NULL) );
-
+    NVXIO_SAFE_CALL( nvxuCopyImage(
+        context_, frame, (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 0)) );
+    NVXIO_SAFE_CALL( vxuGaussianPyramid(
+        context_, gray, (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, 0)) );
+    NVXIO_SAFE_CALL( nvxuHarrisTrack(
+        context_, gray,
+        (vx_array)vxGetReferenceFromDelay(pts_delay_, 0), NULL, 0,
+        harrisParams_.harris_k, harrisParams_.harris_thresh,
+        harrisParams_.harris_cell_size, NULL) );
     vxReleaseImage(&gray);
 }
 
@@ -237,15 +243,15 @@ void ImageBasedVideoStabilizer::createMainGraph(vx_image frame)
     vx_image gray = vxCreateVirtualImage(graph_, 0, 0, VX_DF_IMAGE_U8);
     NVXIO_CHECK_REFERENCE(gray);
 
-    //vxColorConvertNode
+    // vxColorConvertNode
     convert_to_gray_node_ = vxColorConvertNode(graph_, frame, gray);
     NVXIO_CHECK_REFERENCE(convert_to_gray_node_);
 
-    //nvxCopyImageNode
+    // nvxCopyImageNode
     copy_node_ = nvxCopyImageNode(graph_, frame, (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 0));
     NVXIO_CHECK_REFERENCE(copy_node_);
 
-    //vxGaussianPyramidNode
+    // vxGaussianPyramidNode
     pyr_node_ = vxGaussianPyramidNode(graph_, gray,
                                         (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, 0));
     NVXIO_CHECK_REFERENCE(pyr_node_);
@@ -263,36 +269,41 @@ void ImageBasedVideoStabilizer::createMainGraph(vx_image frame)
     //nvxFindHomographyNode
     vx_matrix homography = vxCreateMatrix(context_, VX_TYPE_FLOAT32, 3, 3);
     vx_array mask = vxCreateVirtualArray(graph_, VX_TYPE_UINT8, 1000);
-    find_homography_node_ = nvxFindHomographyNode(graph_, (vx_array)vxGetReferenceFromDelay(pts_delay_, -1),
-                                                    kp_curr_list,
-                                                    homography,
-                                                    NVX_FIND_HOMOGRAPHY_METHOD_RANSAC,
-                                                    3.0f,
-                                                    500, 10,
-                                                    0.9f, 0.45f,
-                                                    mask);
+    find_homography_node_ = nvxFindHomographyNode(
+        graph_, (vx_array)vxGetReferenceFromDelay(pts_delay_, -1),
+        kp_curr_list,
+        homography,
+        NVX_FIND_HOMOGRAPHY_METHOD_RANSAC,
+        3.0f,
+        500, 10,
+        0.9f, 0.45f,
+        mask);
     NVXIO_CHECK_REFERENCE(find_homography_node_);
 
-    //homographyFilterNode
-
-    homography_filter_node_ = homographyFilterNode(graph_, homography,
-                                                    (vx_matrix)vxGetReferenceFromDelay(matrices_delay_, 0),
-                                                    frame, mask);
+    // homographyFilterNode
+    homography_filter_node_ = homographyFilterNode(
+        graph_, homography, (vx_matrix)vxGetReferenceFromDelay(matrices_delay_, 0), frame, mask);
     NVXIO_CHECK_REFERENCE(homography_filter_node_);
 
-    //matrixSmootherNode
+    // matrixSmootherNode
     matrix_smoother_node_ = matrixSmootherNode(graph_, matrices_delay_, smoothed_);
     NVXIO_CHECK_REFERENCE(matrix_smoother_node_);
 
-    //truncateStabTransformNode
-    vx_matrix truncated = vxCreateMatrix(context_, VX_TYPE_FLOAT32, 3, 3);
-    truncate_stab_transform_node_ = truncateStabTransformNode(graph_, smoothed_, truncated, frame, s_crop_margin_);
-    NVXIO_CHECK_REFERENCE(truncate_stab_transform_node_);
+    // truncateStabTransformNode
+    // vx_matrix truncated = vxCreateMatrix(context_, VX_TYPE_FLOAT32, 3, 3);
+    // truncate_stab_transform_node_ = truncateStabTransformNode(graph_, smoothed_, truncated, frame, s_crop_margin_);
+    // NVXIO_CHECK_REFERENCE(truncate_stab_transform_node_);
+    // Crop transform...
+    vx_matrix crop_transform = vxCreateMatrix(context_, VX_TYPE_FLOAT32, 3, 3);
+    crop_stab_transform_node_ = cropStabTransformNode(
+        graph_, smoothed_, crop_transform, frame,
+        s_crop_top_, s_crop_left_, s_crop_bottom_, s_crop_right_);
+    NVXIO_CHECK_REFERENCE(crop_stab_transform_node_);
 
-    //vxWarpPerspectiveNode
+    // vxWarpPerspectiveNode
     warp_perspective_node_ = vxWarpPerspectiveNode(graph_,
             (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 1 - static_cast<vx_int32>(frames_delay_size_)),
-            truncated,
+            crop_transform,
             // VX_INTERPOLATION_TYPE_BILINEAR,
             VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR,
             stabilized_RGBX_frame_);
@@ -306,13 +317,12 @@ void ImageBasedVideoStabilizer::createMainGraph(vx_image frame)
 
     // Ensure highest graph optimization level
     const char* option = "-O3";
-    NVXIO_SAFE_CALL( vxSetGraphAttribute(graph_, NVX_GRAPH_VERIFY_OPTIONS, option, strlen(option)) );
+    NVXIO_SAFE_CALL(vxSetGraphAttribute(graph_, NVX_GRAPH_VERIFY_OPTIONS, option, strlen(option)) );
 
-    NVXIO_SAFE_CALL( vxVerifyGraph(graph_) );
+    NVXIO_SAFE_CALL(vxVerifyGraph(graph_));
 
     vxReleaseMatrix(&homography);
-    vxReleaseMatrix(&truncated);
-
+    vxReleaseMatrix(&crop_transform);
     vxReleaseArray(&kp_curr_list);
     vxReleaseArray(&mask);
     vxReleaseImage(&gray);
@@ -347,8 +357,8 @@ void ImageBasedVideoStabilizer::printPerfs() const
     NVXIO_SAFE_CALL( vxQueryNode(matrix_smoother_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
     std::cout << "\t Matrices Smoothing time : " << perf.avg / 1000000.0 << " ms" << std::endl;
 
-    NVXIO_SAFE_CALL( vxQueryNode(truncate_stab_transform_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Truncate Stab Transform time : " << perf.avg / 1000000.0 << " ms" << std::endl;
+    NVXIO_SAFE_CALL( vxQueryNode(crop_stab_transform_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    std::cout << "\t Crop Stab Transform time : " << perf.avg / 1000000.0 << " ms" << std::endl;
 
     NVXIO_SAFE_CALL( vxQueryNode(warp_perspective_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
     std::cout << "\t Warp Perspective time: " << perf.avg / 1000000.0 << " ms" << std::endl;
@@ -469,8 +479,14 @@ void ImageBasedVideoStabilizer::createDataObjects(vx_image frame)
     s_lk_use_init_est_ = vxCreateScalar(context_, VX_TYPE_BOOL, &lk_use_init_est);
     NVXIO_CHECK_REFERENCE(s_lk_use_init_est_);
 
-    s_crop_margin_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_margin);
-    NVXIO_CHECK_REFERENCE(s_crop_margin_);
+    s_crop_top_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_top);
+    NVXIO_CHECK_REFERENCE(s_crop_top_);
+    s_crop_left_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_left);
+    NVXIO_CHECK_REFERENCE(s_crop_left_);
+    s_crop_bottom_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_bottom);
+    NVXIO_CHECK_REFERENCE(s_crop_bottom_);
+    s_crop_right_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_right);
+    NVXIO_CHECK_REFERENCE(s_crop_right_);
 }
 
 void ImageBasedVideoStabilizer::release()
@@ -488,7 +504,7 @@ void ImageBasedVideoStabilizer::release()
     vxReleaseNode(&find_homography_node_);
     vxReleaseNode(&homography_filter_node_);
     vxReleaseNode(&matrix_smoother_node_);
-    vxReleaseNode(&truncate_stab_transform_node_);
+    vxReleaseNode(&crop_stab_transform_node_);
     vxReleaseNode(&warp_perspective_node_);
 
     vxReleaseDelay(&matrices_delay_);
@@ -502,7 +518,11 @@ void ImageBasedVideoStabilizer::release()
     vxReleaseScalar(&s_lk_epsilon_);
     vxReleaseScalar(&s_lk_num_iters_);
     vxReleaseScalar(&s_lk_use_init_est_);
-    vxReleaseScalar(&s_crop_margin_);
+
+    vxReleaseScalar(&s_crop_top_);
+    vxReleaseScalar(&s_crop_left_);
+    vxReleaseScalar(&s_crop_bottom_);
+    vxReleaseScalar(&s_crop_right_);
 
     vxReleaseGraph(&graph_);
 }
