@@ -542,6 +542,10 @@ nvx::VideoStabilizer::VideoStabilizerParams::VideoStabilizerParams()
 {
     num_smoothing_frames = FLAGS_stab_num_smoothing_frames;
     crop_margin = FLAGS_stab_crop_margin;
+    crop_left = FLAGS_stab_crop_left;
+    crop_right = FLAGS_stab_crop_right;
+    crop_top = FLAGS_stab_crop_top;
+    crop_bottom = FLAGS_stab_crop_bottom;
     // Don't really care about default output size.
     output_height = 480;
     output_width = 640;
