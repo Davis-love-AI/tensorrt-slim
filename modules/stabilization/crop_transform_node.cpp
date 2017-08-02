@@ -153,55 +153,53 @@ static vx_status VX_CALLBACK cropStabTransform_kernel(vx_node, const vx_referenc
     return status;
 }
 
-// Parameter validator
-static vx_status VX_CALLBACK cropStabTransform_validate(vx_node, const vx_reference parameters[],
-                                                            vx_uint32 numParams, vx_meta_format metas[])
+/** Validate the parameters of node.
+ */
+static vx_status VX_CALLBACK cropStabTransform_validate(
+    vx_node, const vx_reference parameters[], vx_uint32 numParams, vx_meta_format metas[])
 {
-    if (numParams != 4) return VX_ERROR_INVALID_PARAMETERS;
+    vx_status status = VX_SUCCESS;
+    // Number: stab + crop tr, image, crop box.
+    if(numParams != 7)  return VX_ERROR_INVALID_PARAMETERS;
 
-    vx_matrix stabTransform = (vx_matrix)parameters[0];
-    vx_scalar cropMargin = (vx_scalar)parameters[3];
+    vx_matrix stab_transform = (vx_matrix)parameters[0];
+    // ''ymin, xmin, ymax, xmax'' format for margin scalars.
+    vx_scalar crop_top = (vx_scalar)parameters[3];
+    vx_scalar crop_left = (vx_scalar)parameters[4];
+    vx_scalar crop_bottom = (vx_scalar)parameters[5];
+    vx_scalar crop_right = (vx_scalar)parameters[6];
 
+    // Check stabilization matrix format.
     vx_enum stabTransformDataType = 0;
     vx_size stabTransformRows = 0ul, stabTransformCols = 0ul;
-    vxQueryMatrix(stabTransform, VX_MATRIX_ATTRIBUTE_TYPE, &stabTransformDataType, sizeof(stabTransformDataType));
-    vxQueryMatrix(stabTransform, VX_MATRIX_ATTRIBUTE_ROWS, &stabTransformRows, sizeof(stabTransformRows));
-    vxQueryMatrix(stabTransform, VX_MATRIX_ATTRIBUTE_COLUMNS, &stabTransformCols, sizeof(stabTransformCols));
-
-    vx_enum cropMarginType = 0;
-    vxQueryScalar(cropMargin, VX_SCALAR_ATTRIBUTE_TYPE, &cropMarginType, sizeof(cropMarginType));
-
-    vx_status status = VX_SUCCESS;
-
-    if (stabTransformDataType != VX_TYPE_FLOAT32 || stabTransformCols != 3 || stabTransformRows != 3)
-    {
+    vxQueryMatrix(stab_transform, VX_MATRIX_ATTRIBUTE_TYPE, &stabTransformDataType, sizeof(stabTransformDataType));
+    vxQueryMatrix(stab_transform, VX_MATRIX_ATTRIBUTE_ROWS, &stabTransformRows, sizeof(stabTransformRows));
+    vxQueryMatrix(stab_transform, VX_MATRIX_ATTRIBUTE_COLUMNS, &stabTransformCols, sizeof(stabTransformCols));
+    if (stabTransformDataType != VX_TYPE_FLOAT32 ||
+        stabTransformCols != 3 || stabTransformRows != 3) {
         status = VX_ERROR_INVALID_PARAMETERS;
     }
 
-    if (cropMarginType == VX_TYPE_FLOAT32)
-    {
-        vx_float32 val = 0;
-        vxCopyScalar(cropMargin, &val, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-        if ( val >= 0.5 )
-        {
-            status = VX_ERROR_INVALID_VALUE;
-        }
-    }
-    else
-    {
-        status = VX_ERROR_INVALID_TYPE;
-    }
+    // Check cropping parameters.
+    vx_enum crop_type = 0;
+    vxQueryScalar(crop_top, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
+    if (crop_type != VX_TYPE_FLOAT32)   status = VX_ERROR_INVALID_TYPE;
+    vxQueryScalar(crop_left, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
+    if (crop_type != VX_TYPE_FLOAT32)   status = VX_ERROR_INVALID_TYPE;
+    vxQueryScalar(crop_bottom, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
+    if (crop_type != VX_TYPE_FLOAT32)   status = VX_ERROR_INVALID_TYPE;
+    vxQueryScalar(crop_right, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
+    if (crop_type != VX_TYPE_FLOAT32)   status = VX_ERROR_INVALID_TYPE;
 
-    vx_meta_format truncatedTransformMeta = metas[1];
 
-    vx_enum truncatedTransformType = VX_TYPE_FLOAT32;
-    vx_size truncatedTransformRows = 3;
-    vx_size truncatedTransformCols = 3;
+    vx_meta_format cropTransformMeta = metas[1];
+    vx_enum cropTransformType = VX_TYPE_FLOAT32;
+    vx_size cropTransformRows = 3;
+    vx_size cropTransformCols = 3;
 
-    vxSetMetaFormatAttribute(truncatedTransformMeta, VX_MATRIX_ATTRIBUTE_TYPE, &truncatedTransformType, sizeof(truncatedTransformType));
-    vxSetMetaFormatAttribute(truncatedTransformMeta, VX_MATRIX_ATTRIBUTE_ROWS, &truncatedTransformRows, sizeof(truncatedTransformRows));
-    vxSetMetaFormatAttribute(truncatedTransformMeta, VX_MATRIX_ATTRIBUTE_COLUMNS, &truncatedTransformCols, sizeof(truncatedTransformCols));
-
+    vxSetMetaFormatAttribute(cropTransformMeta, VX_MATRIX_ATTRIBUTE_TYPE, &cropTransformType, sizeof(cropTransformType));
+    vxSetMetaFormatAttribute(cropTransformMeta, VX_MATRIX_ATTRIBUTE_ROWS, &cropTransformRows, sizeof(cropTransformRows));
+    vxSetMetaFormatAttribute(cropTransformMeta, VX_MATRIX_ATTRIBUTE_COLUMNS, &cropTransformCols, sizeof(cropTransformCols));
     return status;
 }
 
