@@ -33,33 +33,40 @@
 
 namespace nvx
 {
-    class VideoStabilizer
+/** Abstract video stabilization class.
+ */
+class VideoStabilizer
+{
+public:
+    /** Common stabilization parameters.
+     */
+    struct VideoStabilizerParams
     {
-    public:
+        /** Number of smoothing frames. Taken from the interval [-numOfSmoothingFrames_; numOfSmoothingFrames_] in the current frame's vicinity */
+        vx_size  num_smoothing_frames;
+        /** Crop margin. TODO: not be removed... */
+        vx_float32  crop_margin;
+        /** Output height after cropping and warp transform. */
+        vx_uint32  output_height;
+        /** Output width after cropping and warp transform. */
+        vx_uint32  output_width;
 
-        struct VideoStabilizerParams
-        {
-            // frames for smoothing are taken from the interval [-numOfSmoothingFrames_; numOfSmoothingFrames_] in the current frame's vicinity
-            vx_size numOfSmoothingFrames_;
-            // proportion of the width/height of the frame that is allowed to be cropped for stabilizing of the frames
-            vx_float32 cropMargin_;
-
-            VideoStabilizerParams();
-        };
-
-        static VideoStabilizer* createImageBasedVStab(vx_context context, const VideoStabilizerParams& params = VideoStabilizerParams());
-
-        virtual ~VideoStabilizer() {}
-
-        virtual void init(vx_image firstFrame) = 0;
-        virtual void process(vx_image newFrame) = 0;
-
-        virtual vx_image getStabilizedFrame() const = 0;
-
-        virtual void printPerfs() const = 0;
+        /** Default constructor taking values specified in app FLAGS. */
+        VideoStabilizerParams();
     };
 
-    vx_status initDelayOfImages(vx_context context, vx_delay delayOfImages);
+    static VideoStabilizer* createImageBasedVStab(
+        vx_context context, const VideoStabilizerParams& params = VideoStabilizerParams());
+
+    virtual ~VideoStabilizer() {}
+    virtual void init(vx_image firstFrame) = 0;
+    virtual void process(vx_image newFrame) = 0;
+
+    virtual vx_image getStabilizedFrame() const = 0;
+    virtual void printPerfs() const = 0;
+};
+
+vx_status initDelayOfImages(vx_context context, vx_delay delayOfImages);
 }
 
 #endif

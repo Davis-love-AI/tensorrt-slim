@@ -12,6 +12,9 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Robik AI Ltd.
 # =========================================================================== */
+#include <glog/logging.h>
+#include <gflags/gflags.h>
+
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -43,9 +46,6 @@ DEFINE_string(source, "../data/parking.avi", "Video source URI, webcam camera or
 DEFINE_int32(source_width, 1280, "Source width. Only for camera.");
 DEFINE_int32(source_height, 720, "Source height. Only for camera.");
 DEFINE_int32(source_fps, 60, "Source fps. Only for camera.");
-// Stabilization parameters.
-DEFINE_double(stab_crop_margin, 0.1, "Stabilization crop margin.");
-DEFINE_int32(stab_num_frames, 5, "Number of frames used for smoothing the stabilization algorithm.");
 // Network parameters.
 DEFINE_string(network, "ssd_inception2_v0", "SSD network network to use.");
 DEFINE_string(network_pb, "../data/networks/ssd_inception2_v0_orig.tfrt32",
@@ -192,13 +192,15 @@ int main(int argc, char* argv[])
         /* ============================================================================
          * Create OpenVX Image to hold frames from video source
          * ========================================================================== */
+        nvx::VideoStabilizer::VideoStabilizerParams params;
+
         vx_image demoImg = vxCreateImage(context, demoImgWidth,
                                          demoImgHeight, VX_DF_IMAGE_RGBX);
         NVXIO_CHECK_REFERENCE(demoImg);
 
         vx_image frameExemplar = vxCreateImage(context,
                                                sourceParams.frameWidth, sourceParams.frameHeight, VX_DF_IMAGE_RGBX);
-        vx_size orig_frame_delay_size = FLAGS_stab_num_frames + 2; //must have such size to be synchronized with the stabilized frames
+        vx_size orig_frame_delay_size = params.num_smoothing_frames + 2; //must have such size to be synchronized with the stabilized frames
         // RGBX buffer of images.
         vx_delay orig_frame_delay = vxCreateDelay(context, (vx_reference)frameExemplar, orig_frame_delay_size);
         NVXIO_CHECK_REFERENCE(orig_frame_delay);
@@ -212,9 +214,8 @@ int main(int argc, char* argv[])
         /* ============================================================================
          * Create VideoStabilizer instance
          * ========================================================================== */
-        nvx::VideoStabilizer::VideoStabilizerParams params;
-        params.numOfSmoothingFrames_ = FLAGS_stab_num_frames;
-        params.cropMargin_ = FLAGS_stab_crop_margin;
+        // params.num_smoothing_frames = FLAGS_stab_num_frames;
+        // params.crop_margin = FLAGS_stab_crop_margin;
         std::unique_ptr<nvx::VideoStabilizer> stabilizer(nvx::VideoStabilizer::createImageBasedVStab(context, params));
 
         // Get rid of timeout frames + check source not closed.
@@ -291,7 +292,7 @@ int main(int argc, char* argv[])
             syncTimer->synchronize();
             total_ms = totalTimer.toc();
             totalTimer.tic();
-            displayState(renderer.get(), sourceParams, proc_ms, total_ms, FLAGS_stab_crop_margin);
+            displayState(renderer.get(), sourceParams, proc_ms, total_ms, params.crop_margin);
 
             if (!renderer->flush()) {
                 eventData.shouldStop = true;

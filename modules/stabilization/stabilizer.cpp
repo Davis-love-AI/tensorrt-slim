@@ -1,30 +1,19 @@
-/*
-# Copyright (c) 2014-2016, NVIDIA CORPORATION. All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#  * Neither the name of NVIDIA CORPORATION nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-# OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*/
+/* ============================================================================
+# [2017] - Robik AI Ltd - Paul Balanca
+# All Rights Reserved.
+
+# NOTICE: All information contained herein is, and remains
+# the property of Robik AI Ltd, and its suppliers
+# if any.  The intellectual and technical concepts contained
+# herein are proprietary to Robik AI Ltd
+# and its suppliers and may be covered by U.S., European and Foreign Patents,
+# patents in process, and are protected by trade secret or copyright law.
+# Dissemination of this information or reproduction of this material
+# is strictly forbidden unless prior written permission is obtained
+# from Robik AI Ltd.
+# =========================================================================== */
+#include <glog/logging.h>
+#include <gflags/gflags.h>
 
 #include "stabilizer.hpp"
 
@@ -35,10 +24,17 @@
 
 #include <VX/vxu.h>
 #include <NVX/nvx.h>
-
 #include <OVX/UtilityOVX.hpp>
 
 #include "vstab_nodes.hpp"
+
+/* ============================================================================
+ * Stabilization parameters.
+ * ========================================================================== */
+DEFINE_double(stab_crop_margin, 0.1, "Stabilization crop margin.");
+DEFINE_int32(stab_num_frames, 5,
+    "Number of frames used for smoothing the stabilization algorithm.");
+
 
 namespace
 {
@@ -437,7 +433,7 @@ void ImageBasedVideoStabilizer::createDataObjects(vx_image frame)
     smoothed_ = vxCreateMatrix(context_, VX_TYPE_FLOAT32, 3, 3);
     NVXIO_CHECK_REFERENCE(smoothed_);
 
-    matrices_delay_size_ = 2 * vstabParams_.numOfSmoothingFrames_ + 1;
+    matrices_delay_size_ = 2 * vstabParams_.num_smoothing_frames + 1;
     matrices_delay_ = vxCreateDelay(context_, (vx_reference)smoothed_, matrices_delay_size_);
     NVXIO_CHECK_REFERENCE(matrices_delay_);
     NVXIO_SAFE_CALL( initDelayOfMatrices(matrices_delay_) );
@@ -445,7 +441,7 @@ void ImageBasedVideoStabilizer::createDataObjects(vx_image frame)
     vx_image image_exemplar = vxCreateImage(context_, width_, height_, VX_DF_IMAGE_U8);
 
     // 'frames_delay_' must have such size to be synchronized with the 'matrices_delay_'
-    frames_delay_size_ = vstabParams_.numOfSmoothingFrames_ + 2;
+    frames_delay_size_ = vstabParams_.num_smoothing_frames + 2;
 
     frames_RGBX_delay_ = vxCreateDelay(context_, (vx_reference)frame, frames_delay_size_);
     NVXIO_CHECK_REFERENCE(frames_RGBX_delay_);
@@ -467,7 +463,7 @@ void ImageBasedVideoStabilizer::createDataObjects(vx_image frame)
     s_lk_use_init_est_ = vxCreateScalar(context_, VX_TYPE_BOOL, &lk_use_init_est);
     NVXIO_CHECK_REFERENCE(s_lk_use_init_est_);
 
-    s_crop_margin_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.cropMargin_);
+    s_crop_margin_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_margin);
     NVXIO_CHECK_REFERENCE(s_crop_margin_);
 }
 
@@ -505,12 +501,6 @@ void ImageBasedVideoStabilizer::release()
     vxReleaseGraph(&graph_);
 }
 
-nvx::VideoStabilizer::VideoStabilizerParams::VideoStabilizerParams()
-{
-    numOfSmoothingFrames_ = 5;
-    cropMargin_ = 0.05f;
-}
-
 ImageBasedVideoStabilizer::HarrisPyrLKParams::HarrisPyrLKParams()
 {
     pyr_levels = 6;
@@ -536,4 +526,13 @@ vx_image ImageBasedVideoStabilizer::getStabilizedFrame() const
 ImageBasedVideoStabilizer::~ImageBasedVideoStabilizer()
 {
     release();
+}
+
+/* ============================================================================
+ * Video stabilization routine...
+ * ========================================================================== */
+nvx::VideoStabilizer::VideoStabilizerParams::VideoStabilizerParams()
+{
+    num_smoothing_frames = 5;
+    crop_margin = 0.05f;
 }
