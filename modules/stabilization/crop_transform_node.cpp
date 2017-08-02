@@ -95,25 +95,33 @@ static bool cropTransform(const Matrix3x3f_rm & transform, int frameWidth, int f
     return true;
 }
 
-// Kernel implementation
-static vx_status VX_CALLBACK cropStabTransform_kernel(vx_node, const vx_reference *parameters, vx_uint32 num)
+/** Implementation of the real kernel!
+ */
+static vx_status VX_CALLBACK cropStabTransform_kernel(
+    vx_node, const vx_reference* parameters, vx_uint32 num_params)
 {
-    if (num != 4)
-        return VX_FAILURE;
-
+    // Check the number of parameters provided!
+    if (num_params != 7)  return VX_FAILURE;
     vx_status status = VX_SUCCESS;
-
+    // Get the main parameter objects.
     vx_matrix vxStabTransform = (vx_matrix)parameters[0];
     vx_matrix vxTruncatedTransform = (vx_matrix)parameters[1];
     vx_image image = (vx_image)parameters[2];
-    vx_scalar sCropMargin = (vx_scalar)parameters[3];
+    vx_scalar sc_crop_top = (vx_scalar)parameters[3];
+    vx_scalar sc_crop_left = (vx_scalar)parameters[4];
+    vx_scalar sc_crop_bottom = (vx_scalar)parameters[5];
+    vx_scalar sc_crop_right = (vx_scalar)parameters[6];
 
+    // Copy to host as EIGEN matrix.
     vx_float32 stabTransformData[9] = {0};
     status |= vxCopyMatrix(vxStabTransform, stabTransformData, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
     Matrix3x3f_rm stabTransform = Matrix3x3f_rm::Map(stabTransformData, 3, 3), invStabTransform;
-
-    vx_float32 cropMargin;
-    status |= vxCopyScalar(sCropMargin, &cropMargin, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    // Copy cropping parameters too.
+    vx_float32 crop_top, crop_left, crop_bottom, crop_right, cropMargin{-1};
+    status |= vxCopyScalar(sc_crop_top, &crop_top, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    status |= vxCopyScalar(sc_crop_left, &crop_left, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    status |= vxCopyScalar(sc_crop_bottom, &crop_bottom, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    status |= vxCopyScalar(sc_crop_right, &crop_right, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
 
     if (cropMargin < 0) // without truncation
     {
