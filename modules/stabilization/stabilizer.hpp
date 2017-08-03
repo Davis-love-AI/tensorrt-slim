@@ -38,10 +38,10 @@ public:
         /** Crop margin. TODO: not be removed... */
         vx_float32  crop_margin;
         /* Percentage to crop after stabilization, on every side of image. */
-        vx_float32  crop_left;
-        vx_float32  crop_right;
-        vx_float32  crop_top;
-        vx_float32  crop_bottom;
+        vx_float32  crop_y;
+        vx_float32  crop_x;
+        vx_float32  crop_scale_y;
+        vx_float32  crop_scale_x;
 
         /** Default constructor taking values specified in app FLAGS. */
         VideoStabilizerParams();

@@ -256,6 +256,10 @@ int main(int argc, char* argv[])
         nvx::VideoStabilizer::VideoStabilizerParams params;
         params.output_height = FLAGS_net_height;
         params.output_width = FLAGS_net_width;
+        params.crop_scale_y = float(params.output_height) / (FLAGS_source_height * (1. - params.crop_y));
+        params.crop_scale_x = float(params.output_width) / (FLAGS_source_width * (1. - params.crop_x));
+        // params.crop_scale_y = std::min(params.crop_scale_y, params.crop_scale_x);
+        // params.crop_scale_x = std::min(params.crop_scale_y, params.crop_scale_x);
 
         /* ============================================================================
          * Stack of frames.
@@ -274,12 +278,6 @@ int main(int argc, char* argv[])
         vx_image last_frame = (vx_image)vxGetReferenceFromDelay(
             orig_frame_delay, 1 - static_cast<vx_int32>(orig_frame_delay_size));
 
-
-        // vx_image demoImg{nullptr};
-        // vx_image demoImg = vxCreateImage(context, 2*sourceParams.frameWidth,
-        //                                  sourceParams.frameHeight, VX_DF_IMAGE_RGBX);
-        // NVXIO_CHECK_REFERENCE(demoImg);
-        //
         /* ============================================================================
          * Create VideoStabilizer instance
          * ========================================================================== */

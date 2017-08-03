@@ -32,10 +32,10 @@
  * Stabilization parameters.
  * ========================================================================== */
 DEFINE_double(stab_crop_margin, -1, "Stabilization crop margin.");
-DEFINE_double(stab_crop_left, 0.0, "Perc. to crop on left after stabilization.");
-DEFINE_double(stab_crop_right, 0.0, "Perc. to crop on right after stabilization.");
-DEFINE_double(stab_crop_top, 0.0, "Perc. to crop on top after stabilization.");
-DEFINE_double(stab_crop_bottom, 0.0, "Perc. to crop on bottom after stabilization.");
+DEFINE_double(stab_crop_y, 0.0, "Perc. to crop on top after stabilization.");
+DEFINE_double(stab_crop_x, 0.0, "Perc. to crop on left after stabilization.");
+DEFINE_double(stab_crop_scale_y, 1.0, "Scale on y axis.");
+DEFINE_double(stab_crop_scale_x, 1.0, "Scale on x axis.");
 DEFINE_int32(stab_num_smoothing_frames, 5,
     "Number of frames used for smoothing the stabilization algorithm.");
 
@@ -113,10 +113,10 @@ private:
     vx_scalar s_lk_num_iters_;
     vx_scalar s_lk_use_init_est_;
     // Croping scalar parameters.
-    vx_scalar s_crop_top_;
-    vx_scalar s_crop_left_;
-    vx_scalar s_crop_bottom_;
-    vx_scalar s_crop_right_;
+    vx_scalar s_crop_y_;
+    vx_scalar s_crop_x_;
+    vx_scalar s_crop_scale_y_;
+    vx_scalar s_crop_scale_x_;
 
     vx_size matrices_delay_size_;
     vx_size frames_delay_size_;
@@ -155,10 +155,10 @@ ImageBasedVideoStabilizer::ImageBasedVideoStabilizer(vx_context context, const V
     s_lk_num_iters_ = 0;
     s_lk_use_init_est_ = 0;
 
-    s_crop_top_ = 0;
-    s_crop_left_ = 0;
-    s_crop_bottom_ = 0;
-    s_crop_right_ = 0;
+    s_crop_y_ = 0;
+    s_crop_x_ = 0;
+    s_crop_scale_y_ = 0;
+    s_crop_scale_x_ = 0;
 
     matrices_delay_size_ = 0;
     frames_delay_size_ = 0;
@@ -294,14 +294,15 @@ void ImageBasedVideoStabilizer::createMainGraph(vx_image frame)
     // vx_matrix truncated = vxCreateMatrix(context_, VX_TYPE_FLOAT32, 3, 3);
     // truncate_stab_transform_node_ = truncateStabTransformNode(graph_, smoothed_, truncated, frame, s_crop_margin_);
     // NVXIO_CHECK_REFERENCE(truncate_stab_transform_node_);
-    // Crop transform...
+    // Crop transform node.
     vx_matrix crop_transform = vxCreateMatrix(context_, VX_TYPE_FLOAT32, 3, 3);
     crop_stab_transform_node_ = cropStabTransformNode(
         graph_, smoothed_, crop_transform, frame,
-        s_crop_top_, s_crop_left_, s_crop_bottom_, s_crop_right_);
+        s_crop_y_, s_crop_x_, s_crop_scale_y_, s_crop_scale_x_);
     NVXIO_CHECK_REFERENCE(crop_stab_transform_node_);
 
     // vxWarpPerspectiveNode
+    // vstabParams_.output_width, vstabParams_.output_height
     warp_perspective_node_ = vxWarpPerspectiveNode(graph_,
             (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 1 - static_cast<vx_int32>(frames_delay_size_)),
             crop_transform,
@@ -480,14 +481,14 @@ void ImageBasedVideoStabilizer::createDataObjects(vx_image frame)
     s_lk_use_init_est_ = vxCreateScalar(context_, VX_TYPE_BOOL, &lk_use_init_est);
     NVXIO_CHECK_REFERENCE(s_lk_use_init_est_);
 
-    s_crop_top_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_top);
-    NVXIO_CHECK_REFERENCE(s_crop_top_);
-    s_crop_left_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_left);
-    NVXIO_CHECK_REFERENCE(s_crop_left_);
-    s_crop_bottom_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_bottom);
-    NVXIO_CHECK_REFERENCE(s_crop_bottom_);
-    s_crop_right_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_right);
-    NVXIO_CHECK_REFERENCE(s_crop_right_);
+    s_crop_y_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_y);
+    NVXIO_CHECK_REFERENCE(s_crop_y_);
+    s_crop_x_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_x);
+    NVXIO_CHECK_REFERENCE(s_crop_x_);
+    s_crop_scale_y_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_scale_y);
+    NVXIO_CHECK_REFERENCE(s_crop_scale_y_);
+    s_crop_scale_x_ = vxCreateScalar(context_, VX_TYPE_FLOAT32, &vstabParams_.crop_scale_x);
+    NVXIO_CHECK_REFERENCE(s_crop_scale_x_);
 }
 
 void ImageBasedVideoStabilizer::release()
@@ -520,10 +521,10 @@ void ImageBasedVideoStabilizer::release()
     vxReleaseScalar(&s_lk_num_iters_);
     vxReleaseScalar(&s_lk_use_init_est_);
 
-    vxReleaseScalar(&s_crop_top_);
-    vxReleaseScalar(&s_crop_left_);
-    vxReleaseScalar(&s_crop_bottom_);
-    vxReleaseScalar(&s_crop_right_);
+    vxReleaseScalar(&s_crop_y_);
+    vxReleaseScalar(&s_crop_x_);
+    vxReleaseScalar(&s_crop_scale_y_);
+    vxReleaseScalar(&s_crop_scale_x_);
 
     vxReleaseGraph(&graph_);
 }
@@ -563,10 +564,10 @@ nvx::VideoStabilizer::VideoStabilizerParams::VideoStabilizerParams()
 {
     num_smoothing_frames = FLAGS_stab_num_smoothing_frames;
     crop_margin = FLAGS_stab_crop_margin;
-    crop_left = FLAGS_stab_crop_left;
-    crop_right = FLAGS_stab_crop_right;
-    crop_top = FLAGS_stab_crop_top;
-    crop_bottom = FLAGS_stab_crop_bottom;
+    crop_y = FLAGS_stab_crop_y;
+    crop_x = FLAGS_stab_crop_x;
+    crop_scale_y = FLAGS_stab_crop_scale_y;
+    crop_scale_x = FLAGS_stab_crop_scale_x;
     // Don't really care about default output size.
     output_height = 480;
     output_width = 640;

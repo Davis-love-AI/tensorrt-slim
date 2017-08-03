@@ -29,10 +29,10 @@ static vx_status VX_CALLBACK cropStabTransform_kernel(
     vx_matrix vxStabTransform = (vx_matrix)parameters[0];
     vx_matrix vxTruncatedTransform = (vx_matrix)parameters[1];
     vx_image image = (vx_image)parameters[2];
-    vx_scalar sc_crop_top = (vx_scalar)parameters[3];
-    vx_scalar sc_crop_left = (vx_scalar)parameters[4];
-    vx_scalar sc_crop_bottom = (vx_scalar)parameters[5];
-    vx_scalar sc_crop_right = (vx_scalar)parameters[6];
+    vx_scalar s_crop_y = (vx_scalar)parameters[3];
+    vx_scalar s_crop_x = (vx_scalar)parameters[4];
+    vx_scalar s_crop_scale_y = (vx_scalar)parameters[5];
+    vx_scalar s_crop_scale_x = (vx_scalar)parameters[6];
 
     // Copy to host as EIGEN matrix.
     vx_float32 stabTransformData[9] = {0};
@@ -40,11 +40,11 @@ static vx_status VX_CALLBACK cropStabTransform_kernel(
     Matrix3x3f_rm stabTransform = Matrix3x3f_rm::Map(stabTransformData, 3, 3);
     Matrix3x3f_rm invStabTransform;
     // Copy cropping parameters too.
-    vx_float32 crop_top, crop_left, crop_bottom, crop_right;
-    status |= vxCopyScalar(sc_crop_top, &crop_top, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    status |= vxCopyScalar(sc_crop_left, &crop_left, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    status |= vxCopyScalar(sc_crop_bottom, &crop_bottom, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
-    status |= vxCopyScalar(sc_crop_right, &crop_right, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    vx_float32 crop_y, crop_x, crop_scale_y, crop_scale_x;
+    status |= vxCopyScalar(s_crop_y, &crop_y, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    status |= vxCopyScalar(s_crop_x, &crop_x, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    status |= vxCopyScalar(s_crop_scale_y, &crop_scale_y, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
+    status |= vxCopyScalar(s_crop_scale_x, &crop_scale_x, VX_READ_ONLY, VX_MEMORY_TYPE_HOST);
 
     // Get input image size.
     vx_uint32 width = 0, height = 0;
@@ -52,12 +52,12 @@ static vx_status VX_CALLBACK cropStabTransform_kernel(
     status |= vxQueryImage(image, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height));
     // Compute affine transformation matrix (scaling + translation).
     Matrix3x3f_rm resizeMat = Matrix3x3f_rm::Identity();
-    float scale_x = 1.0f / (1.0f - crop_left - crop_right);
-    float scale_y = 1.0f / (1.0f - crop_top - crop_bottom);
-    resizeMat(0, 0) = scale_x;
-    resizeMat(1, 1) = scale_y;
-    resizeMat(0, 2) = - scale_x * width * crop_left;
-    resizeMat(1, 2) = - scale_y * height * crop_top;
+    float scale_x = 1.0f / (1.0f - crop_x);
+    float scale_y = 1.0f / (1.0f - crop_y);
+    resizeMat(0, 0) = crop_scale_x;
+    resizeMat(1, 1) = crop_scale_y;
+    resizeMat(0, 2) = -crop_scale_x * width * crop_x;
+    resizeMat(1, 2) = -crop_scale_y * height * crop_y;
 
     // Transpose to the standart form like resizeMat and combine.
     stabTransform.transposeInPlace();
@@ -81,10 +81,10 @@ static vx_status VX_CALLBACK cropStabTransform_validate(
 
     vx_matrix stab_transform = (vx_matrix)parameters[0];
     // ''ymin, xmin, ymax, xmax'' format for margin scalars.
-    vx_scalar crop_top = (vx_scalar)parameters[3];
-    vx_scalar crop_left = (vx_scalar)parameters[4];
-    vx_scalar crop_bottom = (vx_scalar)parameters[5];
-    vx_scalar crop_right = (vx_scalar)parameters[6];
+    vx_scalar crop_y = (vx_scalar)parameters[3];
+    vx_scalar crop_x = (vx_scalar)parameters[4];
+    vx_scalar crop_scale_y = (vx_scalar)parameters[5];
+    vx_scalar crop_scale_x = (vx_scalar)parameters[6];
 
     // Check stabilization matrix format.
     vx_enum stabTransformDataType = 0;
@@ -99,13 +99,13 @@ static vx_status VX_CALLBACK cropStabTransform_validate(
 
     // Check cropping parameters.
     vx_enum crop_type = 0;
-    vxQueryScalar(crop_top, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
+    vxQueryScalar(crop_y, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
     if (crop_type != VX_TYPE_FLOAT32)   status = VX_ERROR_INVALID_TYPE;
-    vxQueryScalar(crop_left, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
+    vxQueryScalar(crop_x, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
     if (crop_type != VX_TYPE_FLOAT32)   status = VX_ERROR_INVALID_TYPE;
-    vxQueryScalar(crop_bottom, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
+    vxQueryScalar(crop_scale_y, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
     if (crop_type != VX_TYPE_FLOAT32)   status = VX_ERROR_INVALID_TYPE;
-    vxQueryScalar(crop_right, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
+    vxQueryScalar(crop_scale_x, VX_SCALAR_ATTRIBUTE_TYPE, &crop_type, sizeof(crop_type));
     if (crop_type != VX_TYPE_FLOAT32)   status = VX_ERROR_INVALID_TYPE;
 
     vx_meta_format cropTransformMeta = metas[1];
@@ -176,7 +176,7 @@ vx_status registerCropStabTransformKernel(vx_context context)
 vx_node cropStabTransformNode(
     vx_graph graph,
     vx_matrix stab_transform, vx_matrix crop_transform, vx_image image,
-    vx_scalar crop_top, vx_scalar crop_left, vx_scalar crop_bottom, vx_scalar crop_right)
+    vx_scalar crop_y, vx_scalar crop_x, vx_scalar crop_scale_y, vx_scalar crop_scale_x)
 {
     vx_node node = NULL;
     vx_kernel kernel = vxGetKernelByName(
@@ -189,10 +189,10 @@ vx_node cropStabTransformNode(
             vxSetParameterByIndex(node, 0, (vx_reference)stab_transform);
             vxSetParameterByIndex(node, 1, (vx_reference)crop_transform);
             vxSetParameterByIndex(node, 2, (vx_reference)image);
-            vxSetParameterByIndex(node, 3, (vx_reference)crop_top);
-            vxSetParameterByIndex(node, 4, (vx_reference)crop_left);
-            vxSetParameterByIndex(node, 5, (vx_reference)crop_bottom);
-            vxSetParameterByIndex(node, 6, (vx_reference)crop_right);
+            vxSetParameterByIndex(node, 3, (vx_reference)crop_y);
+            vxSetParameterByIndex(node, 4, (vx_reference)crop_x);
+            vxSetParameterByIndex(node, 5, (vx_reference)crop_scale_y);
+            vxSetParameterByIndex(node, 6, (vx_reference)crop_scale_x);
         }
     }
     return node;
