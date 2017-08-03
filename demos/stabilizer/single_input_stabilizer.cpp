@@ -32,6 +32,9 @@
 
 #include <stabilization/stabilizer.hpp>
 
+// ROS headers
+#include <sensor_msgs/Image.h>
+
 #include <tensorflowrt.h>
 #include <tensorflowrt_util.h>
 #include <tensorflowrt_ssd_models.h>

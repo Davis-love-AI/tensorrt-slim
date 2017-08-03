@@ -17,13 +17,6 @@ execute_process(COMMAND protoc --python_out=../python/ network.proto ssd_network
 FILE(GLOB TFRT_SRCS *.cpp *.cu cuda/*.cpp cuda/*.cu boxes2d/*.cpp)
 FILE(GLOB TFRT_HEADERS *.h)
 
-# Some debugging info...
-# MESSAGE("TF-RT sources: " ${TFRT_SRCS})
-# MESSAGE("TF-RT headers: " ${TFRT_HEADERS})
-# MESSAGE("TF-RT headers: " ${CMAKE_CURRENT_BINARY_DIR})
-# MESSAGE("TF-RT headers: " ${CMAKE_CURRENT_SOURCE_DIR})
-# MESSAGE("TF-RT protobuf sources: " ${PROTO_SRCS})
-
 # Build TensorFlowRT
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 cuda_add_library(tensorflowrt STATIC ${TFRT_SRCS} ${PROTO_SRCS})
