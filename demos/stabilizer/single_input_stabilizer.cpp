@@ -106,6 +106,10 @@ static std::unique_ptr<ovxio::FrameSource> create_frame_source(const ovxio::Cont
     CHECK(source->open()) << DEMONET << "ERROR: can't open source: " << FLAGS_source;
     CHECK(source->getSourceType() != ovxio::FrameSource::SINGLE_IMAGE_SOURCE)
         << DEMONET << "ERROR: Can't work on a single image.";
+    // Debug...
+    sourceParams = source->getConfiguration();
+    LOG(INFO) << "Frame source opened: " << sourceParams.frameWidth << "x"
+        << sourceParams.frameHeight << "@" << sourceParams.fps;
     return source;
 }
 
