@@ -141,9 +141,12 @@ v4l2-ctl --list-formats-ext -d 1
 ```bash
 ./aarch64/bin/demo_single_input_stabilizer --alsologtostderr \
     --stab_crop_margin=-1 \
-    --stab_num_frames=5 \
+    --stab_num_smoothing_frames=5 \
     --source "device:///v4l2?index=1" \
     --source_width=1280 \
     --source_height=720 \
-    --source_fps=60
+    --source_fps=60 \
+    --net_width=400 \
+    --net_height=225 \
+    --display_fullscreen=false
 ```
