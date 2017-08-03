@@ -100,6 +100,7 @@ static std::unique_ptr<ovxio::FrameSource> create_frame_source(const ovxio::Cont
         sourceParams.frameHeight = FLAGS_source_height;
         sourceParams.frameWidth = FLAGS_source_width;
         sourceParams.fps = FLAGS_source_fps;
+        // sourceParams.format = NVXCU_DF_IMAGE_RGBX;
         source->setConfiguration(sourceParams);
     }
     CHECK(source->open()) << DEMONET << "ERROR: can't open source: " << FLAGS_source;
@@ -111,9 +112,38 @@ static std::unique_ptr<ovxio::FrameSource> create_frame_source(const ovxio::Cont
 /* ============================================================================
  * Display information on the screen.
  * ========================================================================== */
+/** Create the input render. */
+static std::unique_ptr<ovxio::Render> create_input_render(
+    const ovxio::ContextGuard& context)
+{
+    vx_int32 height = FLAGS_source_height;
+    vx_int32 width = FLAGS_source_width;
+    std::unique_ptr<ovxio::Render> renderer(ovxio::createDefaultRender(
+        context, "Video Stabilization Demo: inputs", width, height,
+            VX_DF_IMAGE_RGBX, false, false));
+    CHECK(renderer) << DEMONET << "ERROR: Can't create a input renderer.";
+    return renderer;
+}
+/** Get the input render image to display. */
+static vx_image get_input_render_image(const ovxio::ContextGuard& context, vx_image frame)
+{
+    static vx_image input_buffer_img{nullptr};
+    // Create static object.
+    if (input_buffer_img == nullptr) {
+        input_buffer_img = vxCreateImage(
+            context, FLAGS_source_width, FLAGS_source_height, VX_DF_IMAGE_RGBX);
+        NVXIO_CHECK_REFERENCE(input_buffer_img);
+    }
+    // Copy image to render buffer.
+    if (frame) {
+        NVXIO_SAFE_CALL( nvxuCopyImage(context, frame, input_buffer_img) );
+    }
+    return input_buffer_img;
+}
+
+
 static std::unique_ptr<ovxio::Render> create_display(
-    const ovxio::ContextGuard& context,
-    vx_int32 height, vx_int32 width)
+    const ovxio::ContextGuard& context, vx_int32 height, vx_int32 width)
 {
     std::unique_ptr<ovxio::Render> renderer(ovxio::createDefaultRender(
         context, "Video Stabilization Demo", width, height,
@@ -189,37 +219,44 @@ int main(int argc, char* argv[])
         auto source = create_frame_source(context);
         auto sourceParams = source->getConfiguration();
 
-        // Create the render window.
-        auto renderer = create_display(context,
-            sourceParams.frameHeight, 2*sourceParams.frameWidth);
-        EventData eventData;
-        renderer->setOnKeyboardEventCallback(eventCallback, &eventData);
+        // Input rendering window.
+        auto input_renderer = create_input_render(context);
+        vx_image input_buffer_img{nullptr};
 
-        /* ============================================================================
-         * Create OpenVX Image to hold frames from video source
-         * ========================================================================== */
+        // Create the output render window.
+        // auto renderer = create_display(context,
+        //     sourceParams.frameHeight, 2*sourceParams.frameWidth);
+        EventData eventData;
+        // renderer->setOnKeyboardEventCallback(eventCallback, &eventData);
+
         // Stabilization parameters + update neural net shape.
         nvx::VideoStabilizer::VideoStabilizerParams params;
         params.output_height = FLAGS_net_height;
         params.output_width = FLAGS_net_width;
 
-        vx_image demoImg = vxCreateImage(context, 2*sourceParams.frameWidth,
-                                         sourceParams.frameHeight, VX_DF_IMAGE_RGBX);
-        NVXIO_CHECK_REFERENCE(demoImg);
+        /* ============================================================================
+         * Stack of frames.
+         * ========================================================================== */
         vx_image frameExemplar = vxCreateImage(context,
                                                sourceParams.frameWidth, sourceParams.frameHeight, VX_DF_IMAGE_RGBX);
-        // must have such size to be synchronized with the stabilized frames.
+        // Must have such size to be synchronized with the stabilized frames.
         vx_size orig_frame_delay_size = params.num_smoothing_frames + 2;
         vx_delay orig_frame_delay = vxCreateDelay(
             context, (vx_reference)frameExemplar, orig_frame_delay_size);
         NVXIO_CHECK_REFERENCE(orig_frame_delay);
         NVXIO_SAFE_CALL(nvx::initDelayOfImages(context, orig_frame_delay));
         NVXIO_SAFE_CALL(vxReleaseImage(&frameExemplar));
-
+        // References to first and last in the stack.
         vx_image frame = (vx_image)vxGetReferenceFromDelay(orig_frame_delay, 0);
-        vx_image lastFrame = (vx_image)vxGetReferenceFromDelay(
+        vx_image last_frame = (vx_image)vxGetReferenceFromDelay(
             orig_frame_delay, 1 - static_cast<vx_int32>(orig_frame_delay_size));
 
+
+
+        // vx_image demoImg = vxCreateImage(context, 2*sourceParams.frameWidth,
+        //                                  sourceParams.frameHeight, VX_DF_IMAGE_RGBX);
+        // NVXIO_CHECK_REFERENCE(demoImg);
+        //
         /* ============================================================================
          * Create VideoStabilizer instance
          * ========================================================================== */
@@ -234,28 +271,29 @@ int main(int argc, char* argv[])
             std::cerr << "Error: Source has no frames" << std::endl;
             return nvxio::Application::APP_EXIT_CODE_NO_FRAMESOURCE;
         }
-        // A few initial checks and initializaition on input frame.
+        // A few initial checks and initialization on input frame.
         stabilizer->init(frame);
 
-        // Left and right sub-images...
-        vx_rectangle_t leftRect;
-        NVXIO_SAFE_CALL( vxGetValidRegionImage(frame, &leftRect) );
-        vx_rectangle_t rightRect;
-        rightRect.start_x = leftRect.end_x;
-        rightRect.start_y = leftRect.start_y;
-        rightRect.end_x = 2 * leftRect.end_x;
-        rightRect.end_y = leftRect.end_y;
+        // // Left and right sub-images...
+        // vx_rectangle_t leftRect;
+        // NVXIO_SAFE_CALL( vxGetValidRegionImage(frame, &leftRect) );
+        // vx_rectangle_t rightRect;
+        // rightRect.start_x = leftRect.end_x;
+        // rightRect.start_y = leftRect.start_y;
+        // rightRect.end_x = 2 * leftRect.end_x;
+        // rightRect.end_y = leftRect.end_y;
 
-        vx_image leftRoi = vxCreateImageFromROI(demoImg, &leftRect);
-        NVXIO_CHECK_REFERENCE(leftRoi);
-        vx_image rightRoi = vxCreateImageFromROI(demoImg, &rightRect);
-        NVXIO_CHECK_REFERENCE(rightRoi);
+        // vx_image leftRoi = vxCreateImageFromROI(demoImg, &leftRect);
+        // NVXIO_CHECK_REFERENCE(leftRoi);
+        // vx_image rightRoi = vxCreateImageFromROI(demoImg, &rightRect);
+        // NVXIO_CHECK_REFERENCE(rightRoi);
 
         /* ============================================================================
          * Run processing loop
          * ========================================================================== */
         std::unique_ptr<nvxio::SyncTimer> syncTimer = nvxio::createSyncTimer();
         syncTimer->arm(1. / app.getFPSLimit());
+        std::cout << "Application FPS: " << app.getFPSLimit() << std::endl;
 
         nvx::Timer totalTimer;
         totalTimer.tic();
@@ -263,24 +301,27 @@ int main(int argc, char* argv[])
 
         while (!eventData.shouldStop) {
             if (!eventData.pause) {
-                // Process
+                // Stabilize inputs.
                 nvx::Timer procTimer;
                 procTimer.tic();
                 stabilizer->process(frame);
                 proc_ms = procTimer.toc();
-
+                // Delay frame stack and get result.
                 NVXIO_SAFE_CALL( vxAgeDelay(orig_frame_delay) );
-
                 vx_image stabImg = stabilizer->getStabilizedFrame();
-                NVXIO_SAFE_CALL( nvxuCopyImage(context, stabImg, rightRoi) );
-                NVXIO_SAFE_CALL( nvxuCopyImage(context, lastFrame, leftRoi) );
+                // Update rendering buffer images.
+                input_buffer_img = get_input_render_image(context, last_frame);
+                // NVXIO_SAFE_CALL( nvxuCopyImage(context, stabImg, rightRoi) );
+                // NVXIO_SAFE_CALL( nvxuCopyImage(context, last_frame, leftRoi) );
 
                 // Print performance results
                 stabilizer->printPerfs();
-
-                // Read frame
-                frameStatus = source->fetch(frame);
+                // Read next frame. SLOW???
+                frameStatus = source->fetch(frame, 1);
+                double fetch_ms = totalTimer.toc();
+                std::cout << "Frame fetch time : " << fetch_ms << " ms" << std::endl;
                 if (frameStatus == ovxio::FrameSource::TIMEOUT) {
+                    std::cout << "Frame timeout..." << std::endl;
                     continue;
                 }
                 else if (frameStatus == ovxio::FrameSource::CLOSED) {
@@ -290,26 +331,29 @@ int main(int argc, char* argv[])
                     }
                 }
             }
+            // Push buffer images to renderers.
+            input_renderer->putImage(input_buffer_img);
+            // renderer->putImage(demoImg);
 
-            renderer->putImage(demoImg);
             double total_ms = totalTimer.toc();
             std::cout << "Display Time : " << total_ms << " ms" << std::endl << std::endl;
 
             syncTimer->synchronize();
             total_ms = totalTimer.toc();
             totalTimer.tic();
-            update_display(renderer.get(), sourceParams, proc_ms, total_ms, params.crop_margin);
+            // update_display(renderer.get(), sourceParams, proc_ms, total_ms, params.crop_margin);
 
-            if (!renderer->flush()) {
+            // Flush rendering windows.
+            if (!input_renderer->flush()) {
                 eventData.shouldStop = true;
             }
         }
 
         // Release all objects
-        renderer->close();
-        vxReleaseImage(&demoImg);
-        vxReleaseImage(&leftRoi);
-        vxReleaseImage(&rightRoi);
+        // renderer->close();
+        // vxReleaseImage(&demoImg);
+        // vxReleaseImage(&leftRoi);
+        // vxReleaseImage(&rightRoi);
         vxReleaseDelay(&orig_frame_delay);
     }
     catch (const std::exception& e)

@@ -28,11 +28,13 @@
 
 #ifdef USE_GSTREAMER
 
+#include <iostream>
 #include <memory>
 
 #include <VX/vx.h>
 
 #include <NVX/ProfilerRange.hpp>
+#include <NVX/nvx_timer.hpp>
 
 #include "FrameSource/GStreamer/GStreamerBaseFrameSourceImpl.hpp"
 
@@ -234,6 +236,8 @@ FrameSource::FrameStatus GStreamerBaseFrameSourceImpl::extractFrameParams(
 
 FrameSource::FrameStatus GStreamerBaseFrameSourceImpl::fetch(const image_t & image, uint32_t /*timeout*/)
 {
+    nvx::Timer timer;
+    timer.tic();
     nvxio::ProfilerRange range(nvxio::COLOR_ARGB_FUSCHIA, "FrameSource::fetch (NVXIO)");
 
     handleGStreamerMessages();
@@ -243,6 +247,7 @@ FrameSource::FrameStatus GStreamerBaseFrameSourceImpl::fetch(const image_t & ima
         close();
         return nvxio::FrameSource::CLOSED;
     }
+
 
 #if GST_VERSION_MAJOR == 0
     std::unique_ptr<GstBuffer, GStreamerObjectDeleter> bufferHolder(
@@ -257,7 +262,11 @@ FrameSource::FrameStatus GStreamerBaseFrameSourceImpl::fetch(const image_t & ima
         NVXIO_ASSERT(!sampleFirstFrame);
     }
     else
+    {
+        // std::cout << "GST time : " << timer.toc() << std::endl;
         sample.reset(gst_app_sink_pull_sample(GST_APP_SINK(sink)));
+        // std::cout << "GST time : " << timer.toc() << std::endl;
+    }
 
     if (!sample)
     {
