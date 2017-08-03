@@ -4,3 +4,6 @@ target_link_libraries(ssdnet_console tensorflowrt_util tensorflowrt)
 
 # cuda_add_executable(ssdnet_camera ssdnet_camera.cpp)
 # target_link_libraries(ssdnet_camera tensorflowrt_util tensorflowrt X11)
+
+# Installation
+install(TARGETS ssdnet_console DESTINATION bin)

@@ -87,7 +87,10 @@ MACRO(BUILD_COPY_HEADERS DIRS_LIST)
             message("-- Copying ${HEADER}")
             set(HEADERS_DIR_BUILD ${PROJECT_INCLUDE_DIR}/${HEADER_DIR})
             file(MAKE_DIRECTORY ${HEADERS_DIR_BUILD})
-	        configure_file(${HEADER} ${HEADERS_DIR_BUILD} COPYONLY)
+            # Copy the file to build directory.
+            configure_file(${HEADER} ${HEADERS_DIR_BUILD} COPYONLY)
+            # Configure for installation as well...
+            install(FILES ${HEADER} DESTINATION include/${HEADER_DIR})
         endforeach(HEADER)
     endforeach(HEADER_DIR)
 ENDMACRO(BUILD_COPY_HEADERS)
@@ -103,15 +106,3 @@ add_subdirectory(util)
 # Build tools and demos...
 add_subdirectory(tools)
 add_subdirectory(demos)
-
-# install
-# foreach(include ${inferenceIncludes})
-#     install(FILES "${include}" DESTINATION include/jetson-inference)
-# endforeach()
-
-# # install the shared library
-# install(TARGETS jetson-inference DESTINATION lib/jetson-inference EXPORT jetson-inferenceConfig)
-
-# # install the cmake project, for importing
-# install(EXPORT jetson-inferenceConfig DESTINATION share/jetson-inference/cmake)
-

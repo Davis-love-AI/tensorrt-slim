@@ -15,7 +15,7 @@ execute_process(COMMAND protoc --python_out=../python/ network.proto ssd_network
 
 # TF-RT sources.
 FILE(GLOB TFRT_SRCS *.cpp *.cu cuda/*.cpp cuda/*.cu boxes2d/*.cpp)
-FILE(GLOB TFRT_HEADERS *.h)
+# FILE(GLOB TFRT_HEADERS *.h)
 
 # Build TensorFlowRT
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -26,7 +26,7 @@ target_link_libraries(tensorflowrt nvinfer ${PROTOBUF_LIBRARY} glog gflags)
 set(HEADERS_DIRS . nets cuda misc models boxes2d boxes3d)
 BUILD_COPY_HEADERS(HEADERS_DIRS)
 
-# foreach(HEADER ${PROTO_HEADERS})
-# 	message("-- Copying ${HEADER}")
-# 	configure_file(${HEADER} ${PROJECT_INCLUDE_DIR} COPYONLY)
-# endforeach(HEADER)
+# Installation targets...
+install(TARGETS tensorflowrt DESTINATION lib)
+# install (FILES MathFunctions.h DESTINATION include)
+

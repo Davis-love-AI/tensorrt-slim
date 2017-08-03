@@ -16,9 +16,11 @@ cd build
 cmake ../
 make
 ```
-Fully optimized binaries can be generated using:
+
+In order to optimize the binaries and set the install directory, you can use:
 ```bash
-cmake -DCMAKE_BUILD_TYPE=Release ../
+export ROBIK_INSTALL=/home/ubuntu/local
+cmake -DCMAKE_INSTALL_PREFIX:PATH=$ROBIK_INSTALL -DCMAKE_BUILD_TYPE=Release ../
 ```
 
 Note, some libraries such as Glib and Gstreamer sometimes install development headers in some weird locations. You may need to modify the `CPLUS_INCLUDE_PATH` global variable to help the compiler finding them. For instance, on `x86-64`:
