@@ -145,16 +145,36 @@ static vx_image get_input_render_image(const ovxio::ContextGuard& context, vx_im
     return input_buffer_img;
 }
 
-
-static std::unique_ptr<ovxio::Render> create_display(
-    const ovxio::ContextGuard& context, vx_int32 height, vx_int32 width)
+/** Create the display render. */
+static std::unique_ptr<ovxio::Render> create_display_render(
+    const ovxio::ContextGuard& context)
 {
+    vx_int32 height = FLAGS_net_height;
+    vx_int32 width = FLAGS_net_width;
     std::unique_ptr<ovxio::Render> renderer(ovxio::createDefaultRender(
         context, "Video Stabilization Demo", width, height,
             VX_DF_IMAGE_RGBX, FLAGS_display_scale, FLAGS_display_fullscreen));
     CHECK(renderer) << DEMONET << "ERROR: Can't create a display renderer.";
     return renderer;
 }
+/** Get the input render image to display. */
+static vx_image get_display_render_image(const ovxio::ContextGuard& context, vx_image stab_frame)
+{
+    vx_int32 height = FLAGS_net_height;
+    vx_int32 width = FLAGS_net_width;
+    static vx_image display_buffer_img{nullptr};
+    // Create static object.
+    if (display_buffer_img == nullptr) {
+        display_buffer_img = vxCreateImage(context, width, height, VX_DF_IMAGE_RGBX);
+        NVXIO_CHECK_REFERENCE(display_buffer_img);
+    }
+    // Copy image to render buffer.
+    if (stab_frame) {
+        NVXIO_SAFE_CALL( nvxuCopyImage(context, stab_frame, display_buffer_img) );
+    }
+    return display_buffer_img;
+}
+
 static void update_display(
     ovxio::Render *renderer, const ovxio::FrameSource::Parameters& sourceParams,
     double proc_ms, double total_ms, float cropMargin)
@@ -226,12 +246,11 @@ int main(int argc, char* argv[])
         // Input rendering window.
         auto input_renderer = create_input_render(context);
         vx_image input_buffer_img{nullptr};
-
         // Create the output render window.
-        // auto renderer = create_display(context,
-        //     sourceParams.frameHeight, 2*sourceParams.frameWidth);
+        auto display_renderer = create_display_render(context);
+        vx_image display_buffer_img{nullptr};
         EventData eventData;
-        // renderer->setOnKeyboardEventCallback(eventCallback, &eventData);
+        display_renderer->setOnKeyboardEventCallback(eventCallback, &eventData);
 
         // Stabilization parameters + update neural net shape.
         nvx::VideoStabilizer::VideoStabilizerParams params;
@@ -241,8 +260,8 @@ int main(int argc, char* argv[])
         /* ============================================================================
          * Stack of frames.
          * ========================================================================== */
-        vx_image frameExemplar = vxCreateImage(context,
-                                               sourceParams.frameWidth, sourceParams.frameHeight, VX_DF_IMAGE_RGBX);
+        vx_image frameExemplar = vxCreateImage(
+            context, sourceParams.frameWidth, sourceParams.frameHeight, VX_DF_IMAGE_RGBX);
         // Must have such size to be synchronized with the stabilized frames.
         vx_size orig_frame_delay_size = params.num_smoothing_frames + 2;
         vx_delay orig_frame_delay = vxCreateDelay(
@@ -256,7 +275,7 @@ int main(int argc, char* argv[])
             orig_frame_delay, 1 - static_cast<vx_int32>(orig_frame_delay_size));
 
 
-
+        // vx_image demoImg{nullptr};
         // vx_image demoImg = vxCreateImage(context, 2*sourceParams.frameWidth,
         //                                  sourceParams.frameHeight, VX_DF_IMAGE_RGBX);
         // NVXIO_CHECK_REFERENCE(demoImg);
@@ -312,11 +331,10 @@ int main(int argc, char* argv[])
                 proc_ms = procTimer.toc();
                 // Delay frame stack and get result.
                 NVXIO_SAFE_CALL( vxAgeDelay(orig_frame_delay) );
-                vx_image stabImg = stabilizer->getStabilizedFrame();
+                vx_image stab_frame = stabilizer->getStabilizedFrame();
                 // Update rendering buffer images.
                 input_buffer_img = get_input_render_image(context, last_frame);
-                // NVXIO_SAFE_CALL( nvxuCopyImage(context, stabImg, rightRoi) );
-                // NVXIO_SAFE_CALL( nvxuCopyImage(context, last_frame, leftRoi) );
+                display_buffer_img = get_display_render_image(context, stab_frame);
 
                 // Print performance results
                 stabilizer->printPerfs();
@@ -337,7 +355,7 @@ int main(int argc, char* argv[])
             }
             // Push buffer images to renderers.
             input_renderer->putImage(input_buffer_img);
-            // renderer->putImage(demoImg);
+            display_renderer->putImage(display_buffer_img);
 
             double total_ms = totalTimer.toc();
             std::cout << "Display Time : " << total_ms << " ms" << std::endl << std::endl;
@@ -348,7 +366,7 @@ int main(int argc, char* argv[])
             // update_display(renderer.get(), sourceParams, proc_ms, total_ms, params.crop_margin);
 
             // Flush rendering windows.
-            if (!input_renderer->flush()) {
+            if (!input_renderer->flush() || !display_renderer->flush()) {
                 eventData.shouldStop = true;
             }
         }
@@ -365,6 +383,5 @@ int main(int argc, char* argv[])
         std::cerr << "Error: " << e.what() << std::endl;
         return nvxio::Application::APP_EXIT_CODE_ERROR;
     }
-
     return nvxio::Application::APP_EXIT_CODE_SUCCESS;
 }
