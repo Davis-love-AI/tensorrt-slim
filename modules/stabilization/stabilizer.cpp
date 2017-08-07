@@ -193,14 +193,16 @@ void ImageBasedVideoStabilizer::init(vx_image firstFrame)
 }
 void ImageBasedVideoStabilizer::init(vx_uint32 width, vx_uint32 height)
 {
-    // NVXIO_ASSERT(format == VX_DF_IMAGE_RGBX);
-    // vx_pixel_value_t initVal;
-    // initVal.RGBX[0] = 0;
-    // initVal.RGBX[1] = 0;
-    // initVal.RGBX[2] = 0;
-    // initVal.RGBX[3] = 0;
-    // vx_image blackImg = vxCreateUniformImage(context, width, height, format, &initVal);
-    // NVXIO_CHECK_REFERENCE(blackImg);
+    // Create a dummy frame.
+    vx_pixel_value_t initVal;
+    initVal.RGBX[0] = 0;
+    initVal.RGBX[1] = 0;
+    initVal.RGBX[2] = 0;
+    initVal.RGBX[3] = 0;
+    vx_image black_frame = vxCreateUniformImage(context_, width, height, VX_DF_IMAGE_RGBX, &initVal);
+    NVXIO_CHECK_REFERENCE(black_frame);
+    // Initialize from that!
+    this->init(black_frame);
 }
 void ImageBasedVideoStabilizer::process(vx_image newFrame)
 {
