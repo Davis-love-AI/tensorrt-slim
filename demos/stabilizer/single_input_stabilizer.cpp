@@ -332,13 +332,13 @@ int main(int argc, char* argv[])
                 proc_ms = procTimer.toc();
                 // Delay frame stack and get result.
                 NVXIO_SAFE_CALL( vxAgeDelay(orig_frame_delay) );
-                vx_image stab_frame = stabilizer->getStabilizedFrame();
+                vx_image stab_frame = stabilizer->get_frame_stabilized();
                 // Update rendering buffer images.
                 input_buffer_img = get_input_render_image(context, last_frame);
                 display_buffer_img = get_display_render_image(context, stab_frame);
 
                 // Print performance results
-                stabilizer->printPerfs();
+                stabilizer->print_performances();
                 // Read next frame. SLOW???
                 frameStatus = source->fetch(frame, 1);
                 double fetch_ms = totalTimer.toc();

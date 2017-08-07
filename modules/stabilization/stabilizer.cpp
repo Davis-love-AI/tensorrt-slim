@@ -42,6 +42,8 @@ DEFINE_int32(stab_num_smoothing_frames, 5,
 
 namespace
 {
+/** Implementation of the video stabilizer class.
+ */
 class ImageBasedVideoStabilizer : public nvx::VideoStabilizer
 {
 public:
@@ -49,11 +51,13 @@ public:
     ~ImageBasedVideoStabilizer();
 
     void init(vx_image firstFrame);
+    void init(vx_uint32 width, vx_uint32 height);
+
     void process(vx_image newFrame);
+    vx_image get_frame_stabilized() const;
+    vx_image get_frame_original() const;
 
-    vx_image getStabilizedFrame() const;
-
-    void printPerfs() const;
+    void print_performances() const;
 
 private:
 
@@ -73,7 +77,6 @@ private:
 
     void processFirstFrame(vx_image frame);
     void createMainGraph(vx_image frame);
-
     void createDataObjects(vx_image frame);
     void release();
 
@@ -164,6 +167,9 @@ ImageBasedVideoStabilizer::ImageBasedVideoStabilizer(vx_context context, const V
     frames_delay_size_ = 0;
 }
 
+/* ============================================================================
+ * Implement public interface of stablization class.
+ * ========================================================================== */
 void ImageBasedVideoStabilizer::init(vx_image firstFrame)
 {
     vx_df_image format = VX_DF_IMAGE_VIRT;
@@ -185,24 +191,17 @@ void ImageBasedVideoStabilizer::init(vx_image firstFrame)
     createMainGraph(firstFrame);
     processFirstFrame(firstFrame);
 }
-
-void ImageBasedVideoStabilizer::processFirstFrame(vx_image frame)
+void ImageBasedVideoStabilizer::init(vx_uint32 width, vx_uint32 height)
 {
-    vx_image gray = vxCreateImage(context_, width_, height_, VX_DF_IMAGE_U8);
-    NVXIO_CHECK_REFERENCE(gray);
-    NVXIO_SAFE_CALL( vxuColorConvert(context_, frame, gray) );
-    NVXIO_SAFE_CALL( nvxuCopyImage(
-        context_, frame, (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 0)) );
-    NVXIO_SAFE_CALL( vxuGaussianPyramid(
-        context_, gray, (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, 0)) );
-    NVXIO_SAFE_CALL( nvxuHarrisTrack(
-        context_, gray,
-        (vx_array)vxGetReferenceFromDelay(pts_delay_, 0), NULL, 0,
-        harrisParams_.harris_k, harrisParams_.harris_thresh,
-        harrisParams_.harris_cell_size, NULL) );
-    vxReleaseImage(&gray);
+    // NVXIO_ASSERT(format == VX_DF_IMAGE_RGBX);
+    // vx_pixel_value_t initVal;
+    // initVal.RGBX[0] = 0;
+    // initVal.RGBX[1] = 0;
+    // initVal.RGBX[2] = 0;
+    // initVal.RGBX[3] = 0;
+    // vx_image blackImg = vxCreateUniformImage(context, width, height, format, &initVal);
+    // NVXIO_CHECK_REFERENCE(blackImg);
 }
-
 void ImageBasedVideoStabilizer::process(vx_image newFrame)
 {
     // Check input format
@@ -231,6 +230,63 @@ void ImageBasedVideoStabilizer::process(vx_image newFrame)
     NVXIO_SAFE_CALL( vxProcessGraph(graph_) );
 }
 
+vx_image ImageBasedVideoStabilizer::get_frame_stabilized() const
+{
+    return stabilized_RGBX_frame_;
+}
+vx_image ImageBasedVideoStabilizer::get_frame_original() const
+{
+    // Last frame in ring buffer.
+    return (vx_image)vxGetReferenceFromDelay(
+        frames_RGBX_delay_, 1 - static_cast<vx_int32>(frames_delay_size_));
+}
+void ImageBasedVideoStabilizer::print_performances() const
+{
+    vx_perf_t perf;
+
+    NVXIO_SAFE_CALL( vxQueryGraph(graph_, VX_GRAPH_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    std::cout << "Graph Time : " << perf.avg / 1000000.0 << " ms" << std::endl;
+    NVXIO_SAFE_CALL( vxQueryNode(convert_to_gray_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    std::cout << "\t RGB to gray time : " << perf.avg / 1000000.0 << " ms" << std::endl;
+    NVXIO_SAFE_CALL( vxQueryNode(copy_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    std::cout << "\t Copy time : " << perf.avg / 1000000.0 << " ms" << std::endl;
+    NVXIO_SAFE_CALL( vxQueryNode(pyr_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    std::cout << "\t Pyramid time : " << perf.avg / 1000000.0 << " ms" << std::endl;
+    NVXIO_SAFE_CALL( vxQueryNode(opt_flow_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    std::cout << "\t Optical Flow time : " << perf.avg / 1000000.0 << " ms" << std::endl;
+    NVXIO_SAFE_CALL( vxQueryNode(find_homography_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    std::cout << "\t Find Homography time : " << perf.avg / 1000000.0 << " ms" << std::endl;
+    NVXIO_SAFE_CALL( vxQueryNode(homography_filter_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    std::cout << "\t Homography Filter time : " << perf.avg / 1000000.0 << " ms" << std::endl;
+    NVXIO_SAFE_CALL( vxQueryNode(matrix_smoother_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    std::cout << "\t Matrices Smoothing time : " << perf.avg / 1000000.0 << " ms" << std::endl;
+    NVXIO_SAFE_CALL( vxQueryNode(crop_stab_transform_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    std::cout << "\t Crop Stab Transform time : " << perf.avg / 1000000.0 << " ms" << std::endl;
+    NVXIO_SAFE_CALL( vxQueryNode(warp_perspective_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    std::cout << "\t Warp Perspective time: " << perf.avg / 1000000.0 << " ms" << std::endl;
+    NVXIO_SAFE_CALL( vxQueryNode(feature_track_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    std::cout << "\t Feature Track time : " << perf.avg / 1000000.0 << " ms" << std::endl;
+}
+
+/* ============================================================================
+ * Private methods helping around...
+ * ========================================================================== */
+void ImageBasedVideoStabilizer::processFirstFrame(vx_image frame)
+{
+    vx_image gray = vxCreateImage(context_, width_, height_, VX_DF_IMAGE_U8);
+    NVXIO_CHECK_REFERENCE(gray);
+    NVXIO_SAFE_CALL( vxuColorConvert(context_, frame, gray) );
+    NVXIO_SAFE_CALL( nvxuCopyImage(
+        context_, frame, (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 0)) );
+    NVXIO_SAFE_CALL( vxuGaussianPyramid(
+        context_, gray, (vx_pyramid)vxGetReferenceFromDelay(pyr_delay_, 0)) );
+    NVXIO_SAFE_CALL( nvxuHarrisTrack(
+        context_, gray,
+        (vx_array)vxGetReferenceFromDelay(pts_delay_, 0), NULL, 0,
+        harrisParams_.harris_k, harrisParams_.harris_thresh,
+        harrisParams_.harris_cell_size, NULL) );
+    vxReleaseImage(&gray);
+}
 void ImageBasedVideoStabilizer::createMainGraph(vx_image frame)
 {
     // Register additional kernels
@@ -304,23 +360,22 @@ void ImageBasedVideoStabilizer::createMainGraph(vx_image frame)
     // vxWarpPerspectiveNode
     // vstabParams_.output_width, vstabParams_.output_height
     warp_perspective_node_ = vxWarpPerspectiveNode(graph_,
-            (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 1 - static_cast<vx_int32>(frames_delay_size_)),
-            crop_transform,
-            // VX_INTERPOLATION_TYPE_BILINEAR,
-            VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR,
-            stabilized_RGBX_frame_);
+        (vx_image)vxGetReferenceFromDelay(frames_RGBX_delay_, 1 - static_cast<vx_int32>(frames_delay_size_)),
+        crop_transform,
+        // VX_INTERPOLATION_TYPE_BILINEAR,
+        VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR,
+        stabilized_RGBX_frame_);
     NVXIO_CHECK_REFERENCE(warp_perspective_node_);
 
     //nvxHarrisTrackNode
-    feature_track_node_ = nvxHarrisTrackNode(graph_, gray,
-                                                (vx_array)vxGetReferenceFromDelay(pts_delay_, 0), NULL,
-                                                kp_curr_list, harrisParams_.harris_k, harrisParams_.harris_thresh, harrisParams_.harris_cell_size, NULL);
+    feature_track_node_ = nvxHarrisTrackNode(
+        graph_, gray, (vx_array)vxGetReferenceFromDelay(pts_delay_, 0), NULL, kp_curr_list,
+        harrisParams_.harris_k, harrisParams_.harris_thresh, harrisParams_.harris_cell_size, NULL);
     NVXIO_CHECK_REFERENCE(feature_track_node_);
 
     // Ensure highest graph optimization level
     const char* option = "-O3";
     NVXIO_SAFE_CALL(vxSetGraphAttribute(graph_, NVX_GRAPH_VERIFY_OPTIONS, option, strlen(option)) );
-
     NVXIO_SAFE_CALL(vxVerifyGraph(graph_));
 
     vxReleaseMatrix(&homography);
@@ -329,105 +384,6 @@ void ImageBasedVideoStabilizer::createMainGraph(vx_image frame)
     vxReleaseArray(&mask);
     vxReleaseImage(&gray);
 }
-}
-
-void ImageBasedVideoStabilizer::printPerfs() const
-{
-    vx_perf_t perf;
-
-    NVXIO_SAFE_CALL( vxQueryGraph(graph_, VX_GRAPH_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "Graph Time : " << perf.avg / 1000000.0 << " ms" << std::endl;
-
-    NVXIO_SAFE_CALL( vxQueryNode(convert_to_gray_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t RGB to gray time : " << perf.avg / 1000000.0 << " ms" << std::endl;
-
-    NVXIO_SAFE_CALL( vxQueryNode(copy_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Copy time : " << perf.avg / 1000000.0 << " ms" << std::endl;
-
-    NVXIO_SAFE_CALL( vxQueryNode(pyr_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Pyramid time : " << perf.avg / 1000000.0 << " ms" << std::endl;
-
-    NVXIO_SAFE_CALL( vxQueryNode(opt_flow_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Optical Flow time : " << perf.avg / 1000000.0 << " ms" << std::endl;
-
-    NVXIO_SAFE_CALL( vxQueryNode(find_homography_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Find Homography time : " << perf.avg / 1000000.0 << " ms" << std::endl;
-
-    NVXIO_SAFE_CALL( vxQueryNode(homography_filter_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Homography Filter time : " << perf.avg / 1000000.0 << " ms" << std::endl;
-
-    NVXIO_SAFE_CALL( vxQueryNode(matrix_smoother_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Matrices Smoothing time : " << perf.avg / 1000000.0 << " ms" << std::endl;
-
-    NVXIO_SAFE_CALL( vxQueryNode(crop_stab_transform_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Crop Stab Transform time : " << perf.avg / 1000000.0 << " ms" << std::endl;
-
-    NVXIO_SAFE_CALL( vxQueryNode(warp_perspective_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Warp Perspective time: " << perf.avg / 1000000.0 << " ms" << std::endl;
-
-    NVXIO_SAFE_CALL( vxQueryNode(feature_track_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
-    std::cout << "\t Feature Track time : " << perf.avg / 1000000.0 << " ms" << std::endl;
-}
-
-static vx_status initDelayOfMatrices(vx_delay delayOfMatrices)
-{
-    vx_status status = VX_SUCCESS;
-
-    vx_enum type = 0;
-    status |= vxQueryDelay(delayOfMatrices, VX_DELAY_ATTRIBUTE_TYPE, &type, sizeof(type));
-    NVXIO_ASSERT(type == VX_TYPE_MATRIX);
-
-    vx_size size = 0;
-    status |= vxQueryDelay(delayOfMatrices, VX_DELAY_ATTRIBUTE_SLOTS, &size, sizeof(size));
-
-    vx_float32 eye[9] = {1,0,0, 0,1,0, 0,0,1};
-    for (vx_int32 i = 1 - static_cast<vx_int32>(size); i <= 0 && status == VX_SUCCESS; ++i)
-    {
-        vx_matrix mat = (vx_matrix)vxGetReferenceFromDelay(delayOfMatrices, i);
-        status |= vxCopyMatrix(mat, eye, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
-    }
-    return status;
-}
-
-vx_status nvx::initDelayOfImages(vx_context context, vx_delay delayOfImages)
-{
-    vx_status status = VX_SUCCESS;
-
-    vx_enum type = 0;
-    status |= vxQueryDelay(delayOfImages, VX_DELAY_ATTRIBUTE_TYPE, &type, sizeof(type));
-    NVXIO_ASSERT(type == VX_TYPE_IMAGE);
-
-    vx_size size = 0;
-    status |= vxQueryDelay(delayOfImages, VX_DELAY_ATTRIBUTE_SLOTS, &size, sizeof(size));
-    if (size > 0)
-    {
-        vx_df_image format = VX_DF_IMAGE_VIRT;
-        vx_uint32 width = 0, height = 0;
-
-        vx_image img0 = (vx_image)vxGetReferenceFromDelay(delayOfImages, 0);
-        status |= vxQueryImage(img0, VX_IMAGE_ATTRIBUTE_FORMAT, &format, sizeof(format));
-        status |= vxQueryImage(img0, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width));
-        status |= vxQueryImage(img0, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height));
-
-        NVXIO_ASSERT(format == VX_DF_IMAGE_RGBX);
-
-        vx_pixel_value_t initVal;
-        initVal.RGBX[0] = 0;
-        initVal.RGBX[1] = 0;
-        initVal.RGBX[2] = 0;
-        initVal.RGBX[3] = 0;
-        vx_image blackImg = vxCreateUniformImage(context, width, height, format, &initVal);
-        NVXIO_CHECK_REFERENCE(blackImg);
-
-        for (vx_int32 i = 1 - static_cast<vx_int32>(size); i < 0 && status == VX_SUCCESS; ++i)
-        {
-            vx_image img = (vx_image)vxGetReferenceFromDelay(delayOfImages, i);
-            status |= nvxuCopyImage(context, blackImg, img);
-        }
-        vxReleaseImage(&blackImg);
-    }
-
-    return status;
 }
 
 void ImageBasedVideoStabilizer::createDataObjects(vx_image frame)
@@ -452,7 +408,7 @@ void ImageBasedVideoStabilizer::createDataObjects(vx_image frame)
     matrices_delay_size_ = 2 * vstabParams_.num_smoothing_frames + 1;
     matrices_delay_ = vxCreateDelay(context_, (vx_reference)smoothed_, matrices_delay_size_);
     NVXIO_CHECK_REFERENCE(matrices_delay_);
-    NVXIO_SAFE_CALL( initDelayOfMatrices(matrices_delay_) );
+    NVXIO_SAFE_CALL( nvx::initDelayOfMatrices(matrices_delay_) );
 
     vx_image image_exemplar = vxCreateImage(context_, width_, height_, VX_DF_IMAGE_U8);
 
@@ -528,7 +484,6 @@ void ImageBasedVideoStabilizer::release()
 
     vxReleaseGraph(&graph_);
 }
-
 ImageBasedVideoStabilizer::HarrisPyrLKParams::HarrisPyrLKParams()
 {
     pyr_levels = 6;
@@ -546,12 +501,6 @@ std::unique_ptr<nvx::VideoStabilizer> nvx::VideoStabilizer::createImageBasedVSta
 {
     return std::unique_ptr<nvx::VideoStabilizer>(new ImageBasedVideoStabilizer(context, params));
 }
-
-vx_image ImageBasedVideoStabilizer::getStabilizedFrame() const
-{
-    return stabilized_RGBX_frame_;
-}
-
 ImageBasedVideoStabilizer::~ImageBasedVideoStabilizer()
 {
     release();
@@ -571,4 +520,63 @@ nvx::VideoStabilizer::VideoStabilizerParams::VideoStabilizerParams()
     // Don't really care about default output size.
     output_height = 480;
     output_width = 640;
+}
+
+/* ============================================================================
+ * Additional useful methods.
+ * ========================================================================== */
+vx_status nvx::initDelayOfMatrices(vx_delay delayOfMatrices)
+{
+    vx_status status = VX_SUCCESS;
+
+    vx_enum type = 0;
+    status |= vxQueryDelay(delayOfMatrices, VX_DELAY_ATTRIBUTE_TYPE, &type, sizeof(type));
+    NVXIO_ASSERT(type == VX_TYPE_MATRIX);
+    vx_size size = 0;
+    status |= vxQueryDelay(delayOfMatrices, VX_DELAY_ATTRIBUTE_SLOTS, &size, sizeof(size));
+
+    vx_float32 eye[9] = {1,0,0, 0,1,0, 0,0,1};
+    for (vx_int32 i = 1 - static_cast<vx_int32>(size); i <= 0 && status == VX_SUCCESS; ++i)
+    {
+        vx_matrix mat = (vx_matrix)vxGetReferenceFromDelay(delayOfMatrices, i);
+        status |= vxCopyMatrix(mat, eye, VX_WRITE_ONLY, VX_MEMORY_TYPE_HOST);
+    }
+    return status;
+}
+vx_status nvx::initDelayOfImages(vx_context context, vx_delay delayOfImages)
+{
+    vx_status status = VX_SUCCESS;
+
+    vx_enum type = 0;
+    status |= vxQueryDelay(delayOfImages, VX_DELAY_ATTRIBUTE_TYPE, &type, sizeof(type));
+    NVXIO_ASSERT(type == VX_TYPE_IMAGE);
+    vx_size size = 0;
+    status |= vxQueryDelay(delayOfImages, VX_DELAY_ATTRIBUTE_SLOTS, &size, sizeof(size));
+
+    if (size > 0) {
+        vx_df_image format = VX_DF_IMAGE_VIRT;
+        vx_uint32 width = 0, height = 0;
+
+        vx_image img0 = (vx_image)vxGetReferenceFromDelay(delayOfImages, 0);
+        status |= vxQueryImage(img0, VX_IMAGE_ATTRIBUTE_FORMAT, &format, sizeof(format));
+        status |= vxQueryImage(img0, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width));
+        status |= vxQueryImage(img0, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height));
+
+        NVXIO_ASSERT(format == VX_DF_IMAGE_RGBX);
+        vx_pixel_value_t initVal;
+        initVal.RGBX[0] = 0;
+        initVal.RGBX[1] = 0;
+        initVal.RGBX[2] = 0;
+        initVal.RGBX[3] = 0;
+        vx_image blackImg = vxCreateUniformImage(context, width, height, format, &initVal);
+        NVXIO_CHECK_REFERENCE(blackImg);
+
+        for (vx_int32 i = 1 - static_cast<vx_int32>(size); i < 0 && status == VX_SUCCESS; ++i)
+        {
+            vx_image img = (vx_image)vxGetReferenceFromDelay(delayOfImages, i);
+            status |= nvxuCopyImage(context, blackImg, img);
+        }
+        vxReleaseImage(&blackImg);
+    }
+    return status;
 }
