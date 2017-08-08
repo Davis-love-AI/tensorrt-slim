@@ -32,7 +32,7 @@ namespace seg_inception2_v0
  * ========================================================================== */
 typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
 typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true> separable_conv2d;
-typedef convolution2d_transpose<ActivationType::RELU, PaddingType::SAME, false>           conv2d_transpose;
+typedef convolution2d_transpose<ActivationType::RELU, PaddingType::SAME, false>  conv2d_transpose;
 
 /** Additional feature layer.
  */
@@ -51,6 +51,17 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
     }
     return tfrt::add_end_point(end_points, sc.name(), net);
 }
+inline nvinfer1::ITensor* seg_inception2_last_layer(
+    nvinfer1::ITensor* net, tfrt::scope sc, int num_outputs, tfrt::map_tensor* end_points=nullptr)
+{
+    LOG(INFO) << "BLOCK SEG inception2 last layer '" << sc.name() << "'. "
+            << "Input shape: " << tfrt::dims_str(net->getDimensions());
+    // 3x3 transpose convolution with stride=2.
+    net = conv2d(sc, "conv3x3").noutputs(num_outputs).ksize({3, 3})(net);
+    return tfrt::add_end_point(end_points, sc.name(), net);
+}
+
+
 /** Inception2 base network.
  */
 inline nvinfer1::ITensor* block1(
@@ -80,7 +91,7 @@ inline nvinfer1::ITensor* inception2_base(
 /* ============================================================================
  * SSD Inception2 class: as ssd_network.
  * ========================================================================== */
-class net : public tfrt::ssd_network
+class net : public tfrt::imagenet_network
 {
 public:
     /** Constructor with default name.  */
@@ -94,28 +105,18 @@ public:
 
         // Build the Inception2 base.
         net = inception2_base(net, sc.sub("inception2_base"), &end_points);
-        // Add extra-features.
-        auto features = this->features();
+        // Add segmentation extra-features.
+        std::vector<std::string> feat_names = {"block6", "block7", "block8", "block9"};
+        std::vector<std::string> feat_names_in = {"Mixed_4e", "", "", "Conv2d_1a_7x7"};
+        std::vector<std::size_t> feat_size = {576, 256, 256, 64};
         auto ssc = sc.sub("feat_layers_extra");
-        for(auto&& f : features) {
-            int num_outputs = f.shape.c();
-            if(num_outputs > 0) {
-                net = inception2_extra_feature(net, ssc.sub(f.name), num_outputs, &end_points);
-            }
+        for (size_t i = 0 ; i < feat_names.size() ; ++i) {
+            auto net1 = tfrt::find_end_point(&end_points, feat_names[i]);
+            auto net2 = tfrt::find_end_point(&end_points, feat_names_in[i]);
+            net = seg_inception2_extra_feature(net1, net2, ssc.sub(feat_names[i]), feat_size[i]);
         }
-        // Add SSD boxed2d blocks.
-        ssc = sc.sub("ssd_boxes2d_blocks");
-        for(auto&& f : features) {
-            net = tfrt::find_end_point(&end_points, f.name);
-            // SSD boxes2d layer.
-            tfrt::ssd_boxes2d_block(ssc, f.name + "_boxes")
-                .num_anchors(f.num_anchors2d_total())
-                .num_classes(this->num_classes_2d())
-                .decode_boxes(true)(net);
-            // tfrt::ssd_boxes2d_block(net, ssc.sub(f.name + "_boxes"),
-            //     f.num_anchors2d_total(), this->num_classes_2d(),
-            //     true, true);
-        }
+        // Last convolution layer producing result...
+        net = seg_inception2_last_layer(net, ssc.sub("block10"), 18);
         // Clear any cached stuff...
         this->clear_cache();
         return net;
