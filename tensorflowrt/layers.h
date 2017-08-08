@@ -440,7 +440,6 @@ protected:
         return convlayer->getOutput(0);
     }
 };
-
 /** Separable 2D convolution layer.
  */
 template <ActivationType ACT, PaddingType PAD, bool BN>
@@ -488,6 +487,68 @@ protected:
     // Depth multiplier.
     int  m_depth_multiplier;
 };
+/** Transpose 2D convolution layer.
+ */
+template <ActivationType ACT, PaddingType PAD, bool BN>
+class convolution2d_transpose : public operation2d<ACT, PAD, BN>
+{
+public:
+    /** Constructor: declare the layer.
+     */
+    convolution2d_transpose(const tfrt::scope& sc, const std::string& lname="Conv2d_transpose") :
+        operation2d<ACT, PAD, BN>(sc, lname) {
+    }
+    /** Add the layer to network graph, using operator(root).
+     * 2D tranpose convolution + batch norm + activation.
+     */
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        LOG(INFO) << "LAYER 2D contrib transpose convolution '" << this->m_scope.name()
+            << ". Input shape: " << dims_str(net->getDimensions());
+        net = this->convolution(net);
+        net = this->batch_norm(net);
+        net = this->activation(net);
+        return this->mark_output(net);
+    }
+
+protected:
+    /** Set up the convolution operation.
+     */
+    nvinfer1::ITensor* tr_convolution(nvinfer1::ITensor* input,
+                                      int ngroups=1,
+                                      std::string wname="weights",
+                                      std::string bname="biases",
+                                      std::string lnamesuffix="") {
+        LOG(INFO) << "OP 2D transpose convolution. "
+            << "Input shape: " << dims_str(input->getDimensions())
+            << ". PARAMETERS: "
+            << "ksize: " << dims_str(this->ksize()) << " | "
+            << "noutputs: " << this->noutputs() << " | "
+            << "stride: " << dims_str(this->stride()) << " | "
+            << "padding: " << dims_str(this->padding());
+        nvinfer1::IDeconvolutionLayer* convlayer = nullptr;
+        // Batch normalization: no bias.
+        if(BN) {
+            auto weights = this->m_scope.weights(wname);
+            nvinfer1::Weights biases{weights.type, nullptr, 0};
+            convlayer = this->m_scope.network()->addDeconvolution(
+                *input, this->noutputs(), DIMRT(this->ksize()), weights, biases);
+        }
+        // Normal convolution with bias.
+        else {
+            auto weights = this->m_scope.weights(wname);
+            auto biases = this->m_scope.weights(bname);
+            convlayer = this->m_scope.network()->addDeconvolution(
+                *input, this->noutputs(), DIMRT(this->ksize()), weights, biases);
+        }
+        CHECK_NOTNULL(convlayer);
+        // Set name, padding, stride and nb groups.
+        convlayer->setName((this->m_scope.name() + lnamesuffix).c_str());
+        convlayer->setPadding(DIMRT(this->padding()));
+        convlayer->setStride(DIMRT(this->stride()));
+        return convlayer->getOutput(0);
+    }
+};
+
 /** Activation layer.
  */
 template <ActivationType ACT>
