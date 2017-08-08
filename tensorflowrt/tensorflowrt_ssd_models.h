@@ -16,6 +16,7 @@
 #define TFRT_SSD_MODELS
 
 #include "models/ssd_inception2_v0.h"
+#include "models/seg_inception2_v0.h"
 // #include "inception2.h"
 
 #endif
