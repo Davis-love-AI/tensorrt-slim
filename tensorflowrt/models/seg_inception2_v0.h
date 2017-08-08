@@ -22,29 +22,39 @@
 
 namespace seg_inception2_v0
 {
+
 /* ============================================================================
- * SSD Inception2 V0 network: functional declaration.
+ * SEG Inception2 V0 block.
+ * ========================================================================== */
+
+/* ============================================================================
+ * SEG Inception2 V0 network: functional declaration.
  * ========================================================================== */
 typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
 typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true> separable_conv2d;
+typedef convolution2d_transpose<ActivationType::RELU, PaddingType::SAME, false>           conv2d_transpose;
 
 /** Additional feature layer.
  */
-inline nvinfer1::ITensor* inception2_extra_feature(nvinfer1::ITensor* net, tfrt::scope sc,
-                                                   int num_outputs, tfrt::map_tensor* end_points=nullptr)
+inline nvinfer1::ITensor* seg_inception2_extra_feature(
+    nvinfer1::ITensor* net, nvinfer1::ITensor* net_side, tfrt::scope sc, int num_outputs, tfrt::map_tensor* end_points=nullptr)
 {
     LOG(INFO) << "BLOCK SEG inception2 extra-features '" << sc.name() << "'. "
             << "Input shape: " << tfrt::dims_str(net->getDimensions());
-    // 1x1 compression convolution.
-    net = conv2d(sc, "conv1x1").noutputs(num_outputs / 2).ksize({1, 1})(net);
-    // 3x3 convolution with stride=2.
-    net = conv2d(sc, "conv3x3").noutputs(num_outputs).ksize({3, 3}).stride({2, 2})(net);
+    // 3x3 transpose convolution with stride=2.
+    net = conv2d_transpose(sc, "conv3x3").noutputs(num_outputs).ksize({3, 3}).stride({2, 2})(net);
+    // Additional side feature to add.
+    if(net_side != nullptr) {
+        // 1x1 compression convolution and sum with rest...
+        net_side = conv2d(sc, "conv1x1").noutputs(num_outputs).ksize({1, 1})(net);
+        net = tfrt::sum(sc, "sum")(net, net_side);
+    }
     return tfrt::add_end_point(end_points, sc.name(), net);
 }
 /** Inception2 base network.
  */
-inline nvinfer1::ITensor* block1(nvinfer1::ITensor* net, tfrt::scope sc,
-                                 tfrt::map_tensor* end_points=nullptr)
+inline nvinfer1::ITensor* block1(
+    nvinfer1::ITensor* net, tfrt::scope sc, tfrt::map_tensor* end_points=nullptr)
 {
     int depthwise_multiplier = std::min(int(64 / 3), 8);
     // // 7x7 depthwise convolution.
@@ -53,8 +63,8 @@ inline nvinfer1::ITensor* block1(nvinfer1::ITensor* net, tfrt::scope sc,
         .noutputs(64).ksize({7, 7}).stride({2, 2})(net);
     return net;
 }
-inline nvinfer1::ITensor* inception2_base(nvinfer1::ITensor* input, tfrt::scope sc,
-                                          tfrt::map_tensor* end_points=nullptr)
+inline nvinfer1::ITensor* inception2_base(
+    nvinfer1::ITensor* input, tfrt::scope sc, tfrt::map_tensor* end_points=nullptr)
 {
     nvinfer1::ITensor* net{input};
     // Main blocks 1 to 5.

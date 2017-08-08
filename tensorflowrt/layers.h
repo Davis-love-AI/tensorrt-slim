@@ -215,6 +215,79 @@ protected:
     nvinfer1::ScaleMode m_mode;
 };
 
+/** Element wise sum.
+ */
+class add : public layer
+{
+public:
+    /** Standard constructor, with scope and layer sub-name.
+     */
+    add(const tfrt::scope& sc, const std::string& lname) :
+        layer(sc, lname) {
+    }
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        LOG(ERROR) << "LAYER operation not implemented.";
+        return nullptr;
+    }
+    nvinfer1::ITensor* operator()(nvinfer1::ITensor* net1, nvinfer1::ITensor* net2) {
+        LOG(INFO) << "LAYER add '" << this->m_scope.name() << "'. "
+            << "Input shape: " << dims_str(net1->getDimensions());
+        auto layer = this->m_scope.network()->addElementWise(
+            *net1, *net2, nvinfer1::ElementWiseOperation::kSUM);
+        CHECK_NOTNULL(layer);
+        layer->setName(m_scope.cname());
+        return this->mark_output(layer->getOutput(0));
+    }
+};
+/** Element wise multiply.
+ */
+class multiply : public layer
+{
+public:
+    /** Standard constructor, with scope and layer sub-name.
+     */
+    multiply(const tfrt::scope& sc, const std::string& lname) :
+        layer(sc, lname) {
+    }
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        LOG(ERROR) << "LAYER operation not implemented.";
+        return nullptr;
+    }
+    nvinfer1::ITensor* operator()(nvinfer1::ITensor* net1, nvinfer1::ITensor* net2) {
+        LOG(INFO) << "LAYER multiply '" << this->m_scope.name() << "'. "
+            << "Input shape: " << dims_str(net1->getDimensions());
+        auto layer = this->m_scope.network()->addElementWise(
+            *net1, *net2, nvinfer1::ElementWiseOperation::kPROD);
+        CHECK_NOTNULL(layer);
+        layer->setName(m_scope.cname());
+        return this->mark_output(layer->getOutput(0));
+    }
+};
+/** Element wise max.
+ */
+class max : public layer
+{
+public:
+    /** Standard constructor, with scope and layer sub-name.
+     */
+    max(const tfrt::scope& sc, const std::string& lname) :
+        layer(sc, lname) {
+    }
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        LOG(ERROR) << "LAYER operation not implemented.";
+        return nullptr;
+    }
+    nvinfer1::ITensor* operator()(nvinfer1::ITensor* net1, nvinfer1::ITensor* net2) {
+        LOG(INFO) << "LAYER maximum '" << this->m_scope.name() << "'. "
+            << "Input shape: " << dims_str(net1->getDimensions());
+        auto layer = this->m_scope.network()->addElementWise(
+            *net1, *net2, nvinfer1::ElementWiseOperation::kMAX);
+        CHECK_NOTNULL(layer);
+        layer->setName(m_scope.cname());
+        return this->mark_output(layer->getOutput(0));
+    }
+};
+
 /** Generic 2D operation, with the following common structure:
  * op2d (with padding) -> batch norm/bias -> activation.
  */
@@ -666,6 +739,7 @@ protected:
  */
 typedef convolution2d<ActivationType::RELU, PaddingType::SAME, false>           conv2d;
 typedef separable_convolution2d<ActivationType::RELU, PaddingType::SAME, false> separable_conv2d;
+typedef convolution2d_transpose<ActivationType::RELU, PaddingType::SAME, false>           conv2d_transpose;
 
 typedef max_pooling2d<PaddingType::SAME>  max_pool2d;
 typedef avg_pooling2d<PaddingType::SAME>  avg_pool2d;
