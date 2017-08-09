@@ -46,7 +46,8 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
     net = conv2d_transpose(sc, "tconv3x3").noutputs(num_outputs).ksize({3, 3}).stride({2, 2})(net);
     // Additional side feature to add.
     if(net_side != nullptr) {
-        // 1x1 compression convolution and sum with rest...
+        LOG(INFO) << "Additional link shape: " << tfrt::dims_str(net_side->getDimensions());
+    // 1x1 compression convolution and sum with rest...
         net_side = conv2d(sc, "conv1x1").noutputs(num_outputs).ksize({1, 1})(net_side);
         net = tfrt::add(sc, "sum")(net, net_side);
     }
