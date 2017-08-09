@@ -46,7 +46,7 @@ inline nvinfer1::ITensor* add_end_point(tfrt::map_tensor* end_points, const std:
 /** Find an end point in a collection. First partial match.
  */
 inline nvinfer1::ITensor* find_end_point(tfrt::map_tensor* end_points, const std::string& name) {
-    if(end_points) {
+    if(end_points && name.length()) {
         for(auto&& point : *end_points) {
             if(point.first.find(name) != std::string::npos) {
                 return point.second;
