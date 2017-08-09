@@ -47,7 +47,7 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
     // Additional side feature to add.
     if(net_side != nullptr) {
         // 1x1 compression convolution and sum with rest...
-        net_side = conv2d(sc, "conv1x1").noutputs(num_outputs).ksize({1, 1})(net);
+        net_side = conv2d(sc, "conv1x1").noutputs(num_outputs).ksize({1, 1})(net_side);
         net = tfrt::add(sc, "sum")(net, net_side);
     }
     return tfrt::add_end_point(end_points, sc.name(), net);
