@@ -114,10 +114,10 @@ public:
         std::vector<std::size_t> feat_size = {576, 256, 256, 64};
         auto ssc = sc.sub("feat_layers_extra");
         for (size_t i = 0 ; i < feat_names.size() ; ++i) {
-            auto net1 = tfrt::find_end_point(&end_points, feat_names[i]);
-            auto net2 = tfrt::find_end_point(&end_points, feat_names_in[i]);
-            std::cout << "extra feat layer " << i << " " << net1 << " / " << net2 << std::endl;
-            net = seg_inception2_extra_feature(net1, net2, ssc.sub(feat_names[i]), feat_size[i]);
+            // auto net1 = tfrt::find_end_point(&end_points, feat_names[i]);
+            auto net_in = tfrt::find_end_point(&end_points, feat_names_in[i]);
+            std::cout << "extra feat layer " << i << " " << net << " / " << net_in << std::endl;
+            net = seg_inception2_extra_feature(net, net_in, ssc.sub(feat_names[i]), feat_size[i]);
         }
         // Last convolution layer and softmax.
         net = seg_inception2_last_layer(net, ssc.sub("block10"), 18);
