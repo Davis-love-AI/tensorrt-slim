@@ -95,8 +95,8 @@ GLOG_logtostderr=1 ./tfrt_benchmark \
     --network_pb=../data/networks/inception_v2_fused.tfrt16 \
     --batch_size=2 \
     --workspace=32 \
-    --height=300 \
-    --width=300
+    --height=256 \
+    --width=256
 ```
 
 ### Classification on image and video inputs
