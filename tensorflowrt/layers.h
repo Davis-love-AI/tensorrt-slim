@@ -651,7 +651,7 @@ protected:
             convlayer = this->m_scope.network()->addDeconvolution(
                 *input, this->noutputs(), DIMRT(this->ksize()), weights, biases);
         }
-        this->m_scope.network()->setDeconvolutionOutputDimensionsFormula(nullptr);
+        // this->m_scope.network()->setDeconvolutionOutputDimensionsFormula(nullptr);
         CHECK_NOTNULL(convlayer);
         // Set name, padding, stride and nb groups.
         convlayer->setName((this->m_scope.name() + lnamesuffix).c_str());
