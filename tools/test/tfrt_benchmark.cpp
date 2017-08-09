@@ -49,7 +49,7 @@ DEFINE_int32(workspace, 16, "Workspace size.");
 DEFINE_int32(height, 224, "Input height.");
 DEFINE_int32(width, 224, "Input height.");
 
-static const int BATCH_SIZE = 2;
+// static const int BATCH_SIZE = 2;
 static const int TIMING_ITERATIONS = 1000;
 std::string  INPUT_BLOB_NAME;
 std::string  OUTPUT_BLOB_NAME;
@@ -218,7 +218,7 @@ int main(int argc, char** argv)
            }
 
     // run inference with null data to time network performance
-    timeInference(engine, BATCH_SIZE);
+    timeInference(engine, FLAGS_batch_size);
 
     engine->destroy();
     infer->destroy();
