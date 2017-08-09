@@ -176,22 +176,22 @@ void timeInference(ICudaEngine* engine, int batchSize)
 
     std::cout << "Input index: " << inputIndex << " of size: " << inputSize << std::endl;
     std::cout << "Output index: " << outputIndex << " of size: " << outputSize << std::endl;
-    CHECK(cudaMalloc(&buffers[inputIndex], inputSize));
-    CHECK(cudaMalloc(&buffers[outputIndex], outputSize));
+    CHECK_CUDA(cudaMalloc(&buffers[inputIndex], inputSize));
+    CHECK_CUDA(cudaMalloc(&buffers[outputIndex], outputSize));
 
     IExecutionContext* context = engine->createExecutionContext();
     context->setProfiler(&gProfiler);
 
     // zero the input buffer
-    CHECK(cudaMemset(buffers[inputIndex], 0, inputSize));
+    CHECK_CUDA(cudaMemset(buffers[inputIndex], 0, inputSize));
 
     for (int i = 0; i < TIMING_ITERATIONS;i++)
         context->execute(batchSize, buffers);
 
     // release the context and buffers
     context->destroy();
-    CHECK(cudaFree(buffers[inputIndex]));
-    CHECK(cudaFree(buffers[outputIndex]));
+    CHECK_CUDA(cudaFree(buffers[inputIndex]));
+    CHECK_CUDA(cudaFree(buffers[outputIndex]));
 }
 
 
