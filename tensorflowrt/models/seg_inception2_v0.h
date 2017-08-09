@@ -42,7 +42,7 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
     LOG(INFO) << "BLOCK SEG inception2 extra-features '" << sc.name() << "'. "
             << "Input shape: " << tfrt::dims_str(net->getDimensions());
     // 3x3 transpose convolution with stride=2.
-    net = conv2d_transpose(sc, "conv3x3").noutputs(num_outputs).ksize({3, 3}).stride({2, 2})(net);
+    net = conv2d_transpose(sc, "tconv3x3").noutputs(num_outputs).ksize({3, 3}).stride({2, 2})(net);
     // Additional side feature to add.
     if(net_side != nullptr) {
         // 1x1 compression convolution and sum with rest...
