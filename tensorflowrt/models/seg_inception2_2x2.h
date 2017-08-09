@@ -31,8 +31,8 @@ namespace seg_inception2_2x2
 /* ============================================================================
  * SEG Inception2 V0 network: functional declaration.
  * ========================================================================== */
-typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
-typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true> separable_conv2d;
+typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false>  conv2d;
+typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
 typedef tfrt::convolution2d_transpose<tfrt::ActivationType::RELU, tfrt::PaddingType::CUSTOM, false>  conv2d_transpose;
 
 /** Additional feature layer.
