@@ -215,7 +215,7 @@ protected:
     nvinfer1::ScaleMode m_mode;
 };
 
-/** Element wise sum.
+/** Element wise sum. TODO: refactor into a single class sum, multiply and max.
  */
 class add : public layer
 {
@@ -231,7 +231,8 @@ public:
     }
     nvinfer1::ITensor* operator()(nvinfer1::ITensor* net1, nvinfer1::ITensor* net2) {
         LOG(INFO) << "LAYER add '" << this->m_scope.name() << "'. "
-            << "Input shape: " << dims_str(net1->getDimensions());
+            << "Inputs shape: " << dims_str(net1->getDimensions())
+            << " and " << dims_str(net2->getDimensions());
         auto layer = this->m_scope.network()->addElementWise(
             *net1, *net2, nvinfer1::ElementWiseOperation::kSUM);
         CHECK_NOTNULL(layer);
@@ -255,7 +256,8 @@ public:
     }
     nvinfer1::ITensor* operator()(nvinfer1::ITensor* net1, nvinfer1::ITensor* net2) {
         LOG(INFO) << "LAYER multiply '" << this->m_scope.name() << "'. "
-            << "Input shape: " << dims_str(net1->getDimensions());
+            << "Input shape: " << dims_str(net1->getDimensions())
+            << " and " << dims_str(net2->getDimensions());
         auto layer = this->m_scope.network()->addElementWise(
             *net1, *net2, nvinfer1::ElementWiseOperation::kPROD);
         CHECK_NOTNULL(layer);
@@ -279,7 +281,8 @@ public:
     }
     nvinfer1::ITensor* operator()(nvinfer1::ITensor* net1, nvinfer1::ITensor* net2) {
         LOG(INFO) << "LAYER maximum '" << this->m_scope.name() << "'. "
-            << "Input shape: " << dims_str(net1->getDimensions());
+            << "Input shape: " << dims_str(net1->getDimensions())
+            << " and " << dims_str(net2->getDimensions());
         auto layer = this->m_scope.network()->addElementWise(
             *net1, *net2, nvinfer1::ElementWiseOperation::kMAX);
         CHECK_NOTNULL(layer);
@@ -569,7 +572,7 @@ public:
     /** Constructor: declare the layer.
      */
     convolution2d_transpose(const tfrt::scope& sc, const std::string& lname="Conv2d_transpose") :
-        operation2d<ACT, PAD, BN>(sc, lname) {
+        operation2d<ACT, PAD, BN>(sc, lname), m_ceil_mode{false}, m_ceil_formula{} {
     }
     /** Add the layer to network graph, using operator(root).
      * 2D tranpose convolution + batch norm + activation.
@@ -582,6 +585,34 @@ public:
         net = this->activation(net);
         return this->mark_output(net);
     }
+    /** Named parameter: ceil mode. */
+    convolution2d_transpose& ceil(bool mode) {
+        m_ceil_mode = mode;
+        return *this;
+    }
+    bool ceil() const {
+        return m_ceil_mode;
+    }
+
+public:
+    /** Ceil computation method of output size. Basically suppose that
+     * the layer is the up-scaling equivalent of convolution downscaled layer
+     * where the formula was approximating the output shape. TODO: not very clear!
+     */
+    class ceil_formula : public nvinfer1::IOutputDimensionsFormula
+    {
+    public:
+        virtual nvinfer1::DimsHW compute(nvinfer1::DimsHW inputDims, nvinfer1::DimsHW ksize,
+            nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, const char* layerName)
+        {
+            // Change a bit the formula...
+            nvinfer1::DimsHW odims{
+                (inputDims.h() - 1) * stride.h() + ksize.h() - 2 * padding.h() + 1,
+                (inputDims.w() - 1) * stride.w() + ksize.w() - 2 * padding.w() + 1
+            };
+            return odims;
+        }
+    };
 
 protected:
     /** Set up the convolution operation.
@@ -599,6 +630,13 @@ protected:
             << "stride: " << dims_str(this->stride()) << " | "
             << "padding: " << dims_str(this->padding());
         nvinfer1::IDeconvolutionLayer* convlayer = nullptr;
+        // Output formula used?
+        if (m_ceil_mode) {
+            this->m_scope.network()->setDeconvolutionOutputDimensionsFormula(&m_ceil_formula);
+        }
+        else {
+            this->m_scope.network()->setDeconvolutionOutputDimensionsFormula(nullptr);
+        }
         // Batch normalization: no bias.
         if(BN) {
             auto weights = this->m_scope.weights(wname);
@@ -613,6 +651,7 @@ protected:
             convlayer = this->m_scope.network()->addDeconvolution(
                 *input, this->noutputs(), DIMRT(this->ksize()), weights, biases);
         }
+        this->m_scope.network()->setDeconvolutionOutputDimensionsFormula(nullptr);
         CHECK_NOTNULL(convlayer);
         // Set name, padding, stride and nb groups.
         convlayer->setName((this->m_scope.name() + lnamesuffix).c_str());
@@ -620,6 +659,11 @@ protected:
         convlayer->setStride(DIMRT(this->stride()));
         return convlayer->getOutput(0);
     }
+private:
+    // Ceil mode for computing the deconvolution formula.
+    bool  m_ceil_mode;
+    // Output formula object in ceil mode.
+    ceil_formula  m_ceil_formula;
 };
 
 /** Activation layer.
