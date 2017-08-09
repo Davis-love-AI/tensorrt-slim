@@ -122,7 +122,7 @@ public:
             net = seg_inception2_extra_feature(net, net_in, ssc.sub(feat_names[i]), feat_size[i]);
         }
         // Last convolution layer and softmax.
-        net = seg_inception2_last_layer(net, ssc.sub("block10"), 15);
+        net = seg_inception2_last_layer(net, ssc.sub("block10"), 18);
         net = tfrt::softmax(sc, "Softmax")(net);
 
         // Clear any cached stuff...
