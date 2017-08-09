@@ -168,14 +168,14 @@ void timeInference(ICudaEngine* engine, int batchSize)
     // note that indices are guaranteed to be less than ICudaEngine::getNbBindings()
     int inputIndex = engine->getBindingIndex(INPUT_BLOB_NAME.c_str());
     int outputIndex = engine->getBindingIndex(OUTPUT_BLOB_NAME.c_str());
-    std::cout << "Input index: " << inputIndex << std::endl;
-    std::cout << "Output index: " << outputIndex << std::endl;
 
     // allocate GPU buffers
     DimsCHW inputDims = static_cast<DimsCHW&&>(engine->getBindingDimensions(inputIndex)), outputDims = static_cast<DimsCHW&&>(engine->getBindingDimensions(outputIndex));
     size_t inputSize = batchSize * inputDims.c() * inputDims.h() * inputDims.w() * sizeof(float);
     size_t outputSize = batchSize * outputDims.c() * outputDims.h() * outputDims.w() * sizeof(float);
 
+    std::cout << "Input index: " << inputIndex << " of size: " << inputSize << std::endl;
+    std::cout << "Output index: " << outputIndex << " of size: " << outputSize << std::endl;
     CHECK(cudaMalloc(&buffers[inputIndex], inputSize));
     CHECK(cudaMalloc(&buffers[outputIndex], outputSize));
 
