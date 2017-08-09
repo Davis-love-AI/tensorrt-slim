@@ -37,7 +37,7 @@
 
 #include <tensorflowrt.h>
 #include <tensorflowrt_util.h>
-#include <tensorflowrt_ssd_models.h>
+#include <tensorflowrt_models.h>
 
 #define DEMONET "<demo-single-input> "
 

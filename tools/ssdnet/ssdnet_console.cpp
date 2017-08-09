@@ -23,7 +23,7 @@
 // TensorFlowRT headers
 #include <tensorflowrt.h>
 #include <tensorflowrt_util.h>
-#include <tensorflowrt_ssd_models.h>
+#include <tensorflowrt_models.h>
 
 #define SSDNET "<ssdnet-console> "
 // FLAGS...

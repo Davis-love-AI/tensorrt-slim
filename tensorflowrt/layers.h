@@ -577,7 +577,7 @@ public:
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
         LOG(INFO) << "LAYER 2D contrib transpose convolution '" << this->m_scope.name()
             << ". Input shape: " << dims_str(net->getDimensions());
-        net = this->convolution(net);
+        net = this->tr_convolution(net);
         net = this->batch_norm(net);
         net = this->activation(net);
         return this->mark_output(net);

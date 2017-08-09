@@ -12,8 +12,8 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Robik AI Ltd.
 # =========================================================================== */
-#ifndef TFRT_SSD_MODELS
-#define TFRT_SSD_MODELS
+#ifndef TFRT_MODELS
+#define TFRT_MODELS
 
 #include "models/ssd_inception2_v0.h"
 #include "models/seg_inception2_v0.h"

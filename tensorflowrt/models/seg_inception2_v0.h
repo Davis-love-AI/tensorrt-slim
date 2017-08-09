@@ -12,8 +12,8 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Robik AI Ltd.
 # =========================================================================== */
-#ifndef TFRT_SSD_INCEPTION2_V0
-#define TFRT_SSD_INCEPTION2_V0
+#ifndef TFRT_SEG_INCEPTION2_V0
+#define TFRT_SEG_INCEPTION2_V0
 
 #include <NvInfer.h>
 
@@ -32,7 +32,7 @@ namespace seg_inception2_v0
  * ========================================================================== */
 typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
 typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true> separable_conv2d;
-typedef convolution2d_transpose<ActivationType::RELU, PaddingType::SAME, false>  conv2d_transpose;
+typedef tfrt::convolution2d_transpose<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false>  conv2d_transpose;
 
 /** Additional feature layer.
  */
@@ -47,13 +47,15 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
     if(net_side != nullptr) {
         // 1x1 compression convolution and sum with rest...
         net_side = conv2d(sc, "conv1x1").noutputs(num_outputs).ksize({1, 1})(net);
-        net = tfrt::sum(sc, "sum")(net, net_side);
+        net = tfrt::add(sc, "sum")(net, net_side);
     }
     return tfrt::add_end_point(end_points, sc.name(), net);
 }
 inline nvinfer1::ITensor* seg_inception2_last_layer(
     nvinfer1::ITensor* net, tfrt::scope sc, int num_outputs, tfrt::map_tensor* end_points=nullptr)
 {
+    typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
+
     LOG(INFO) << "BLOCK SEG inception2 last layer '" << sc.name() << "'. "
             << "Input shape: " << tfrt::dims_str(net->getDimensions());
     // 3x3 transpose convolution with stride=2.
@@ -89,15 +91,15 @@ inline nvinfer1::ITensor* inception2_base(
 }
 
 /* ============================================================================
- * SSD Inception2 class: as ssd_network.
+ * SEG Inception2 class: as seg_network.
  * ========================================================================== */
 class net : public tfrt::imagenet_network
 {
 public:
     /** Constructor with default name.  */
-    net() : tfrt::ssd_network("seg_inception2") {}
+    net() : tfrt::imagenet_network("seg_inception2") {}
 
-    /** SSD Inception2 building method. Take a network scope and do the work!
+    /** SEG Inception2 building method. Take a network scope and do the work!
      */
     virtual nvinfer1::ITensor* build(tfrt::scope sc) {
         auto net = tfrt::input(sc)();
@@ -115,10 +117,12 @@ public:
             auto net2 = tfrt::find_end_point(&end_points, feat_names_in[i]);
             net = seg_inception2_extra_feature(net1, net2, ssc.sub(feat_names[i]), feat_size[i]);
         }
-        // Last convolution layer producing result...
+        // Last convolution layer and softmax.
         net = seg_inception2_last_layer(net, ssc.sub("block10"), 18);
+        net = tfrt::softmax(sc, "Softmax")(net);
+
         // Clear any cached stuff...
-        this->clear_cache();
+        // this->clear_cache();
         return net;
     }
 };

@@ -23,7 +23,7 @@
 
 #include <tensorflowrt.h>
 #include <tensorflowrt_nets.h>
-#include <tensorflowrt_ssd_models.h>
+#include <tensorflowrt_models.h>
 
 DEFINE_double(value, 1.0, "Float value.");
 
