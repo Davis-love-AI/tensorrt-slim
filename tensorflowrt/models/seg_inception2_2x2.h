@@ -81,7 +81,7 @@ inline nvinfer1::ITensor* block1(
     net = separable_conv2d(sc, "Conv2d_1a_7x7")
         .depthmul(depthwise_multiplier)
         .noutputs(64).ksize({7, 7}).stride({2, 2})(net);
-    return net;
+    return tfrt::add_end_point(end_points, sc.sub("Conv2d_1a_7x7").name(), net);;
 }
 inline nvinfer1::ITensor* inception2_base(
     nvinfer1::ITensor* input, tfrt::scope sc, tfrt::map_tensor* end_points=nullptr)
@@ -116,7 +116,7 @@ public:
         net = inception2_base(net, sc.sub("inception2_base"), &end_points);
         // Add segmentation extra-features.
         std::vector<std::string> feat_names = {"block6", "block7", "block8", "block9"};
-        std::vector<std::string> feat_names_in = {"Mixed_4e", "", "", "Conv2d_1a_7x7"};
+        std::vector<std::string> feat_names_in = {"Mixed_4e", "Mixed_3c", "Conv2d_2c_3x3", "Conv2d_1a_7x7"};
         std::vector<std::size_t> feat_size = {384, 192, 96, 18};
         auto ssc = sc.sub("feat_layers_tests");
         // auto ssc = sc.sub("feat_layers_extra");

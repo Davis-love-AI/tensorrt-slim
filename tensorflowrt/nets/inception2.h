@@ -135,7 +135,7 @@ inline nvinfer1::ITensor* block2(nvinfer1::ITensor* net, tfrt::scope sc,
     net = max_pool2d(sc, "MaxPool_2a_3x3").ksize({3, 3}).stride({2, 2})(net);
     net = conv2d(sc, "Conv2d_2b_1x1").noutputs(64).ksize({1, 1})(net);
     net = conv2d(sc, "Conv2d_2c_3x3").noutputs(192).ksize({3, 3})(net);
-    return net;
+    return tfrt::add_end_point(end_points, sc.sub("Conv2d_2c_3x3").name(), net);;
 }
 inline nvinfer1::ITensor* block3(nvinfer1::ITensor* net, tfrt::scope sc,
                                  tfrt::map_tensor* end_points=nullptr)
