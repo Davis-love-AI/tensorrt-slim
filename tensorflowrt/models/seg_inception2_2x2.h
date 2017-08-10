@@ -44,7 +44,7 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
             << "Input shape: " << tfrt::dims_str(net->getDimensions());
     // 3x3 transpose convolution with stride=2.
     net = conv2d_transpose(sc, "tconv3x3")
-        .noutputs(num_outputs).ksize({1, 1}).stride({2, 2}).padding({0, 0})(net);
+        .noutputs(num_outputs).ksize({2, 2}).stride({2, 2}).padding({0, 0})(net);
     // Additional side feature to add.
     if(net_side != nullptr) {
         LOG(INFO) << "Additional link shape: " << tfrt::dims_str(net_side->getDimensions());
