@@ -32,130 +32,130 @@ namespace nvinfer1
 {
 enum class DimensionType : int
 {
-	kSPATIAL = 0,			//!< elements correspond to different spatial data
-	kCHANNEL = 1,			//!< elements correspond to different channels
-	kINDEX = 2,				//!< elements correspond to different batch index
-	kSEQUENCE = 3			//!< elements correspond to different sequence values
+    kSPATIAL = 0,			//!< elements correspond to different spatial data
+    kCHANNEL = 1,			//!< elements correspond to different channels
+    kINDEX = 2,				//!< elements correspond to different batch index
+    kSEQUENCE = 3			//!< elements correspond to different sequence values
 };
 class Dims
 {
 public:
-	static const int MAX_DIMS = 8;			//!< the maximum number of dimensions supported for a tensor
-	int nbDims;								//!< the number of dimensions
-	int d[MAX_DIMS];					//!< the extent of each dimension
-	DimensionType type[MAX_DIMS];			//!< the type of each dimension
+    static const int MAX_DIMS = 8;			//!< the maximum number of dimensions supported for a tensor
+    int nbDims;								//!< the number of dimensions
+    int d[MAX_DIMS];					//!< the extent of each dimension
+    DimensionType type[MAX_DIMS];			//!< the type of each dimension
 };
 class DimsHW : public Dims
 {
 public:
-	DimsHW()
-	{
-		nbDims = 2;
-		type[0] = type[1] = DimensionType::kSPATIAL;
-		d[0] = d[1] = 0;
-	}
+    DimsHW()
+    {
+        nbDims = 2;
+        type[0] = type[1] = DimensionType::kSPATIAL;
+        d[0] = d[1] = 0;
+    }
     DimsHW(int height, int width)
-	{
-		nbDims = 2;
-		type[0] = type[1] = DimensionType::kSPATIAL;
-		d[0] = height;
-		d[1] = width;
-	}
+    {
+        nbDims = 2;
+        type[0] = type[1] = DimensionType::kSPATIAL;
+        d[0] = height;
+        d[1] = width;
+    }
     DimsHW(const nvinfer1::Dims2& dims)
-	{
-		nbDims = 2;
-		type[0] = type[1] = DimensionType::kSPATIAL;
-		d[0] = dims.h;
-		d[1] = dims.w;
-	}
+    {
+        nbDims = 2;
+        type[0] = type[1] = DimensionType::kSPATIAL;
+        d[0] = dims.h;
+        d[1] = dims.w;
+    }
     int& h() { return d[0]; }
-	int h() const { return d[0]; }
-	int& w() { return d[1]; }
-	int w() const { return d[1]; }
+    int h() const { return d[0]; }
+    int& w() { return d[1]; }
+    int w() const { return d[1]; }
 };
 
 class DimsCHW : public Dims
 {
 public:
-	DimsCHW()
-	{
-		nbDims = 3;
-		type[0] = DimensionType::kCHANNEL;
-		type[1] = type[2] = DimensionType::kSPATIAL;
-		d[0] = d[1] = d[2] = 0;
-	}
-	DimsCHW(int channels, int height, int width)
-	{
-		nbDims = 3;
-		type[0] = DimensionType::kCHANNEL;
-		type[1] = type[2] = DimensionType::kSPATIAL;
-		d[0] = channels;
-		d[1] = height;
-		d[2] = width;
-	}
+    DimsCHW()
+    {
+        nbDims = 3;
+        type[0] = DimensionType::kCHANNEL;
+        type[1] = type[2] = DimensionType::kSPATIAL;
+        d[0] = d[1] = d[2] = 0;
+    }
+    DimsCHW(int channels, int height, int width)
+    {
+        nbDims = 3;
+        type[0] = DimensionType::kCHANNEL;
+        type[1] = type[2] = DimensionType::kSPATIAL;
+        d[0] = channels;
+        d[1] = height;
+        d[2] = width;
+    }
     DimsCHW(const nvinfer1::Dims3& dims)
-	{
-		nbDims = 3;
-		type[0] = DimensionType::kCHANNEL;
-		type[1] = type[2] = DimensionType::kSPATIAL;
-		d[0] = dims.c;
-		d[1] = dims.h;
-		d[2] = dims.w;
-	}
+    {
+        nbDims = 3;
+        type[0] = DimensionType::kCHANNEL;
+        type[1] = type[2] = DimensionType::kSPATIAL;
+        d[0] = dims.c;
+        d[1] = dims.h;
+        d[2] = dims.w;
+    }
 
-	int& c() { return d[0]; }
-	int c() const { return d[0]; }
-	int& h() { return d[1]; }
-	int h() const { return d[1]; }
-	int& w() { return d[2]; }
-	int w() const { return d[2]; }
+    int& c() { return d[0]; }
+    int c() const { return d[0]; }
+    int& h() { return d[1]; }
+    int h() const { return d[1]; }
+    int& w() { return d[2]; }
+    int w() const { return d[2]; }
 };
 
 class DimsNCHW : public Dims
 {
 public:
-	/**
-	* \brief construct an empty DimsNCHW object
-	*/
-	DimsNCHW()
-	{
-		nbDims = 4;
-		type[0] = DimensionType::kINDEX;
-		type[1] = DimensionType::kCHANNEL;
-		type[2] = type[3] = DimensionType::kSPATIAL;
-		d[0] = d[1] = d[2] = d[3] = 0;
-	}
-	DimsNCHW(int batchSize, int channels, int height, int width)
-	{
-		nbDims = 4;
-		type[0] = DimensionType::kINDEX;
-		type[1] = DimensionType::kCHANNEL;
-		type[2] = type[3] = DimensionType::kSPATIAL;
-		d[0] = batchSize;
-		d[1] = channels;
-		d[2] = height;
-		d[3] = width;
-	}
+    /**
+    * \brief construct an empty DimsNCHW object
+    */
+    DimsNCHW()
+    {
+        nbDims = 4;
+        type[0] = DimensionType::kINDEX;
+        type[1] = DimensionType::kCHANNEL;
+        type[2] = type[3] = DimensionType::kSPATIAL;
+        d[0] = d[1] = d[2] = d[3] = 0;
+    }
+    DimsNCHW(int batchSize, int channels, int height, int width)
+    {
+        nbDims = 4;
+        type[0] = DimensionType::kINDEX;
+        type[1] = DimensionType::kCHANNEL;
+        type[2] = type[3] = DimensionType::kSPATIAL;
+        d[0] = batchSize;
+        d[1] = channels;
+        d[2] = height;
+        d[3] = width;
+    }
     DimsNCHW(const nvinfer1::Dims4& dims)
-	{
-		nbDims = 4;
-		type[0] = DimensionType::kINDEX;
-		type[1] = DimensionType::kCHANNEL;
-		type[2] = type[3] = DimensionType::kSPATIAL;
-		d[0] = dims.n;
-		d[1] = dims.c;
-		d[2] = dims.h;
-		d[3] = dims.w;
-	}
+    {
+        nbDims = 4;
+        type[0] = DimensionType::kINDEX;
+        type[1] = DimensionType::kCHANNEL;
+        type[2] = type[3] = DimensionType::kSPATIAL;
+        d[0] = dims.n;
+        d[1] = dims.c;
+        d[2] = dims.h;
+        d[3] = dims.w;
+    }
 
-	int& n() { return d[0]; }
-	int n() const { return d[0]; }
-	int& c() { return d[1]; }
-	int c() const { return d[1]; }
-	int& h() { return d[2]; }
-	int h() const { return d[2]; }
-	int& w() { return d[3]; }
-	int w() const { return d[3]; }
+    int& n() { return d[0]; }
+    int n() const { return d[0]; }
+    int& c() { return d[1]; }
+    int c() const { return d[1]; }
+    int& h() { return d[2]; }
+    int h() const { return d[2]; }
+    int& w() { return d[3]; }
+    int w() const { return d[3]; }
 };
 
 }
@@ -231,5 +231,50 @@ inline nvinfer1::DimsNCHW DIMRT(const nvinfer1::DimsNCHW& dims)
 }
 
 #endif
+
+namespace nvinfer1
+{
+/** Additional dimension object. */
+class DimsNACHW : public Dims
+{
+public:
+    /**
+    * \brief construct an empty DimsNCHW object
+    */
+    DimsNACHW()
+    {
+        nbDims = 5;
+        type[0] = DimensionType::kINDEX;
+        type[1] = DimensionType::kCHANNEL;
+        type[2] = DimensionType::kCHANNEL;
+        type[3] = type[4] = DimensionType::kSPATIAL;
+        d[0] = d[1] = d[2] = d[3] = d[4] = 0;
+    }
+    DimsNACHW(int batchSize, int anchors, int channels, int height, int width)
+    {
+        nbDims = 5;
+        type[0] = DimensionType::kINDEX;
+        type[1] = DimensionType::kCHANNEL;
+        type[2] = DimensionType::kCHANNEL;
+        type[3] = type[4] = DimensionType::kSPATIAL;
+        d[0] = batchSize;
+        d[1] = anchors;
+        d[2] = channels;
+        d[3] = height;
+        d[4] = width;
+    }
+
+    int& n() { return d[0]; }
+    int n() const { return d[0]; }
+    int& a() { return d[1]; }
+    int a() const { return d[1]; }
+    int& c() { return d[2]; }
+    int c() const { return d[2]; }
+    int& h() { return d[3]; }
+    int h() const { return d[3]; }
+    int& w() { return d[4]; }
+    int w() const { return d[4]; }
+};
+}
 
 #endif
