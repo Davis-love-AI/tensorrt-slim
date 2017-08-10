@@ -199,8 +199,9 @@ protected:
     /** Set up a scaling operation.
      */
     nvinfer1::ITensor* scale_op(nvinfer1::ITensor* net) {
+        auto inshape = static_cast<nvinfer1::DimsNCHW&&>(net->getDimensions());
         LOG(INFO) << "OP scaling. "
-            << "Input shape: " << dims_str(net->getDimensions());
+            << "Input shape: " << dims_str(inshape);
         // Get weights and add scale layer.
         auto drift = m_scope.weights("drift");
         auto scale = m_scope.weights("scale");
@@ -210,6 +211,21 @@ protected:
         slayer->setName(m_scope.cname());
         return slayer->getOutput(0);
     }
+protected:
+    /** Get weights shape. */
+    nvinfer1::Dims weights_shape(const nvinfer1::DimsNCHW& inshape)
+    {
+        if (m_mode == nvinfer1::ScaleMode::kUNIFORM) {
+            return nvinfer1::DimsC{1};
+        }
+        else if (m_mode == nvinfer1::ScaleMode::kCHANNEL) {
+            return nvinfer1::DimsC{inshape.c()};
+        }
+        else {
+            return nvinfer1::DimsCHW{inshape.c(), inshape.h(), inshape.w()};
+        }
+    }
+
 protected:
     // Scaling mode
     nvinfer1::ScaleMode m_mode;

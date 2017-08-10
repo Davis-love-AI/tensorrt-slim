@@ -275,6 +275,26 @@ public:
     int& w() { return d[4]; }
     int w() const { return d[4]; }
 };
+
+class DimsC : public Dims
+{
+public:
+    DimsC()
+    {
+        nbDims = 1;
+        type[0] = DimensionType::kCHANNEL;
+        d[0] = 0;
+    }
+    DimsC(int channels)
+    {
+        nbDims = 1;
+        type[0] = DimensionType::kCHANNEL;
+        d[0] = channels;
+    }
+    int& c() { return d[0]; }
+    int c() const { return d[0]; }
+};
+
 }
 
 #endif
