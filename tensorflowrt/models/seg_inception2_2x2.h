@@ -45,8 +45,8 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
     // 3x3 transpose convolution with stride=2.
     net = conv2d_transpose(sc, "tconv3x3")
         .noutputs(num_outputs).ksize({2, 2}).stride({2, 2}).padding({0, 0})(net);
-    net = conv2d(sc, "conv3x3")
-        .noutputs(num_outputs).ksize({3, 3})(net);
+    // net = conv2d(sc, "conv3x3")
+    //     .noutputs(num_outputs).ksize({3, 3})(net);
     // net = conv2d(sc, "conv1x1")
     //     .noutputs(num_outputs).ksize({1, 1})(net);
     // Additional side feature to add.
@@ -117,7 +117,8 @@ public:
         // Add segmentation extra-features.
         std::vector<std::string> feat_names = {"block6", "block7", "block8", "block9"};
         std::vector<std::string> feat_names_in = {"Mixed_4e", "Mixed_3c", "Conv2d_2c_3x3", "Conv2d_1a_7x7"};
-        std::vector<std::size_t> feat_size = {384, 192, 96, 48};
+        // std::vector<std::size_t> feat_size = {384, 192, 96, 48};
+        std::vector<std::size_t> feat_size = {512, 256, 192, 64};
         auto ssc = sc.sub("feat_layers_tests");
         // auto ssc = sc.sub("feat_layers_extra");
         for (size_t i = 0 ; i < feat_names.size() ; ++i) {
