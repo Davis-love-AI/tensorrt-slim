@@ -117,7 +117,7 @@ public:
         // Add segmentation extra-features.
         std::vector<std::string> feat_names = {"block6", "block7", "block8", "block9"};
         std::vector<std::string> feat_names_in = {"Mixed_4e", "Mixed_3c", "Conv2d_2c_3x3", "Conv2d_1a_7x7"};
-        std::vector<std::size_t> feat_size = {384, 192, 96, 18};
+        std::vector<std::size_t> feat_size = {384, 192, 96, 48};
         auto ssc = sc.sub("feat_layers_tests");
         // auto ssc = sc.sub("feat_layers_extra");
         for (size_t i = 0 ; i < feat_names.size() ; ++i) {
