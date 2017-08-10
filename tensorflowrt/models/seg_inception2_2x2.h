@@ -47,7 +47,7 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
         .noutputs(num_outputs).ksize({3, 3}).stride({2, 2}).padding({0, 0})(net);
     net = conv2d(sc, "conv3x3")
         .noutputs(num_outputs).ksize({3, 3})(net);
-    net = conv2d(sc, "conv3x3")
+    net = conv2d(sc, "conv1x1")
         .noutputs(num_outputs).ksize({1, 1})(net);
     // Additional side feature to add.
     if(net_side != nullptr) {
