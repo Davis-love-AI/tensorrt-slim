@@ -145,7 +145,7 @@ public:
      * The tensor is owned by the network.
      */
     const tfrt_pb::tensor& create_tensor(std::string name, nvinfer1::Dims shape,
-        float val, nvinfer1::DataType dt);
+        float val, nvinfer1::DataType dt) const;
     /** Get a tensor by name. If not found, either create a new tensor to replace
      * or just return an empty tensor. */
     const tfrt_pb::tensor& tensor_by_name(std::string name, nvinfer1::Dims wshape) const;

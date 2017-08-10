@@ -151,9 +151,9 @@ tfrt::scope network::scope(nvinfer1::INetworkDefinition* nv_network) const
  * Network weights / tensors.
  * ========================================================================== */
 const tfrt_pb::tensor& network::create_tensor(
-    std::string name, nvinfer1::Dims shape, float val, nvinfer1::DataType dt)
+    std::string name, nvinfer1::Dims shape, float val, nvinfer1::DataType dt) const
 {
-    DLOG(INFO) << "CREATE tfrt_pb::tensor '" << name << "'. SHAPE: " << dims_str(shape);
+    LOG(INFO) << "CREATE tfrt_pb::tensor '" << name << "'. SHAPE: " << dims_str(shape);
     // Create new tensor in the weights collection.
     auto pb_tensor = m_pb_network->add_weights();
     pb_tensor->set_name(name);
@@ -234,7 +234,6 @@ const tfrt_pb::tensor& network::create_tensor(
     }
     return *pb_tensor;
 }
-
 const tfrt_pb::tensor& network::tensor_by_name(std::string name, nvinfer1::Dims wshape) const
 {
     // Best search algorithm ever!
@@ -247,7 +246,11 @@ const tfrt_pb::tensor& network::tensor_by_name(std::string name, nvinfer1::Dims 
             return tensor;
         }
     }
-    // Default empty tensor.
+    // Create new tensor if specified.
+    if (m_missing_tensors) {
+        float val = 1.0f;
+        return this->create_tensor(name, wshape, val, this->datatype());
+    }
     LOG(WARNING) << "FAILED to find the tfrt_pb::tensor '" << name
         << "'. Using default empty tensor." ;
     return tfrt_pb::tensor::default_instance();
