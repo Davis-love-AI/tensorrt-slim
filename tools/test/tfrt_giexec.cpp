@@ -89,6 +89,7 @@ ICudaEngine* tfrtToGIEModel()
 
     // Build TF-RT network.
     auto tf_network = networks_map(gParams.modelName);
+    tf_network->create_missing_tensors(true);
     tf_network->load_weights(gParams.modelFile.c_str());
     tf_network->input_shape({3, gParams.inheight, gParams.inwidth});
     tfrt::scope sc = tf_network->scope(network);

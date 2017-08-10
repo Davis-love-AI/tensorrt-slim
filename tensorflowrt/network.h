@@ -139,6 +139,9 @@ public:
     std::vector<std::string> outputs_name(bool fullname, bool suffix) const;
     // Input and output setters.
     tfrt::network& input_shape(const nvinfer1::DimsCHW& shape);
+    // Create missing tensors?
+    bool create_missing_tensors() const;
+    void create_missing_tensors(bool v);
 
 public:
     /** Create a tensor, with a given name, shape, default value and type.

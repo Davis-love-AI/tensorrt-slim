@@ -361,6 +361,14 @@ tfrt::cuda_tensor* network::find_cuda_output(const std::string& name) const
     LOG(WARNING) << "Could not find CUDA output tensor named: \'" << name << "\'";
     return nullptr;
 }
+bool network::create_missing_tensors() const
+{
+    return m_missing_tensors;
+}
+void network::create_missing_tensors(bool v)
+{
+    m_missing_tensors = v;
+}
 
 /* ============================================================================
  * load - build - serialize. The big stuff!

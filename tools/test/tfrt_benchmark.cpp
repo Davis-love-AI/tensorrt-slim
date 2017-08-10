@@ -120,6 +120,7 @@ ICudaEngine* tfrt_to_gie_model()
 
     // Build TF-RT network.
     auto tf_network = networks_map(FLAGS_network);
+    tf_network->create_missing_tensors(true);
     tf_network->load_weights(FLAGS_network_pb);
     tf_network->input_shape({3, FLAGS_height, FLAGS_width});
     tfrt::scope sc = tf_network->scope(network);
