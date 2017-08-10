@@ -200,18 +200,17 @@ protected:
      */
     nvinfer1::ITensor* scale_op(nvinfer1::ITensor* net) {
         auto inshape = static_cast<nvinfer1::DimsNCHW&&>(net->getDimensions());
-        LOG(INFO) << "OP scaling. "
-            << "Input shape: " << dims_str(inshape);
+        auto wshape = this->weights_shape(inshape);
+        LOG(INFO) << "OP scaling. Input shape: " << dims_str(inshape);
         // Get weights and add scale layer.
-        auto drift = m_scope.weights("drift");
-        auto scale = m_scope.weights("scale");
-        auto power = m_scope.weights("power");
+        auto drift = m_scope.weights("drift", wshape);
+        auto scale = m_scope.weights("scale", wshape);
+        auto power = m_scope.weights("power", wshape);
         auto slayer = this->m_scope.network()->addScale(*net, m_mode, drift, scale, power);
         CHECK_NOTNULL(slayer);
         slayer->setName(m_scope.cname());
         return slayer->getOutput(0);
     }
-protected:
     /** Get weights shape. */
     nvinfer1::Dims weights_shape(const nvinfer1::DimsNCHW& inshape)
     {
@@ -407,16 +406,17 @@ protected:
      */
     nvinfer1::ITensor* batch_norm(nvinfer1::ITensor* input) {
         if(BN) {
-            LOG(INFO) << "OP Batch Norm. "
-                << "Input shape: " << dims_str(input->getDimensions());
+            auto inshape = static_cast<nvinfer1::DimsNCHW&&>(input->getDimensions());
+            auto bnshape = this->bn_weights_shape(inshape);
+            LOG(INFO) << "OP Batch Norm. Input shape: " << dims_str(inshape);
             // TODO: transform moving mean and variance in export...
             nvinfer1::IScaleLayer* bnlayer = nullptr;
             tfrt::scope bnsc = this->m_scope.sub("BatchNorm");
             // Get the weights.
-            auto mean = bnsc.weights("moving_mean");
-            auto variance = bnsc.weights("moving_variance");
-            auto beta = bnsc.weights("beta");
-            auto gamma = bnsc.weights("gamma");
+            auto mean = bnsc.weights("moving_mean", bnshape);
+            auto variance = bnsc.weights("moving_variance", bnshape);
+            auto beta = bnsc.weights("beta", bnshape);
+            auto gamma = bnsc.weights("gamma", bnshape);
             nvinfer1::Weights power{mean.type, nullptr, 0};
 
             // Add two scale layers...
@@ -459,6 +459,12 @@ protected:
     }
 
 protected:
+    /** Get batch norm weights shape. */
+    nvinfer1::Dims bn_weights_shape(const nvinfer1::DimsNCHW& inshape)
+    {
+        return nvinfer1::DimsC{inshape.c()};
+    }
+protected:
     // Number of outputs.
     int  m_noutputs;
     // Kernel size of the operation.
@@ -500,8 +506,11 @@ protected:
                                    std::string wname="weights",
                                    std::string bname="biases",
                                    std::string lnamesuffix="") {
+        auto inshape = static_cast<nvinfer1::DimsNCHW&&>(input->getDimensions());
+        auto wshape = this->weights_shape(inshape);
+        auto bshape = this->biases_shape(inshape);
         LOG(INFO) << "OP 2D convolution. "
-            << "Input shape: " << dims_str(input->getDimensions())
+            << "Input shape: " << dims_str(inshape)
             << ". PARAMETERS: "
             << "ksize: " << dims_str(this->ksize()) << " | "
             << "noutputs: " << this->noutputs() << " | "
@@ -511,15 +520,15 @@ protected:
         nvinfer1::IConvolutionLayer* convlayer = nullptr;
         // Batch normalization: no bias.
         if(BN) {
-            auto weights = this->m_scope.weights(wname);
+            auto weights = this->m_scope.weights(wname, wshape);
             nvinfer1::Weights biases{weights.type, nullptr, 0};
             convlayer = this->m_scope.network()->addConvolution(
                 *input, this->noutputs(), DIMRT(this->ksize()), weights, biases);
         }
         // Normal convolution with bias.
         else {
-            auto weights = this->m_scope.weights(wname);
-            auto biases = this->m_scope.weights(bname);
+            auto weights = this->m_scope.weights(wname, wshape);
+            auto biases = this->m_scope.weights(bname, bshape);
             convlayer = this->m_scope.network()->addConvolution(
                 *input, this->noutputs(), DIMRT(this->ksize()), weights, biases);
         }
@@ -530,6 +539,22 @@ protected:
         convlayer->setStride(DIMRT(this->stride()));
         convlayer->setNbGroups(ngroups);
         return convlayer->getOutput(0);
+    }
+    /** Get convolution weights shape. Note: TensorRT uses the convention GKCRS,
+     * where G is the number of groups,
+     * K the number of output feature maps,
+     * C the number of input channels, and
+     * R and S are the height and width of the filter.
+     */
+    nvinfer1::Dims weights_shape(const nvinfer1::DimsNCHW& inshape)
+    {
+        auto ksize = this->ksize();
+        return nvinfer1::DimsNACHW{1, this->noutputs(), inshape.c(), ksize.h(), ksize.w()};
+    }
+    /** Bias shape. */
+    nvinfer1::Dims biases_shape(const nvinfer1::DimsNCHW& inshape)
+    {
+        return nvinfer1::DimsC{this->noutputs()};
     }
 };
 /** Separable 2D convolution layer.
@@ -547,10 +572,11 @@ public:
      * 2D convolution + batch norm + activation.
      */
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        auto inshape = static_cast<nvinfer1::DimsNCHW&&>(net->getDimensions());
         LOG(INFO) << "LAYER 2D contrib separable convolution '" << this->m_scope.name() << "'. "
-            << "Input shape: " << dims_str(net->getDimensions());
+            << "Input shape: " << dims_str(inshape);
         // Number of groups: input channel size.
-        int ngroups = dims_channels(net->getDimensions());
+        int ngroups = dims_channels(inshape);
         // Depthwise convolution, with depth multiplier.
         separable_convolution2d dw_conv2d(*this);
         dw_conv2d.noutputs(ngroups * m_depth_multiplier);
@@ -565,7 +591,6 @@ public:
         net = pw_conv2d.activation(net);
         return this->mark_output(net);
     }
-
     /** Named parameter: depth multiplier.
      */
     separable_convolution2d& depthmul(int depth_multiplier) {
@@ -575,6 +600,7 @@ public:
     int depthmul() const {
         return m_depth_multiplier;
     }
+
 protected:
     // Depth multiplier.
     int  m_depth_multiplier;
