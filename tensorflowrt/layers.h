@@ -469,7 +469,7 @@ protected:
     /** Get batch norm weights shape. */
     nvinfer1::Dims bn_weights_shape(const nvinfer1::DimsNCHW& inshape)
     {
-        return nvinfer1::DimsC{inshape.c()};
+        return nvinfer1::DimsC{m_noutputs};
     }
 protected:
     // Number of outputs.
