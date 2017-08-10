@@ -145,7 +145,7 @@ protected:
     /** Scaling input tensor.
      */
     nvinfer1::ITensor* scale(nvinfer1::ITensor* input) {
-        auto inshape = static_cast<nvinfer1::DimsNCHW&&>(input->getDimensions());
+        auto inshape = static_cast<nvinfer1::DimsCHW&&>(input->getDimensions());
         auto wshape = this->weights_shape(inshape);
         // Get the scaling weights.
         nvinfer1::Weights shift = m_scope.weights("shift", wshape);
@@ -164,7 +164,7 @@ protected:
     // Should not be used!
     nvinfer1::ITensor* operator()(nvinfer1::ITensor*) { return nullptr; }
     /** Get weights shape. */
-    nvinfer1::Dims weights_shape(const nvinfer1::DimsNCHW& inshape)
+    nvinfer1::Dims weights_shape(const nvinfer1::DimsCHW& inshape)
     {
         return nvinfer1::DimsC{1};
     }
@@ -206,7 +206,7 @@ protected:
     /** Set up a scaling operation.
      */
     nvinfer1::ITensor* scale_op(nvinfer1::ITensor* net) {
-        auto inshape = static_cast<nvinfer1::DimsNCHW&&>(net->getDimensions());
+        auto inshape = static_cast<nvinfer1::DimsCHW&&>(net->getDimensions());
         auto wshape = this->weights_shape(inshape);
         LOG(INFO) << "OP scaling. Input shape: " << dims_str(inshape);
         // Get weights and add scale layer.
@@ -219,7 +219,7 @@ protected:
         return slayer->getOutput(0);
     }
     /** Get weights shape. */
-    nvinfer1::Dims weights_shape(const nvinfer1::DimsNCHW& inshape)
+    nvinfer1::Dims weights_shape(const nvinfer1::DimsCHW& inshape)
     {
         if (m_mode == nvinfer1::ScaleMode::kUNIFORM) {
             return nvinfer1::DimsC{1};
@@ -413,7 +413,7 @@ protected:
      */
     nvinfer1::ITensor* batch_norm(nvinfer1::ITensor* input) {
         if(BN) {
-            auto inshape = static_cast<nvinfer1::DimsNCHW&&>(input->getDimensions());
+            auto inshape = static_cast<nvinfer1::DimsCHW&&>(input->getDimensions());
             auto bnshape = this->bn_weights_shape(inshape);
             LOG(INFO) << "OP Batch Norm. Input shape: " << dims_str(inshape);
             // TODO: transform moving mean and variance in export...
@@ -467,7 +467,7 @@ protected:
 
 protected:
     /** Get batch norm weights shape. */
-    nvinfer1::Dims bn_weights_shape(const nvinfer1::DimsNCHW& inshape)
+    nvinfer1::Dims bn_weights_shape(const nvinfer1::DimsCHW& inshape)
     {
         return nvinfer1::DimsC{m_noutputs};
     }
@@ -513,7 +513,7 @@ protected:
                                    std::string wname="weights",
                                    std::string bname="biases",
                                    std::string lnamesuffix="") {
-        auto inshape = static_cast<nvinfer1::DimsNCHW&&>(input->getDimensions());
+        auto inshape = static_cast<nvinfer1::DimsCHW&&>(input->getDimensions());
         auto wshape = this->weights_shape(inshape);
         auto bshape = this->biases_shape(inshape);
         LOG(INFO) << "OP 2D convolution. "
@@ -553,13 +553,13 @@ protected:
      * C the number of input channels, and
      * R and S are the height and width of the filter.
      */
-    nvinfer1::Dims weights_shape(const nvinfer1::DimsNCHW& inshape)
+    nvinfer1::Dims weights_shape(const nvinfer1::DimsCHW& inshape)
     {
         auto ksize = this->ksize();
         return nvinfer1::DimsNACHW{1, this->noutputs(), inshape.c(), ksize.h(), ksize.w()};
     }
     /** Bias shape. */
-    nvinfer1::Dims biases_shape(const nvinfer1::DimsNCHW& inshape)
+    nvinfer1::Dims biases_shape(const nvinfer1::DimsCHW& inshape)
     {
         return nvinfer1::DimsC{this->noutputs()};
     }
@@ -579,7 +579,7 @@ public:
      * 2D convolution + batch norm + activation.
      */
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
-        auto inshape = static_cast<nvinfer1::DimsNCHW&&>(net->getDimensions());
+        auto inshape = static_cast<nvinfer1::DimsCHW&&>(net->getDimensions());
         LOG(INFO) << "LAYER 2D contrib separable convolution '" << this->m_scope.name() << "'. "
             << "Input shape: " << dims_str(inshape);
         // Number of groups: input channel size.
@@ -670,7 +670,7 @@ protected:
                                       std::string wname="weights",
                                       std::string bname="biases",
                                       std::string lnamesuffix="") {
-        auto inshape = static_cast<nvinfer1::DimsNCHW&&>(input->getDimensions());
+        auto inshape = static_cast<nvinfer1::DimsCHW&&>(input->getDimensions());
         auto wshape = this->weights_shape(inshape);
         auto bshape = this->biases_shape(inshape);
         LOG(INFO) << "OP 2D transpose convolution. "
@@ -711,13 +711,13 @@ protected:
         return convlayer->getOutput(0);
     }
 
-    nvinfer1::Dims weights_shape(const nvinfer1::DimsNCHW& inshape)
+    nvinfer1::Dims weights_shape(const nvinfer1::DimsCHW& inshape)
     {
         auto ksize = this->ksize();
         return nvinfer1::DimsNACHW{1, this->noutputs(), inshape.c(), ksize.h(), ksize.w()};
     }
     /** Bias shape. */
-    nvinfer1::Dims biases_shape(const nvinfer1::DimsNCHW& inshape)
+    nvinfer1::Dims biases_shape(const nvinfer1::DimsCHW& inshape)
     {
         return nvinfer1::DimsC{this->noutputs()};
     }

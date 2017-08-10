@@ -118,7 +118,6 @@ public:
         for (size_t i = 0 ; i < feat_names.size() ; ++i) {
             // auto net1 = tfrt::find_end_point(&end_points, feat_names[i]);
             auto net_in = tfrt::find_end_point(&end_points, feat_names_in[i]);
-            std::cout << "extra feat layer " << i << " " << net << " / " << net_in << std::endl;
             net = seg_inception2_extra_feature(net, net_in, ssc.sub(feat_names[i]), feat_size[i]);
         }
         // Last convolution layer and softmax.
