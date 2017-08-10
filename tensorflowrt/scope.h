@@ -76,7 +76,7 @@ public:
     /** Get the weights from this scope (and with specific name).
      */
     nvinfer1::Weights weights(const std::string& wname, const nvinfer1::Dims& wshape) const {
-        return m_tf_network->weights_by_name(subname(wname));
+        return m_tf_network->weights_by_name(subname(wname), wshape);
     }
 
 protected:

@@ -128,9 +128,9 @@ public:
 
 public:
     /** Get a tensor by name. Return empty tensor if not found. */
-    const tfrt_pb::tensor& tensor_by_name(std::string name) const;
+    const tfrt_pb::tensor& tensor_by_name(std::string name, const nvinfer1::Dims& wshape) const;
     /** Get NV weights by name. Return empty weights if not found. */
-    nvinfer1::Weights weights_by_name(std::string name) const;
+    nvinfer1::Weights weights_by_name(std::string name, const nvinfer1::Dims& wshape) const;
 
     // General network parameters.
     const std::string& name() const;

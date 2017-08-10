@@ -148,7 +148,7 @@ tfrt::scope network::scope(nvinfer1::INetworkDefinition* nv_network) const
 /* ============================================================================
  * Getters / setters wrapping protobuf methods.
  * ========================================================================== */
-const tfrt_pb::tensor& network::tensor_by_name(std::string name) const
+const tfrt_pb::tensor& network::tensor_by_name(std::string name, const nvinfer1::Dims& wshape) const
 {
     // Best search algorithm ever!
     for(int i = 0 ; i < m_pb_network->weights_size() ; ++i) {
@@ -165,9 +165,9 @@ const tfrt_pb::tensor& network::tensor_by_name(std::string name) const
         << "'. Using default empty tensor." ;
     return tfrt_pb::tensor::default_instance();
 }
-nvinfer1::Weights network::weights_by_name(std::string name) const
+nvinfer1::Weights network::weights_by_name(std::string name, const nvinfer1::Dims& wshape) const
 {
-    const tfrt_pb::tensor& tensor = tensor_by_name(name);
+    const tfrt_pb::tensor& tensor = tensor_by_name(name, wshape);
     return tensor_to_weights(tensor, this->datatype());
 }
 
