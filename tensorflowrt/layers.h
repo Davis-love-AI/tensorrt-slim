@@ -145,9 +145,11 @@ protected:
     /** Scaling input tensor.
      */
     nvinfer1::ITensor* scale(nvinfer1::ITensor* input) {
+        auto inshape = static_cast<nvinfer1::DimsNCHW&&>(input->getDimensions());
+        auto wshape = this->weights_shape(inshape);
         // Get the scaling weights.
-        nvinfer1::Weights shift = m_scope.weights("shift");
-        nvinfer1::Weights scale = m_scope.weights("scale");
+        nvinfer1::Weights shift = m_scope.weights("shift", wshape);
+        nvinfer1::Weights scale = m_scope.weights("scale", wshape);
         if(shift.values || scale.values) {
             LOG(INFO) << "OP input pre-scaling (shift + scale).";
             nvinfer1::Weights power{shift.type, nullptr, 0};
@@ -161,6 +163,11 @@ protected:
     }
     // Should not be used!
     nvinfer1::ITensor* operator()(nvinfer1::ITensor*) { return nullptr; }
+    /** Get weights shape. */
+    nvinfer1::Dims weights_shape(const nvinfer1::DimsNCHW& inshape)
+    {
+        return nvinfer1::DimsC{1};
+    }
 
 protected:
     // Input shape.
@@ -660,12 +667,14 @@ protected:
     /** Set up the convolution operation.
      */
     nvinfer1::ITensor* tr_convolution(nvinfer1::ITensor* input,
-                                      int ngroups=1,
                                       std::string wname="weights",
                                       std::string bname="biases",
                                       std::string lnamesuffix="") {
+        auto inshape = static_cast<nvinfer1::DimsNCHW&&>(input->getDimensions());
+        auto wshape = this->weights_shape(inshape);
+        auto bshape = this->biases_shape(inshape);
         LOG(INFO) << "OP 2D transpose convolution. "
-            << "Input shape: " << dims_str(input->getDimensions())
+            << "Input shape: " << dims_str(inshape)
             << ". PARAMETERS: "
             << "ksize: " << dims_str(this->ksize()) << " | "
             << "noutputs: " << this->noutputs() << " | "
@@ -681,15 +690,15 @@ protected:
         }
         // Batch normalization: no bias.
         if(BN) {
-            auto weights = this->m_scope.weights(wname);
+            auto weights = this->m_scope.weights(wname, wshape);
             nvinfer1::Weights biases{weights.type, nullptr, 0};
             convlayer = this->m_scope.network()->addDeconvolution(
                 *input, this->noutputs(), DIMRT(this->ksize()), weights, biases);
         }
         // Normal convolution with bias.
         else {
-            auto weights = this->m_scope.weights(wname);
-            auto biases = this->m_scope.weights(bname);
+            auto weights = this->m_scope.weights(wname, wshape);
+            auto biases = this->m_scope.weights(bname, bshape);
             convlayer = this->m_scope.network()->addDeconvolution(
                 *input, this->noutputs(), DIMRT(this->ksize()), weights, biases);
         }
@@ -700,6 +709,17 @@ protected:
         convlayer->setPadding(DIMRT(this->padding()));
         convlayer->setStride(DIMRT(this->stride()));
         return convlayer->getOutput(0);
+    }
+
+    nvinfer1::Dims weights_shape(const nvinfer1::DimsNCHW& inshape)
+    {
+        auto ksize = this->ksize();
+        return nvinfer1::DimsNACHW{1, this->noutputs(), inshape.c(), ksize.h(), ksize.w()};
+    }
+    /** Bias shape. */
+    nvinfer1::Dims biases_shape(const nvinfer1::DimsNCHW& inshape)
+    {
+        return nvinfer1::DimsC{this->noutputs()};
     }
 private:
     // Ceil mode for computing the deconvolution formula.
