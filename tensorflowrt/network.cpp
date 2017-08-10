@@ -248,7 +248,7 @@ const tfrt_pb::tensor& network::tensor_by_name(std::string name, nvinfer1::Dims 
     }
     // Create new tensor if specified.
     if (m_missing_tensors) {
-        float val = 1.0f;
+        float val = 0.0f;
         return this->create_tensor(name, wshape, val, this->datatype());
     }
     LOG(WARNING) << "FAILED to find the tfrt_pb::tensor '" << name
