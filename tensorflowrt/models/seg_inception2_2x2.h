@@ -47,14 +47,14 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
         .noutputs(num_outputs).ksize({2, 2}).stride({2, 2}).padding({0, 0})(net);
     net = conv2d(sc, "conv3x3")
         .noutputs(num_outputs).ksize({3, 3})(net);
-    net = conv2d(sc, "conv1x1")
-        .noutputs(num_outputs).ksize({1, 1})(net);
+    // net = conv2d(sc, "conv1x1")
+    //     .noutputs(num_outputs).ksize({1, 1})(net);
     // Additional side feature to add.
     if(net_side != nullptr) {
         LOG(INFO) << "Additional link shape: " << tfrt::dims_str(net_side->getDimensions());
-    // 1x1 compression convolution and sum with rest...
-        // net_side = conv2d(sc, "conv1x1").noutputs(num_outputs).ksize({1, 1})(net_side);
-        // net = tfrt::add(sc, "sum")(net, net_side);
+        // 1x1 compression convolution and sum with rest...
+        net_side = conv2d(sc, "conv1x1").noutputs(num_outputs).ksize({1, 1})(net_side);
+        net = tfrt::add(sc, "sum")(net, net_side);
     }
     return tfrt::add_end_point(end_points, sc.name(), net);
 }
@@ -117,7 +117,7 @@ public:
         // Add segmentation extra-features.
         std::vector<std::string> feat_names = {"block6", "block7", "block8", "block9"};
         std::vector<std::string> feat_names_in = {"Mixed_4e", "", "", "Conv2d_1a_7x7"};
-        std::vector<std::size_t> feat_size = {384, 192, 96, 48};
+        std::vector<std::size_t> feat_size = {384, 192, 96, 18};
         auto ssc = sc.sub("feat_layers_tests");
         // auto ssc = sc.sub("feat_layers_extra");
         for (size_t i = 0 ; i < feat_names.size() ; ++i) {
