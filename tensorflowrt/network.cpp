@@ -25,9 +25,11 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
 
+#include "types.h"
 #include "scope.h"
 #include "network.h"
 #include "tensorflowrt.h"
+#include "cuda/cudaHalfPrecision.h"
 
 const int kProtoReadBytesLimit = INT_MAX;
 
@@ -146,9 +148,94 @@ tfrt::scope network::scope(nvinfer1::INetworkDefinition* nv_network) const
 
 
 /* ============================================================================
- * Getters / setters wrapping protobuf methods.
+ * Network weights / tensors.
  * ========================================================================== */
-const tfrt_pb::tensor& network::tensor_by_name(std::string name, const nvinfer1::Dims& wshape) const
+const tfrt_pb::tensor& network::create_tensor(
+    std::string name, nvinfer1::Dims shape, float val, nvinfer1::DataType dt)
+{
+    DLOG(INFO) << "CREATE tfrt_pb::tensor '" << name << "'. SHAPE: " << dims_str(shape);
+    // Create new tensor in the weights collection.
+    auto pb_tensor = m_pb_network->add_weights();
+    pb_tensor->set_name(name);
+    pb_tensor->set_datatype(tfrt_pb::DataType(int(dt)));
+    pb_tensor->set_size(0);
+    for (int i = 0 ; i < shape.nbDims; ++i) {
+        pb_tensor->add_shape(shape.d[i]);
+    }
+    // Create Eigen tensor... Ugly if / else combinations!
+    // First create float tensor, and then convert if necessary.
+    if (shape.nbDims == 1) {
+        auto t_float = tfrt::c<float>::tensor(shape.d[0]);
+        t_float.setConstant(val);
+        pb_tensor->set_size(t_float.size());
+        if (dt == nvinfer1::DataType::kHALF) {
+            auto t_half = tfrt::c<uint16_t>::tensor(shape.d[0]);
+            cuda_float2half_array(t_float.data(), t_half.data(), t_float.size());
+            pb_tensor->set_data(t_half.data(), t_half.size() * sizeof(uint16_t));
+        }
+        else {
+            pb_tensor->set_data(t_float.data(), t_float.size() * sizeof(float));
+        }
+    }
+    else if (shape.nbDims == 2) {
+        auto t_float = tfrt::hw<float>::tensor(shape.d[0], shape.d[1]);
+        t_float.setConstant(val);
+        pb_tensor->set_size(t_float.size());
+        if (dt == nvinfer1::DataType::kHALF) {
+            auto t_half = tfrt::hw<uint16_t>::tensor(shape.d[0], shape.d[1]);
+            cuda_float2half_array(t_float.data(), t_half.data(), t_float.size());
+            pb_tensor->set_data(t_half.data(), t_half.size() * sizeof(uint16_t));
+        }
+        else {
+            pb_tensor->set_data(t_float.data(), t_float.size() * sizeof(float));
+        }
+    }
+    else if (shape.nbDims == 3) {
+        auto t_float = tfrt::chw<float>::tensor(shape.d[0], shape.d[1], shape.d[2]);
+        t_float.setConstant(val);
+        pb_tensor->set_size(t_float.size());
+        if (dt == nvinfer1::DataType::kHALF) {
+            auto t_half = tfrt::chw<uint16_t>::tensor(shape.d[0], shape.d[1], shape.d[2]);
+            cuda_float2half_array(t_float.data(), t_half.data(), t_float.size());
+            pb_tensor->set_data(t_half.data(), t_half.size() * sizeof(uint16_t));
+        }
+        else {
+            pb_tensor->set_data(t_float.data(), t_float.size() * sizeof(float));
+        }
+    }
+    else if (shape.nbDims == 4) {
+        auto t_float = tfrt::nchw<float>::tensor(shape.d[0], shape.d[1], shape.d[2], shape.d[3]);
+        t_float.setConstant(val);
+        pb_tensor->set_size(t_float.size());
+        if (dt == nvinfer1::DataType::kHALF) {
+            auto t_half = tfrt::nchw<uint16_t>::tensor(shape.d[0], shape.d[1], shape.d[2], shape.d[3]);
+            cuda_float2half_array(t_float.data(), t_half.data(), t_float.size());
+            pb_tensor->set_data(t_half.data(), t_half.size() * sizeof(uint16_t));
+        }
+        else {
+            pb_tensor->set_data(t_float.data(), t_float.size() * sizeof(float));
+        }
+    }
+    else if (shape.nbDims == 5) {
+        auto t_float = tfrt::nachw<float>::tensor(shape.d[0], shape.d[1], shape.d[2], shape.d[3], shape.d[4]);
+        t_float.setConstant(val);
+        pb_tensor->set_size(t_float.size());
+        if (dt == nvinfer1::DataType::kHALF) {
+            auto t_half = tfrt::nachw<uint16_t>::tensor(shape.d[0], shape.d[1], shape.d[2], shape.d[3], shape.d[4]);
+            cuda_float2half_array(t_float.data(), t_half.data(), t_float.size());
+            pb_tensor->set_data(t_half.data(), t_half.size() * sizeof(uint16_t));
+        }
+        else {
+            pb_tensor->set_data(t_float.data(), t_float.size() * sizeof(float));
+        }
+    }
+    else {
+        LOG(WARNING) << "FAILED to recognize the tensor shape.";
+    }
+    return *pb_tensor;
+}
+
+const tfrt_pb::tensor& network::tensor_by_name(std::string name, nvinfer1::Dims wshape) const
 {
     // Best search algorithm ever!
     for(int i = 0 ; i < m_pb_network->weights_size() ; ++i) {
@@ -165,7 +252,7 @@ const tfrt_pb::tensor& network::tensor_by_name(std::string name, const nvinfer1:
         << "'. Using default empty tensor." ;
     return tfrt_pb::tensor::default_instance();
 }
-nvinfer1::Weights network::weights_by_name(std::string name, const nvinfer1::Dims& wshape) const
+nvinfer1::Weights network::weights_by_name(std::string name, nvinfer1::Dims wshape) const
 {
     const tfrt_pb::tensor& tensor = tensor_by_name(name, wshape);
     return tensor_to_weights(tensor, this->datatype());
@@ -186,7 +273,13 @@ nvinfer1::Weights network::tensor_to_weights(
     }
     return w;
 }
+nvinfer1::Weights network::empty_weights() const {
+    return nvinfer1::Weights{.type = this->datatype(), .values = nullptr, .count = 0};
+}
 
+/* ============================================================================
+ * Getters / setters wrapping protobuf methods.
+ * ========================================================================== */
 const std::string& network::name() const {
     return m_pb_network->name();
 }

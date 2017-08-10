@@ -115,7 +115,8 @@ public:
         m_pb_network(std::make_unique<tfrt_pb::network>()),
         m_nv_infer{nullptr}, m_nv_engine{nullptr}, m_nv_context{nullptr},
         m_max_batch_size{2}, m_workspace_size{16 << 20},
-        m_enable_profiler{false}, m_enable_debug{false} {
+        m_enable_profiler{false}, m_enable_debug{false},
+        m_missing_tensors{false}  {
     }
     virtual ~network();
     /** Clear the network and its weights. */
@@ -127,11 +128,6 @@ public:
     tfrt::scope scope(nvinfer1::INetworkDefinition* nv_network) const;
 
 public:
-    /** Get a tensor by name. Return empty tensor if not found. */
-    const tfrt_pb::tensor& tensor_by_name(std::string name, const nvinfer1::Dims& wshape) const;
-    /** Get NV weights by name. Return empty weights if not found. */
-    nvinfer1::Weights weights_by_name(std::string name, const nvinfer1::Dims& wshape) const;
-
     // General network parameters.
     const std::string& name() const;
     network& name(const std::string& name);
@@ -145,12 +141,21 @@ public:
     tfrt::network& input_shape(const nvinfer1::DimsCHW& shape);
 
 public:
+    /** Create a tensor, with a given name, shape, default value and type.
+     * The tensor is owned by the network.
+     */
+    const tfrt_pb::tensor& create_tensor(std::string name, nvinfer1::Dims shape,
+        float val, nvinfer1::DataType dt);
+    /** Get a tensor by name. If not found, either create a new tensor to replace
+     * or just return an empty tensor. */
+    const tfrt_pb::tensor& tensor_by_name(std::string name, nvinfer1::Dims wshape) const;
+    /** Get NV weights by name. Return empty weights if not found. */
+    nvinfer1::Weights weights_by_name(std::string name, nvinfer1::Dims wshape) const;
     /** Generate empty weights. */
-    nvinfer1::Weights empty_weights() const {
-        return nvinfer1::Weights{.type = this->datatype(), .values = nullptr, .count = 0};
-    }
+    nvinfer1::Weights empty_weights() const;
     /** Convert TF protobuf tensor to NV weights. */
-    static nvinfer1::Weights tensor_to_weights(const tfrt_pb::tensor& tensor, nvinfer1::DataType default_dt=nvinfer1::DataType::kFLOAT);
+    static nvinfer1::Weights tensor_to_weights(const tfrt_pb::tensor& tensor,
+        nvinfer1::DataType default_dt=nvinfer1::DataType::kFLOAT);
     /** Parse a protobuf file into a message.  */
     static bool parse_protobuf(const std::string&, google::protobuf::MessageLite*);
 
@@ -234,6 +239,8 @@ protected:
     // Cached bindings vector.
     std::vector<float*>  m_cached_bindings;
 
+    // Create missing tensors?
+    bool  m_missing_tensors;
     // Temporary collection of zero tensors.
     std::vector<tfrt_pb::tensor>  m_zero_tensors;
 };

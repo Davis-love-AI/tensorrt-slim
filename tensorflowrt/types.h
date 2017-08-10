@@ -19,7 +19,28 @@
 
 namespace tfrt
 {
+/** C type of tensors. */
+template <typename T, typename IndexType=Eigen::DenseIndex>
+struct c {
+    typedef Eigen::Tensor<T, 1, Eigen::RowMajor, IndexType> tensor;
+    typedef Eigen::Tensor<const T, 1, Eigen::RowMajor, IndexType> const_tensor;
 
+    typedef Eigen::TensorMap<Eigen::Tensor<T, 1, Eigen::RowMajor, IndexType>,
+                             Eigen::Aligned> tensor_map;
+    typedef Eigen::TensorMap<Eigen::Tensor<const T, 1, Eigen::RowMajor, IndexType>,
+                             Eigen::Aligned> const_tensor_map;
+};
+/** HW type of tensors. */
+template <typename T, typename IndexType=Eigen::DenseIndex>
+struct hw {
+    typedef Eigen::Tensor<T, 2, Eigen::RowMajor, IndexType> tensor;
+    typedef Eigen::Tensor<const T, 2, Eigen::RowMajor, IndexType> const_tensor;
+
+    typedef Eigen::TensorMap<Eigen::Tensor<T, 2, Eigen::RowMajor, IndexType>,
+                             Eigen::Aligned> tensor_map;
+    typedef Eigen::TensorMap<Eigen::Tensor<const T, 2, Eigen::RowMajor, IndexType>,
+                             Eigen::Aligned> const_tensor_map;
+};
 /** CHW type of tensors. */
 template <typename T, typename IndexType=Eigen::DenseIndex>
 struct chw {
