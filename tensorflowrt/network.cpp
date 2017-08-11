@@ -29,7 +29,9 @@
 #include "scope.h"
 #include "network.h"
 #include "tensorflowrt.h"
+
 #include "cuda/cudaHalfPrecision.h"
+#include "cuda/cudaImageNet.h"
 
 const int kProtoReadBytesLimit = INT_MAX;
 
@@ -563,6 +565,26 @@ bool network::profile_model(nvinfer1::IHostMemory** nv_model_stream)
     engine->destroy();
     builder->destroy();
     return true;
+}
+
+/* ============================================================================
+ * Inference methods.
+ * ========================================================================== */
+void network::inference(float* rgba, uint32_t height, uint32_t width)
+{
+    // Checking inputs!
+    CHECK(rgba) << "Invalid image buffer.";
+    CHECK(height) << "Invalid image height.";
+    CHECK(width) << "Invalid image width.";
+    // Downsample and convert to RGB.
+    cudaError_t r = cudaPreImageNet((float4*)rgba, width, height,
+        m_cuda_input.cuda, m_cuda_input.shape.w(), m_cuda_input.shape.h());
+    CHECK_EQ(r, cudaSuccess) << "Failed to resize image to network input shape. "
+        << "CUDA error: " << r;
+    // Execute TensorRT network (batch size = 1).
+    DLOG(INFO) << "Inference on the neural network.";
+    size_t num_batches = 1;
+    m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
 }
 
 }

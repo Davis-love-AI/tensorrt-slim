@@ -144,6 +144,7 @@ public:
     void create_missing_tensors(bool v);
 
 public:
+    /// Weight tensors handling.
     /** Create a tensor, with a given name, shape, default value and type.
      * The tensor is owned by the network.
      */
@@ -163,6 +164,7 @@ public:
     static bool parse_protobuf(const std::string&, google::protobuf::MessageLite*);
 
 public:
+    /// Loading and building the model.
     /** Load weights and configuration from .tfrt file. */
     virtual bool load_weights(const std::string& filename);
     /** Clear out the collections of network weights, to save memory. */
@@ -179,6 +181,12 @@ public:
     /** Build and profile a model.
      */
     bool profile_model(nvinfer1::IHostMemory** model_stream);
+
+protected:
+    /// Basic inference methods: single image, nvx images, ...
+    /** Inference on a single RGBA image.
+     */
+    void inference(float* rgba, uint32_t height, uint32_t width);
 
 protected:
     /** Find a output CUDA tensor from the all collection! Return first partial match.
