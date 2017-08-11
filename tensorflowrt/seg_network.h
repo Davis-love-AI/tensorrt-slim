@@ -29,16 +29,11 @@ class seg_network : public tfrt::network
 public:
     /** Create segmentation network, with a given name.
      */
-    seg_network(std::string name, uint32_t num_classes=1000, bool empty_class=false) :
-        tfrt::network(name), m_num_classes{num_classes}, m_empty_class{empty_class} {}
+    seg_network(std::string name, uint32_t num_classes_seg=2, bool empty_class=true) :
+        tfrt::network(name), m_num_classes{num_classes}, m_empty_class{empty_class},
+        m_desc_classes{num_classes_seg, "Nothing"} {}
 
-    // /** Load ImageNet classes information and descriptions.
-    //  */
-    // bool load_info(const std::string& filename);
-    // /** Classify an image. Return a tuple <class, score>
-    //  */
-    // std::pair<int, float> classify(float* rgba, uint32_t height, uint32_t width);
-
+   
 public:
     /** Number of classes. */
     uint32_t num_classes() const {
@@ -54,10 +49,8 @@ protected:
     uint32_t  m_num_classes;
     // Empty class in the first coordinate?
     bool  m_empty_class;
-
-    // Segmentation classes synset(?) and descriptions
-    // std::vector<std::string>  m_synset_classes; // 1000 class ID's (ie n01580077, n04325704)
-	std::vector<std::string>  m_desc_classes;
+    // Segmentation classes descriptions
+    std::vector<std::string>  m_desc_classes;
 };
 
 }

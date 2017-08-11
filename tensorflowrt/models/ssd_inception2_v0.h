@@ -19,6 +19,7 @@
 
 #include "../tensorflowrt.h"
 #include "../nets/inception2.h"
+#include "robik_classes.h"
 
 namespace ssd_inception2_v0
 {
