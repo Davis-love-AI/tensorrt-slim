@@ -16,6 +16,11 @@
 #define TFRT_UTILS_H
 
 #include <glog/logging.h>
+
+#include <VX/vx.h>
+#include <VX/vxu.h>
+#include <NVX/nvx.h>
+
 #include <NvInfer.h>
 
 #include "tfrt_jetson.h"
@@ -61,6 +66,47 @@ inline nvinfer1::DimsHW dims_pb(tfrt_pb::dimsHW dims)
 {
     return {dims.h(), dims.w()};
 }
+
+/* ============================================================================
+ * NVX compatibility utils.
+ * ========================================================================== */
+/** NVX CUDA image input patch. Automatic map at construction, and unmap at destruction.
+ * RAII spirit: probably not the fastest implementation, but easy to use.
+ */
+struct nvx_image_inpatch
+{
+    // Map id.
+    vx_map_id  map_id;
+    // Map addressing.
+    vx_imagepatch_addressing_t  addr;
+    // CUDA image pointer.
+    vx_uint8*  cuda;
+    // VX image.
+    vx_image  image;
+
+public:
+    /** Construction of the CUDA patch from a VX input image,
+     * directly initializing the mapping.
+     */
+    nvx_image_inpatch(vx_image input_img) : 
+        map_id{0}, addr{}, cuda{nullptr}, image{input_img}
+    {
+        vxMapImagePatch(image, nullptr, 0, &map_id, &addr, (void **)&cuda, 
+            VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA, 0);
+    }
+    /** Unmap at destruction. */
+    ~nvx_image_inpatch()
+    {
+        if (cuda) {
+            vxUnmapImagePatch(image, map_id);
+        }
+    }
+
+private:
+    // Deactivating copy
+    nvx_image_inpatch(const nvx_image_inpatch&);
+    nvx_image_inpatch(nvx_image_inpatch&&);
+};
 
 }
 
