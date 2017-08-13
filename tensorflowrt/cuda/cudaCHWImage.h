@@ -12,14 +12,14 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Robik AI Ltd.
 # =========================================================================== */
-
-#include "cudaUtility.h"
-
 #ifndef TFRT_CUDA_CHW_IMAGE_H
 #define TFRT_CUDA_CHW_IMAGE_H
 
-/** Convert a HWC image to CHW format.
+#include "cudaUtility.h"
+
+/** Convert a RGBX image to CHW format. Both are supposed to be stored on
+ * device/CUDA space. Note: input and output are supposed to have equal size.
  */
- cudaError_t cuda_hwc_to_chw(float* h_input, float* d_output, uint32_t height, uint32_t width);
+cudaError_t cuda_rgba_to_chw(float4* d_input, float* d_output, uint32_t height, uint32_t width);
 
 #endif
