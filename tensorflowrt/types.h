@@ -52,6 +52,17 @@ struct chw {
     typedef Eigen::TensorMap<Eigen::Tensor<const T, 3, Eigen::RowMajor, IndexType>,
                              Eigen::Aligned> const_tensor_map;
 };
+/** NHW type of tensors. */
+template <typename T, typename IndexType=Eigen::DenseIndex>
+struct nhw {
+    typedef Eigen::Tensor<T, 3, Eigen::RowMajor, IndexType> tensor;
+    typedef Eigen::Tensor<const T, 3, Eigen::RowMajor, IndexType> const_tensor;
+
+    typedef Eigen::TensorMap<Eigen::Tensor<T, 3, Eigen::RowMajor, IndexType>,
+                             Eigen::Aligned> tensor_map;
+    typedef Eigen::TensorMap<Eigen::Tensor<const T, 3, Eigen::RowMajor, IndexType>,
+                             Eigen::Aligned> const_tensor_map;
+};
 /** NCHW type of tensors. */
 template <typename T=float, typename IndexType=Eigen::DenseIndex>
 struct nchw {

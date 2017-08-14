@@ -53,6 +53,8 @@ public:
 protected:
     /** Initialize the cached tensors. */
     void init_tensors_cached();
+    /** Post-processing of outputs. Ugly way! */
+    void post_processing();
 
 protected:
     // Number of classes in the model.
@@ -63,8 +65,8 @@ protected:
     std::vector<std::string>  m_desc_classes;
 
     // Cached result tensors.
-    tfrt::nchw<uint8_t>::tensor  m_rclasses_cached;
-    tfrt::nchw<float>::tensor  m_rscores_cached;
+    tfrt::nhw<uint8_t>::tensor  m_rclasses_cached;
+    tfrt::nhw<float>::tensor  m_rscores_cached;
 };
 
 }
