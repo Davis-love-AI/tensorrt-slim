@@ -103,7 +103,7 @@ std::unique_ptr<tfrt::network>&& networks_map(const std::string& key)
         nets["inception1"] = std::make_unique<inception1::net>();
         nets["inception2"] = std::make_unique<inception2::net>();
         nets["ssd_inception2_v0"] = std::make_unique<ssd_inception2_v0::net>();
-        nets["seg_inception2_v0"] = std::make_unique<seg_inception2_v0::net>();
+        nets["seg_inception2_v1"] = std::make_unique<seg_inception2_v1::net>();
         nets["seg_inception2_2x2"] = std::make_unique<seg_inception2_2x2::net>();
     }
     return std::move(nets.at(key));

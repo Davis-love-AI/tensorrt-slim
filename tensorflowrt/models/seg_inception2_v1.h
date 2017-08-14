@@ -99,8 +99,9 @@ public:
     /** Constructor with default name.  */
     net() : tfrt::seg_network("seg_inception2", robik::seg_descriptions().size(), true) 
     {
+        // Set up the descriptions of the classes.
+        this->m_desc_classes = robik::seg_descriptions();
     }
-
     /** SEG Inception2 building method. Take a network scope and do the work!
      */
     virtual nvinfer1::ITensor* build(tfrt::scope sc) 
