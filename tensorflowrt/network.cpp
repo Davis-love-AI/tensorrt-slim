@@ -594,13 +594,8 @@ void network::inference(float* rgba, uint32_t height, uint32_t width)
 }
 void network::inference(vx_image image)
 {
-    // vx_uint32 width = 0;
-    // vx_uint32 height = 0;
-    // NVXIO_SAFE_CALL( vxQueryImage(image, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width)) );
-    // NVXIO_SAFE_CALL( vxQueryImage(image, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)) );
-
-    DLOG(INFO) << "Inference on the neural network:"  << this->name();
-    // Get image information.
+    DLOG(INFO) << "Inference (batch 1) on the neural network:"  << this->name();
+    // Check image information.
     vx_df_image format = VX_DF_IMAGE_VIRT;
     NVXIO_SAFE_CALL( vxQueryImage(image, VX_IMAGE_ATTRIBUTE_FORMAT, &format, sizeof(format)) );
     CHECK_EQ(format, VX_DF_IMAGE_RGBX) << "Wrong VX image format.";
@@ -611,6 +606,23 @@ void network::inference(vx_image image)
     CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image to CHW format. CUDA error: " << r;
     // Execute TensorRT network (batch size = 1).
     size_t num_batches = 1;
+    m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
+}
+
+void network::inference(vx_image img1, vx_image img2)
+{
+    cudaError_t r;
+    const nvinfer1::DimsNCHW& inshape{m_cuda_input.shape};
+    DLOG(INFO) << "Inference (batch 2) on the neural network:"  << this->name();
+    // Set CUDA patches and convert to CHW format.
+    nvx_image_inpatch img_patch1{img1};
+    nvx_image_inpatch img_patch2{img2};
+    r = cuda_rgba_to_chw(img_patch1.cuda, m_cuda_input.cuda_ptr(0), inshape.h(), inshape.w());
+    CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 0 to CHW format. CUDA error: " << r;
+    r = cuda_rgba_to_chw(img_patch2.cuda, m_cuda_input.cuda_ptr(1), inshape.h(), inshape.w());
+    CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 1 to CHW format. CUDA error: " << r;
+    // Execute TensorRT network (batch size = 1).
+    size_t num_batches = 2;
     m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
 }
 
