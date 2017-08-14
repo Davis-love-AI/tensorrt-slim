@@ -50,6 +50,17 @@ public:
     /** Inference on two VX images. */
     void inference(vx_image img1, vx_image img2);
 
+    // Getting raw results.
+    const tfrt::nhw<uint8_t>::tensor& raw_classes() const {
+        return m_rclasses_cached;
+    }
+    const tfrt::nhw<float>::tensor& raw_scores() const {
+        return m_rscores_cached;
+    }
+    tfrt::nchw<float>::tensor raw_probabilities() const {
+        return m_cuda_outputs[0].tensor();
+    }
+
 protected:
     /** Initialize the cached tensors. */
     void init_tensors_cached();

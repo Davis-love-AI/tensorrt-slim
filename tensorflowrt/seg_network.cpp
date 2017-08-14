@@ -21,10 +21,10 @@ void seg_network::init_tensors_cached()
 {
     const tfrt::cuda_tensor& cuda_output = m_cuda_outputs[0];
     const auto& oshape = cuda_output.shape;
-    if (m_rclasses_cached.size() != cuda_output.size) {
+    if (m_rclasses_cached.size() != long(cuda_output.size)) {
         m_rclasses_cached = tfrt::nhw<uint8_t>::tensor(oshape.n(), oshape.h(), oshape.w());
     }
-    if (m_rscores_cached.size() != cuda_output.size) {
+    if (m_rscores_cached.size() != long(cuda_output.size)) {
         m_rscores_cached = tfrt::nhw<float>::tensor(oshape.n(), oshape.h(), oshape.w());
     }
 }
@@ -55,15 +55,13 @@ void seg_network::post_processing()
 void seg_network::inference(vx_image image)
 {
     network::inference(image);
-    // Post-processing of the output.
-
+    // Post-processing of the output: computing classes and scores.
+    this->post_processing();
 }
 void seg_network::inference(vx_image img1, vx_image img2)
 {
     network::inference(img1, img2);
-
-    
-
+    this->post_processing();
 }
 
 }
