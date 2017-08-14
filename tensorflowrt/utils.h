@@ -85,6 +85,10 @@ struct nvx_image_inpatch
     vx_image  image;
 
 public:
+    nvx_image_inpatch() : 
+        map_id{0}, addr{}, cuda{nullptr}, image{}
+    {
+    }
     /** Construction of the CUDA patch from a VX input image,
      * directly initializing the mapping.
      */
@@ -107,6 +111,8 @@ private:
     nvx_image_inpatch(const nvx_image_inpatch&);
     nvx_image_inpatch(nvx_image_inpatch&&);
 };
+
+
 
 }
 

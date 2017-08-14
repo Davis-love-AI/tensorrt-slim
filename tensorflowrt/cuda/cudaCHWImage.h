@@ -18,8 +18,8 @@
 #include "cudaUtility.h"
 
 /** Convert a RGBX image to CHW format. Both are supposed to be stored on
- * device/CUDA space. Note: input and output are supposed to have equal size.
+ * device/CUDA space and have same size. The input image is uint8 RGBA format.
  */
-cudaError_t cuda_rgba_to_chw(float4* d_input, float* d_output, uint32_t height, uint32_t width);
+cudaError_t cuda_rgba_to_chw(uint8_t* d_input, float* d_output, uint32_t height, uint32_t width);
 
 #endif

@@ -25,6 +25,11 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
 
+#include <VX/vx.h>
+#include <VX/vxu.h>
+#include <NVX/nvx.h>
+#include <OVX/UtilityOVX.hpp>
+
 #include "types.h"
 #include "scope.h"
 #include "network.h"
@@ -32,6 +37,7 @@
 
 #include "cuda/cudaHalfPrecision.h"
 #include "cuda/cudaImageNet.h"
+#include "cuda/cudaCHWImage.h"
 
 const int kProtoReadBytesLimit = INT_MAX;
 
@@ -572,6 +578,7 @@ bool network::profile_model(nvinfer1::IHostMemory** nv_model_stream)
  * ========================================================================== */
 void network::inference(float* rgba, uint32_t height, uint32_t width)
 {
+    DLOG(INFO) << "Inference on the neural network:" << this->name();
     // Checking inputs!
     CHECK(rgba) << "Invalid image buffer.";
     CHECK(height) << "Invalid image height.";
@@ -582,9 +589,30 @@ void network::inference(float* rgba, uint32_t height, uint32_t width)
     CHECK_EQ(r, cudaSuccess) << "Failed to resize image to network input shape. "
         << "CUDA error: " << r;
     // Execute TensorRT network (batch size = 1).
-    DLOG(INFO) << "Inference on the neural network.";
     size_t num_batches = 1;
     m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
 }
+void network::inference(vx_image image)
+{
+    // vx_uint32 width = 0;
+    // vx_uint32 height = 0;
+    // NVXIO_SAFE_CALL( vxQueryImage(image, VX_IMAGE_ATTRIBUTE_WIDTH, &width, sizeof(width)) );
+    // NVXIO_SAFE_CALL( vxQueryImage(image, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height)) );
+
+    DLOG(INFO) << "Inference on the neural network:"  << this->name();
+    // Get image information.
+    vx_df_image format = VX_DF_IMAGE_VIRT;
+    NVXIO_SAFE_CALL( vxQueryImage(image, VX_IMAGE_ATTRIBUTE_FORMAT, &format, sizeof(format)) );
+    NVXIO_ASSERT(format == VX_DF_IMAGE_RGBX);
+    // Set CUDA patch and convert to CHW format.
+    nvx_image_inpatch img_patch{image};
+    auto r = cuda_rgba_to_chw(img_patch.cuda, m_cuda_input.cuda, 
+        m_cuda_input.shape.h(), m_cuda_input.shape.w());
+    CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image to CHW format. CUDA error: " << r;
+    // Execute TensorRT network (batch size = 1).
+    size_t num_batches = 1;
+    m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
+}
+
 
 }

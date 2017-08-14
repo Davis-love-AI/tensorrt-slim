@@ -22,6 +22,7 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 // #include <cuda_runtime_api.h>
 #include <NvInfer.h>
+#include <VX/vx.h>
 
 #include "types.h"
 #include "tfrt_jetson.h"
@@ -183,11 +184,14 @@ public:
     bool profile_model(nvinfer1::IHostMemory** model_stream);
 
 protected:
-    /// Basic inference methods: single image, nvx images, ...
-    /** Inference on a single RGBA image.
-     */
+    // Basic inference methods: single image, nvx images, ...
+    /** Inference on a single RGBA image. */
     void inference(float* rgba, uint32_t height, uint32_t width);
-
+    /** Inference on a single VX image.
+     * Input image is supposed to be in RGBA, uint8 format.
+     */
+    void inference(vx_image image);
+    
 protected:
     /** Find a output CUDA tensor from the all collection! Return first partial match.
      */
