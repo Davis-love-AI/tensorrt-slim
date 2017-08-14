@@ -34,7 +34,8 @@ typedef tfrt::convolution2d_transpose<tfrt::ActivationType::RELU, tfrt::PaddingT
 /** Additional feature layer.
  */
 inline nvinfer1::ITensor* seg_inception2_extra_feature(
-    nvinfer1::ITensor* net, nvinfer1::ITensor* net_side, tfrt::scope sc, int num_outputs, tfrt::map_tensor* end_points=nullptr)
+    nvinfer1::ITensor* net, nvinfer1::ITensor* net_side, tfrt::scope sc, 
+    int num_outputs, tfrt::map_tensor* end_points=nullptr)
 {
     LOG(INFO) << "BLOCK SEG inception2 extra-features '" << sc.name() << "'. "
             << "Input shape: " << tfrt::dims_str(net->getDimensions());
