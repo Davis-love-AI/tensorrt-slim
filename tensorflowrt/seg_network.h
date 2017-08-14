@@ -30,7 +30,7 @@ public:
     /** Create segmentation network, with a given name.
      */
     seg_network(std::string name, uint32_t num_classes_seg=2, bool empty_class=true) :
-        tfrt::network(name), m_num_classes{num_classes}, m_empty_class{empty_class},
+        tfrt::network(name), m_num_classes{num_classes_seg}, m_empty_class{empty_class},
         m_desc_classes{num_classes_seg, "Nothing"} {}
 
    
@@ -44,6 +44,16 @@ public:
         return m_desc_classes[idx];
     }
 
+public:
+    /** Inference on a single VX image. */
+    void inference(vx_image image);
+    /** Inference on two VX images. */
+    void inference(vx_image img1, vx_image img2);
+
+protected:
+    /** Initialize the cached tensors. */
+    void init_tensors_cached();
+
 protected:
     // Number of classes in the model.
     uint32_t  m_num_classes;
@@ -51,6 +61,10 @@ protected:
     bool  m_empty_class;
     // Segmentation classes descriptions
     std::vector<std::string>  m_desc_classes;
+
+    // Cached result tensors.
+    tfrt::nchw<uint8_t>::tensor  m_rclasses_cached;
+    tfrt::nchw<float>::tensor  m_rscores_cached;
 };
 
 }
