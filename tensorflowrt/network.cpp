@@ -603,7 +603,7 @@ void network::inference(vx_image image)
     // Get image information.
     vx_df_image format = VX_DF_IMAGE_VIRT;
     NVXIO_SAFE_CALL( vxQueryImage(image, VX_IMAGE_ATTRIBUTE_FORMAT, &format, sizeof(format)) );
-    NVXIO_ASSERT(format == VX_DF_IMAGE_RGBX);
+    CHECK_EQ(format, VX_DF_IMAGE_RGBX) << "Wrong VX image format.";
     // Set CUDA patch and convert to CHW format.
     nvx_image_inpatch img_patch{image};
     auto r = cuda_rgba_to_chw(img_patch.cuda, m_cuda_input.cuda, 
@@ -613,6 +613,5 @@ void network::inference(vx_image image)
     size_t num_batches = 1;
     m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
 }
-
 
 }

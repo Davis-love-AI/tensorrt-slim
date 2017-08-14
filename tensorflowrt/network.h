@@ -83,8 +83,17 @@ public:
     }
 
 public:
-    /** Get an Eigen tensor representation of the CPU tensor. */
+    /** Get an Eigen tensor representation of the CPU tensor.  */
     tfrt::nchw<float>::tensor tensor() const;
+    /** Get the cuda pointer, at a given batch index.  */
+    float* cuda_ptr(size_t batch_idx=0) {
+        return (cuda + batch_idx*shape.c()*shape.h()*shape.w());
+    }
+    /** Get the cpu pointer, at a given batch index.  */
+    float* cpu_ptr(size_t batch_idx=0) {
+        return (cpu + batch_idx*shape.c()*shape.h()*shape.w());
+    }
+
 
 private:
     cuda_tensor(const cuda_tensor&) = default;
