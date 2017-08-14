@@ -18,6 +18,7 @@ __pycache__*
 *.ckpt.index
 *.ckpt.meta
 *.ckpt.data-00000-of-00001
+data/networks/*.tar.gz
 
 # Build directory.
 build/

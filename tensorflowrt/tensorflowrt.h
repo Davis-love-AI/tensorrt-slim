@@ -34,6 +34,7 @@
 #include "boxes2d/boxes2d.h"
 
 #include "imagenet_network.h"
+#include "seg_network.h"
 #include "ssd_network.h"
 
 namespace tfrt

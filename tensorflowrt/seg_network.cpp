@@ -12,7 +12,6 @@
 # is strictly forbidden unless prior written permission is obtained
 # from Robik AI Ltd.
 # =========================================================================== */
-
 #include "seg_network.h"
 
 namespace tfrt
@@ -37,6 +36,7 @@ void seg_network::post_processing()
             for (long j = 0 ; j < rtensor.dimension(3) ; ++j) {
                 uint8_t max_idx = 0;
                 float max_score = 0.0f;
+                // Channel loop.
                 for (long k = 0 ; k < rtensor.dimension(1) ; ++k) {
                     float score = rtensor(n, k, i, j);
                     if (score > max_score) {

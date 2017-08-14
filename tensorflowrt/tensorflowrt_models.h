@@ -18,6 +18,7 @@
 #include "models/ssd_inception2_v0.h"
 #include "models/seg_inception2_v0.h"
 #include "models/seg_inception2_2x2.h"
+#include "models/seg_inception2_v1.h"
 // #include "inception2.h"
 
 #endif
