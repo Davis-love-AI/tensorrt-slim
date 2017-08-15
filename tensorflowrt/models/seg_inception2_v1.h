@@ -98,11 +98,10 @@ class net : public tfrt::seg_network
 {
 public:
     /** Constructor with default name.  */
-    net() : tfrt::seg_network("seg_inception2", robik::seg_descriptions().size()-1, false)
+    net() : tfrt::seg_network("seg_inception2", robik::seg_descriptions().size(), false)
     {
         // Set up the descriptions of the classes.
-        this->m_desc_classes = std::vector<std::string>{
-            robik::seg_descriptions().begin()+1, robik::seg_descriptions().end()};
+        this->m_desc_classes = robik::seg_descriptions();
     }
     /** SEG Inception2 building method. Take a network scope and do the work!
      */
@@ -125,7 +124,8 @@ public:
             net = seg_inception2_extra_feature(net, net_in, ssc.sub(feat_names[i]), feat_size[i]);
         }
         // Last convolution layer and softmax.
-        net = seg_inception2_last_layer(net, ssc.sub("block10"), this->num_classes());
+        int num_classes = this->num_classes() - int(!m_empty_class);
+        net = seg_inception2_last_layer(net, ssc.sub("block10"), num_classes);
         net = tfrt::softmax(sc, "Softmax")(net);
 
         // Clear any cached stuff...

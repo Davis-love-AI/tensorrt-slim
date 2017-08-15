@@ -44,7 +44,7 @@ void seg_network::post_processing()
                         max_score = score;
                     }
                     // Save to cached tensors.
-                    m_rclasses_cached(n, i, j) = max_idx;
+                    m_rclasses_cached(n, i, j) = max_idx + int(!m_empty_class);
                     m_rscores_cached(n, i, j) = max_score;
                 }
             }

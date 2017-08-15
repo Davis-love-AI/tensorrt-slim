@@ -27,13 +27,14 @@ namespace tfrt
 class seg_network : public tfrt::network
 {
 public:
-    /** Create segmentation network, with a given name.
+    /** Create segmentation network, with a given name and a number of classes.
+     * 'empty_class': if the network predict the 0-index empty class?
      */
     seg_network(std::string name, uint32_t num_classes_seg=2, bool empty_class=true) :
         tfrt::network(name), m_num_classes{num_classes_seg}, m_empty_class{empty_class},
         m_desc_classes{num_classes_seg, "Nothing"} {}
 
-   
+
 public:
     /** Number of classes. */
     uint32_t num_classes() const {
