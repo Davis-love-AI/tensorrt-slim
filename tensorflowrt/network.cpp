@@ -602,8 +602,9 @@ void network::inference(vx_image image)
     // Set CUDA patch and convert to CHW format.
     nvx_image_inpatch img_patch{image};
     auto r = cuda_rgba_to_chw(img_patch.cuda, m_cuda_input.cuda, 
-        m_cuda_input.shape.h(), m_cuda_input.shape.w());
+        m_cuda_input.shape.w(), m_cuda_input.shape.h(), img_patch.addr.stride_x, img_patch.addr.stride_y);
     CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image to CHW format. CUDA error: " << r;
+    CUDA(cudaDeviceSynchronize());
     // Execute TensorRT network (batch size = 1).
     size_t num_batches = 1;
     m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
@@ -617,10 +618,13 @@ void network::inference(vx_image img1, vx_image img2)
     // Set CUDA patches and convert to CHW format.
     nvx_image_inpatch img_patch1{img1};
     nvx_image_inpatch img_patch2{img2};
-    r = cuda_rgba_to_chw(img_patch1.cuda, m_cuda_input.cuda_ptr(0), inshape.h(), inshape.w());
+    r = cuda_rgba_to_chw(img_patch1.cuda, m_cuda_input.cuda_ptr(0), 
+        inshape.h(), inshape.w(), img_patch1.addr.stride_x, img_patch1.addr.stride_y);
     CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 0 to CHW format. CUDA error: " << r;
-    r = cuda_rgba_to_chw(img_patch2.cuda, m_cuda_input.cuda_ptr(1), inshape.h(), inshape.w());
+    r = cuda_rgba_to_chw(img_patch2.cuda, m_cuda_input.cuda_ptr(1), 
+        inshape.h(), inshape.w(), img_patch2.addr.stride_x, img_patch2.addr.stride_y);
     CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 1 to CHW format. CUDA error: " << r;
+    CUDA(cudaDeviceSynchronize());
     // Execute TensorRT network (batch size = 1).
     size_t num_batches = 2;
     // m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());

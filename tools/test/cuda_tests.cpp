@@ -78,29 +78,30 @@ int main(int argc, char **argv)
     vx_rectangle_t rect;
     vxGetValidRegionImage(frame, &rect);
 
-    vx_map_id src_map_id;
-    vx_uint8* src_ptr;
-    vx_imagepatch_addressing_t src_addr;
-    NVXIO_SAFE_CALL(vxMapImagePatch(frame, nullptr, 0, &src_map_id, &src_addr, (void **)&src_ptr, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA, 0));
-    LOG(INFO) << "CUDA ptr: " << (void*)src_ptr << ", ID: " << src_map_id;
-    LOG(INFO) << "CUDA addr: " << src_addr.stride_x << " | " << src_addr.stride_y;
-    LOG(INFO) << "CUDA addr: " << src_addr.dim_x << " | " << src_addr.dim_y;
-    LOG(INFO) << "CUDA addr: " << src_addr.scale_x << " | " << src_addr.scale_y;
+    // vx_map_id src_map_id;
+    // vx_uint8* src_ptr;
+    // vx_imagepatch_addressing_t src_addr;
+    // NVXIO_SAFE_CALL(vxMapImagePatch(frame, nullptr, 0, &src_map_id, &src_addr, (void **)&src_ptr, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA, 0));
+    // LOG(INFO) << "CUDA ptr: " << (void*)src_ptr << ", ID: " << src_map_id;
+    // LOG(INFO) << "CUDA addr: " << src_addr.stride_x << " | " << src_addr.stride_y;
+    // LOG(INFO) << "CUDA addr: " << src_addr.dim_x << " | " << src_addr.dim_y;
+    // LOG(INFO) << "CUDA addr: " << src_addr.scale_x << " | " << src_addr.scale_y;
+
+    tfrt::nvx_image_inpatch img_patch{frame};
+    
     
     // Interaction with cuda tensor?
     tfrt::cuda_tensor ctensor{"test", {1, 3, 100, 100}};
     ctensor.allocate();
     LOG(INFO) << "CUDA tensor: " << tfrt::dims_str(ctensor.shape);
-    auto r = cuda_rgba_to_chw(src_ptr, ctensor.cuda, 100, 100);
-    
+    auto r = cuda_rgba_to_chw(img_patch.cuda, ctensor.cuda, 100, 100, img_patch.addr.stride_x, img_patch.addr.stride_y);
     
     CUDA(cudaDeviceSynchronize());
-    int start = 10000;
+    int start = 0;
     for (int i = start ; i < start+200 ; ++i) {
         LOG(INFO) << "CUDA tensor: " << i << " | " << ctensor.cpu[i] << " | " << ctensor.cpu[i];
     }
     
-
-    
+    // tfrt::nvx_image_inpatch img_patch{frame};
     return 0;
 }

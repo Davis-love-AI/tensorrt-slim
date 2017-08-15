@@ -15,7 +15,8 @@
 
 #include "cudaUtility.h"
 
-__global__ void kernel_rgbx_to_chw(uint8_t* input, float* output, int height, int width)
+__global__ void kernel_rgbx_to_chw(uint8_t* input, float* output, 
+    int width, int height, uint32_t stride_x, uint32_t stride_y)
 {
     const int x = blockIdx.x * blockDim.x + threadIdx.x;
     const int y = blockIdx.y * blockDim.y + threadIdx.y;
@@ -24,14 +25,15 @@ __global__ void kernel_rgbx_to_chw(uint8_t* input, float* output, int height, in
         return;
     }
     // Use stride to compute the index?
-    const int idx = y * width * 4 + x * 4;
+    const int idx = y * stride_y + x * stride_x;
     // Simple re-ordering. Nothing fancy!
     const float3 rgb = make_float3(input[idx], input[idx+1], input[idx+2]);
     output[n * 0 + y * width + x] = rgb.x;
     output[n * 1 + y * width + x] = rgb.y;
     output[n * 2 + y * width + x] = rgb.z;
 }
-cudaError_t cuda_rgba_to_chw(uint8_t* d_input, float* d_output, uint32_t height, uint32_t width)
+cudaError_t cuda_rgba_to_chw(uint8_t* d_input, float* d_output, 
+    uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y)
 {
     if( !d_input || !d_output ) {
         return cudaErrorInvalidDevicePointer;
@@ -42,6 +44,6 @@ cudaError_t cuda_rgba_to_chw(uint8_t* d_input, float* d_output, uint32_t height,
     // Launch convertion kernel.
     const dim3 blockDim(8, 8);
     const dim3 gridDim(iDivUp(width, blockDim.x), iDivUp(height, blockDim.y));
-    kernel_rgbx_to_chw<<<gridDim, blockDim>>>(d_input, d_output, height, width);
+    kernel_rgbx_to_chw<<<gridDim, blockDim>>>(d_input, d_output, width, height, stride_x, stride_y);
     return CUDA(cudaGetLastError());
 }
