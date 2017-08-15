@@ -443,12 +443,13 @@ bool network::load(std::string filename)
     m_cached_bindings.resize(1 + outputs_name.size());
 
     // CUDA allocate input memory.
-    LOG(INFO) << LOG_GIE << "Allocating CUDA input memory for " << input_name(true);
     const int input_idx = m_nv_engine->getBindingIndex(input_name(true).c_str());
     nvinfer1::DimsCHW inshape =
         static_cast<nvinfer1::DimsCHW&&>(engine->getBindingDimensions(input_idx));
     shape = nvinfer1::DimsNCHW{int(m_max_batch_size), inshape.c(), inshape.h(), inshape.w()};
 
+    LOG(INFO) << LOG_GIE << "Allocating CUDA input memory for '" << input_name(true)
+        << "' with shape: " << dims_str(shape);
     m_cuda_input = std::move(tfrt::cuda_tensor(input_name(true), shape));
     bool r = m_cuda_input.allocate();
     CHECK(r) << LOG_GIE << "Could not allocate memory for CUDA input: "
@@ -459,12 +460,13 @@ bool network::load(std::string filename)
     // CUDA allocate outputs memory.
     m_cuda_outputs.clear();
     for(size_t i = 0 ; i < outputs_name.size() ; ++i) {
-        LOG(INFO) << LOG_GIE << "Allocating CUDA output memory for " << outputs_name[i];
         const int output_idx = engine->getBindingIndex(outputs_name[i].c_str());
         if(output_idx > -1) {
             nvinfer1::DimsCHW outshape =
                 static_cast<nvinfer1::DimsCHW&&>(engine->getBindingDimensions(output_idx));
             shape = nvinfer1::DimsNCHW{int(m_max_batch_size), outshape.c(), outshape.h(), outshape.w()};
+            LOG(INFO) << LOG_GIE << "Allocating CUDA output memory for '" << outputs_name[i]
+                << "' with shape: " << dims_str(shape);
             // Push CUDA tensor and allocate memory.
             m_cuda_outputs.push_back(tfrt::cuda_tensor(outputs_name[i], shape));
             r = m_cuda_outputs.back().allocate();
@@ -604,30 +606,32 @@ void network::inference(vx_image image)
     auto r = cuda_rgba_to_chw(img_patch.cuda, m_cuda_input.cuda, 
         m_cuda_input.shape.w(), m_cuda_input.shape.h(), img_patch.addr.stride_x, img_patch.addr.stride_y);
     CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image to CHW format. CUDA error: " << r;
-    CUDA(cudaDeviceSynchronize());
+    // CUDA(cudaDeviceSynchronize());
     // Execute TensorRT network (batch size = 1).
     size_t num_batches = 1;
     m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
 }
-
 void network::inference(vx_image img1, vx_image img2)
 {
     cudaError_t r;
     const nvinfer1::DimsNCHW& inshape{m_cuda_input.shape};
-    DLOG(INFO) << "Inference (batch 2) on the neural network:"  << this->name();
+    LOG(INFO) << "Inference (batch 2) on the neural network:"  << this->name();
     // Set CUDA patches and convert to CHW format.
+    LOG(INFO) << "Creating patches from VX images.";
     nvx_image_inpatch img_patch1{img1};
     nvx_image_inpatch img_patch2{img2};
+    LOG(INFO) << "Converting RGBA image to CHW format.";
     r = cuda_rgba_to_chw(img_patch1.cuda, m_cuda_input.cuda_ptr(0), 
-        inshape.h(), inshape.w(), img_patch1.addr.stride_x, img_patch1.addr.stride_y);
+        inshape.w(), inshape.h(), img_patch1.addr.stride_x, img_patch1.addr.stride_y);
     CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 0 to CHW format. CUDA error: " << r;
     r = cuda_rgba_to_chw(img_patch2.cuda, m_cuda_input.cuda_ptr(1), 
         inshape.h(), inshape.w(), img_patch2.addr.stride_x, img_patch2.addr.stride_y);
     CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 1 to CHW format. CUDA error: " << r;
-    CUDA(cudaDeviceSynchronize());
+    // CUDA(cudaDeviceSynchronize());
     // Execute TensorRT network (batch size = 1).
     size_t num_batches = 2;
-    // m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
+    LOG(INFO) << "Executing neural network.";
+    m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
 }
 
 }

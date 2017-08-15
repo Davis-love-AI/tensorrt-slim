@@ -24,10 +24,12 @@
 #include <NvInfer.h>
 #include <VX/vx.h>
 
+#include "utils.h"
 #include "types.h"
 #include "tfrt_jetson.h"
 #include "network.pb.h"
 #include "cuda/cudaMappedMemory.h"
+#include "cuda/cudaCHWImage.h"
 #include "misc/std_make_unique.h"
 
 namespace tfrt

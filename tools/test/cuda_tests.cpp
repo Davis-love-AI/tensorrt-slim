@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     initVal.RGBX[1] = 128;
     initVal.RGBX[2] = 64;
     initVal.RGBX[3] = 32;
-    vx_image frame = vxCreateUniformImage(context, 100, 100, VX_DF_IMAGE_RGBX, &initVal);
+    vx_image frame = vxCreateUniformImage(context, 200, 100, VX_DF_IMAGE_RGBX, &initVal);
 
     vx_rectangle_t rect;
     vxGetValidRegionImage(frame, &rect);
@@ -91,13 +91,14 @@ int main(int argc, char **argv)
     
     
     // Interaction with cuda tensor?
-    tfrt::cuda_tensor ctensor{"test", {1, 3, 100, 100}};
+    tfrt::cuda_tensor ctensor{"test", {1, 3, 100, 200}};
     ctensor.allocate();
     LOG(INFO) << "CUDA tensor: " << tfrt::dims_str(ctensor.shape);
-    auto r = cuda_rgba_to_chw(img_patch.cuda, ctensor.cuda, 100, 100, img_patch.addr.stride_x, img_patch.addr.stride_y);
+    auto r = cuda_rgba_to_chw(img_patch.cuda, ctensor.cuda, 200, 100, 
+        img_patch.addr.stride_x, img_patch.addr.stride_y);
     
     CUDA(cudaDeviceSynchronize());
-    int start = 0;
+    int start = 20000-10;
     for (int i = start ; i < start+200 ; ++i) {
         LOG(INFO) << "CUDA tensor: " << i << " | " << ctensor.cpu[i] << " | " << ctensor.cpu[i];
     }
