@@ -34,7 +34,7 @@ typedef tfrt::convolution2d_transpose<tfrt::ActivationType::RELU, tfrt::PaddingT
 /** Additional feature layer.
  */
 inline nvinfer1::ITensor* seg_inception2_extra_feature(
-    nvinfer1::ITensor* net, nvinfer1::ITensor* net_side, tfrt::scope sc, 
+    nvinfer1::ITensor* net, nvinfer1::ITensor* net_side, tfrt::scope sc,
     int num_outputs, tfrt::map_tensor* end_points=nullptr)
 {
     LOG(INFO) << "BLOCK SEG inception2 extra-features '" << sc.name() << "'. "
@@ -98,14 +98,15 @@ class net : public tfrt::seg_network
 {
 public:
     /** Constructor with default name.  */
-    net() : tfrt::seg_network("seg_inception2", robik::seg_descriptions().size(), true) 
+    net() : tfrt::seg_network("seg_inception2", robik::seg_descriptions().size()-1, false)
     {
         // Set up the descriptions of the classes.
-        this->m_desc_classes = robik::seg_descriptions();
+        this->m_desc_classes = std::vector<std::string>{
+            robik::seg_descriptions().begin()+1, robik::seg_descriptions().end()};
     }
     /** SEG Inception2 building method. Take a network scope and do the work!
      */
-    virtual nvinfer1::ITensor* build(tfrt::scope sc) 
+    virtual nvinfer1::ITensor* build(tfrt::scope sc)
     {
         auto net = tfrt::input(sc)();
         tfrt::map_tensor end_points;
@@ -114,7 +115,7 @@ public:
         net = inception2_base(net, sc.sub("inception2_base"), &end_points);
         // Add segmentation extra-features.
         std::vector<std::string> feat_names = {"block6", "block7", "block8", "block9"};
-        std::vector<std::string> feat_names_side = 
+        std::vector<std::string> feat_names_side =
             {"Mixed_4e", "Mixed_3c", "Conv2d_2c_3x3", "Conv2d_1a_7x7"};
         std::vector<std::size_t> feat_size = {384, 192, 96, 48};
         auto ssc = sc.sub("feat_layers_extra");

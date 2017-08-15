@@ -47,7 +47,7 @@ const std::vector<std::string>& seg_descriptions()
     };
     return desc;
 }
-/** List of segmentation colors, used for visualization. 
+/** List of segmentation colors, used for visualization.
  * Returns of vector of RGBA colors.
  */
 const std::vector<std::array<uint8_t,4>>& seg_colors()
