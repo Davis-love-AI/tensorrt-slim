@@ -623,7 +623,7 @@ void network::inference(vx_image img1, vx_image img2)
     CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 1 to CHW format. CUDA error: " << r;
     // Execute TensorRT network (batch size = 1).
     size_t num_batches = 2;
-    m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
+    // m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
 }
 
 }

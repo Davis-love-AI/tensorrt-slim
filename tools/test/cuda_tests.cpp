@@ -21,9 +21,16 @@
 
 #include <half.hpp>
 
+#include <VX/vx.h>
+#include <VX/vxu.h>
+#include <NVX/nvx.h>
+#include <OVX/UtilityOVX.hpp>
+
 #include <tensorflowrt.h>
 #include <tensorflowrt_nets.h>
 #include <tensorflowrt_models.h>
+
+#include <cuda/cudaCHWImage.h>
 
 DEFINE_double(value, 1.0, "Float value.");
 
@@ -40,7 +47,7 @@ void print_half(uint16_t* half)
 
 int main(int argc, char **argv)
 {
-    google::InitGoogleLogging(argv[0]);
+    // google::InitGoogleLogging(argv[0]);
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     // Half precision tests.
@@ -55,5 +62,45 @@ int main(int argc, char **argv)
     cuda_half2float_array(vec_h.data(), vec_f2.data(), vec_f.size());
     LOG(INFO) << "Half data: " << std::setprecision(6) << vec_f[0] << " | " << vec_f2[0];
     print_half(vec_h.data());
+
+    // VX image testing...
+    ovxio::ContextGuard context;
+    vxRegisterLogCallback(context, &ovxio::stdoutLogCallback, vx_false_e);
+    vxDirective(context, VX_DIRECTIVE_ENABLE_PERFORMANCE);
+
+    vx_pixel_value_t initVal;
+    initVal.RGBX[0] = 255;
+    initVal.RGBX[1] = 128;
+    initVal.RGBX[2] = 64;
+    initVal.RGBX[3] = 32;
+    vx_image frame = vxCreateUniformImage(context, 100, 100, VX_DF_IMAGE_RGBX, &initVal);
+
+    vx_rectangle_t rect;
+    vxGetValidRegionImage(frame, &rect);
+
+    vx_map_id src_map_id;
+    vx_uint8* src_ptr;
+    vx_imagepatch_addressing_t src_addr;
+    NVXIO_SAFE_CALL(vxMapImagePatch(frame, nullptr, 0, &src_map_id, &src_addr, (void **)&src_ptr, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA, 0));
+    LOG(INFO) << "CUDA ptr: " << (void*)src_ptr << ", ID: " << src_map_id;
+    LOG(INFO) << "CUDA addr: " << src_addr.stride_x << " | " << src_addr.stride_y;
+    LOG(INFO) << "CUDA addr: " << src_addr.dim_x << " | " << src_addr.dim_y;
+    LOG(INFO) << "CUDA addr: " << src_addr.scale_x << " | " << src_addr.scale_y;
+    
+    // Interaction with cuda tensor?
+    tfrt::cuda_tensor ctensor{"test", {1, 3, 100, 100}};
+    ctensor.allocate();
+    LOG(INFO) << "CUDA tensor: " << tfrt::dims_str(ctensor.shape);
+    auto r = cuda_rgba_to_chw(src_ptr, ctensor.cuda, 100, 100);
+    
+    
+    CUDA(cudaDeviceSynchronize());
+    int start = 10000;
+    for (int i = start ; i < start+200 ; ++i) {
+        LOG(INFO) << "CUDA tensor: " << i << " | " << ctensor.cpu[i] << " | " << ctensor.cpu[i];
+    }
+    
+
+    
     return 0;
 }
