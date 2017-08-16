@@ -201,12 +201,14 @@ protected:
     /** Inference on a single VX image.
      * Input image is supposed to be in RGBA, uint8 format.
      */
-     void inference(vx_image image);
+    void inference(vx_image image);
+    void inference(const tfrt::nvx_image_inpatch& image);     
     /** Inference on two VX images.
      * Input images are supposed to be in RGBA, uint8 format.
      */
-     void inference(vx_image img1, vx_image img2);
-     
+    void inference(vx_image img1, vx_image img2);
+    void inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2);     
+    
 protected:
     /** Find a output CUDA tensor from the all collection! Return first partial match.
      */

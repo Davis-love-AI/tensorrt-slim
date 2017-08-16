@@ -59,8 +59,14 @@ __global__ void kernel_seg_overlay(
     const int my = max(min(int((float)y * scale.y), mask_height-1), 0);
 
     const int mval = d_mask[my * mask_stride_y + mx * mask_stride_x];
+    // const uchar3 color = make_uchar3(colors[mval].x, colors[mval].y, colors[mval].z);
+    // const float alpha = float(colors[mval].w) / 255.f;
+    // const int mval = 1;
     const uchar3 color = make_uchar3(colors[mval].x, colors[mval].y, colors[mval].z);
     const float alpha = float(colors[mval].w) / 255.f;
+    // const uchar3 color = make_uchar3(255, 0, 0); 
+    // const float alpha = 0.3;
+
     // Mask overlay.
     const uchar3 rgb = make_uchar3(
         d_img[idx + 0] * (1. - alpha) + color.x * alpha, 
