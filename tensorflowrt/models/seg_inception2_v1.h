@@ -56,7 +56,7 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
 inline nvinfer1::ITensor* seg_inception2_last_layer(
     nvinfer1::ITensor* net, tfrt::scope sc, int num_outputs, tfrt::map_tensor* end_points=nullptr)
 {
-    typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, false>  conv2d;
+    typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
 
     LOG(INFO) << "BLOCK SEG inception2 last layer '" << sc.name() << "'. "
             << "Input shape: " << tfrt::dims_str(net->getDimensions());
