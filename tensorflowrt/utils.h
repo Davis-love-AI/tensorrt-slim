@@ -83,20 +83,26 @@ struct nvx_image_inpatch
     vx_uint8*  cuda;
     // VX image.
     vx_image  image;
+    // Usage and memory type.
+    vx_enum  usage;
+    vx_enum  mem_type;
 
 public:
     nvx_image_inpatch() : 
-        map_id{0}, addr{}, cuda{nullptr}, image{}
+        map_id{0}, addr{}, cuda{nullptr}, image{}, 
+        usage{VX_READ_ONLY}, mem_type{NVX_MEMORY_TYPE_CUDA}
     {
     }
     /** Construction of the CUDA patch from a VX input image,
      * directly initializing the mapping.
      */
-    nvx_image_inpatch(vx_image input_img) : 
-        map_id{0}, addr{}, cuda{nullptr}, image{input_img}
+    nvx_image_inpatch(vx_image _input_img, 
+        vx_enum _usage=VX_READ_ONLY, vx_enum _mem_type=NVX_MEMORY_TYPE_CUDA) : 
+            map_id{0}, addr{}, cuda{nullptr}, image{_input_img},
+            usage{_usage}, mem_type{_mem_type}
     {
         vxMapImagePatch(image, nullptr, 0, &map_id, &addr, (void **)&cuda, 
-            VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA, 0);
+            usage, mem_type, 0);
     }
     /** Unmap at destruction. */
     ~nvx_image_inpatch()
