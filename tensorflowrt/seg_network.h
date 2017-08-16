@@ -55,14 +55,14 @@ public:
     void inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2);     
     
     // Getting raw results.
-    const tfrt::nhw<uint8_t>::tensor& raw_classes() const {
+    const tfrt::cuda_tensor_u8& raw_classes() const {
         return m_rclasses_cached;
     }
-    const tfrt::nhw<float>::tensor& raw_scores() const {
+    const tfrt::cuda_tensor& raw_scores() const {
         return m_rscores_cached;
     }
-    tfrt::nchw<float>::tensor raw_probabilities() const {
-        return m_cuda_outputs[0].tensor();
+    const tfrt::cuda_tensor& raw_probabilities() const {
+        return m_cuda_outputs[0];
     }
 
 protected:
@@ -80,8 +80,8 @@ protected:
     std::vector<std::string>  m_desc_classes;
 
     // Cached result tensors.
-    tfrt::nhw<uint8_t>::tensor  m_rclasses_cached;
-    tfrt::nhw<float>::tensor  m_rscores_cached;
+    tfrt::cuda_tensor_u8  m_rclasses_cached;
+    tfrt::cuda_tensor  m_rscores_cached;
 };
 
 }

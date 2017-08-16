@@ -16,6 +16,7 @@
 #include <array>
 #include "cudaUtility.h"
 
+#define ALPHA_COLOR 128
 
 __global__ void kernel_seg_overlay(
     uint8_t* d_img, uint8_t* d_mask, float2 scale,
@@ -26,25 +27,25 @@ __global__ void kernel_seg_overlay(
 {
     // UGLY! I know!
     static uchar4 colors[] = {
-        {0, 0, 0, 80},
-        {0, 0, 142, 80},
-        {0, 110, 100, 80},
-        {30, 30, 70, 80},
-        {0, 60, 100, 80},
-        {119, 11, 32, 80},
-        {50, 0, 230, 80},
-        {220, 20, 60, 80},
-        {128, 64, 128, 80},
-        {244, 35, 232, 80},
-        {152, 251, 152, 80},
-        {220, 220, 0, 80},
-        {250, 170, 30, 80},
-        {107, 142, 35, 80},
-        {70, 70, 70, 80},
-        {70, 130, 180, 80},
-        {190, 153, 153, 80},
-        {153, 53, 153, 80},
-        {250, 170, 160, 80}
+        {0, 0, 0, ALPHA_COLOR},
+        {0, 0, 142, ALPHA_COLOR},
+        {0, 110, 100, ALPHA_COLOR},
+        {30, 30, 70, ALPHA_COLOR},
+        {0, 60, 100, ALPHA_COLOR},
+        {119, 11, 32, ALPHA_COLOR},
+        {50, 0, 230, ALPHA_COLOR},
+        {220, 20, 60, ALPHA_COLOR},
+        {128, 64, 128, ALPHA_COLOR},
+        {244, 35, 232, ALPHA_COLOR},
+        {152, 251, 152, ALPHA_COLOR},
+        {220, 220, 0, ALPHA_COLOR},
+        {250, 170, 30, ALPHA_COLOR},
+        {107, 142, 35, ALPHA_COLOR},
+        {70, 70, 70, ALPHA_COLOR},
+        {70, 130, 180, ALPHA_COLOR},
+        {190, 153, 153, ALPHA_COLOR},
+        {153, 53, 153, ALPHA_COLOR},
+        {250, 170, 160, ALPHA_COLOR}
     };
 
     // Image coordinates.
@@ -93,8 +94,8 @@ cudaError_t cuda_seg_overlay(
         return cudaErrorInvalidValue;
     }
     // Scale between image and mask.
-    const float2 scale = make_float2( float(img_width) / float(mask_width),
-                                      float(img_height) / float(mask_height) );
+    const float2 scale = make_float2( float(mask_width) / float(img_width),
+                                      float(mask_height) / float(img_height) );
     // Launch kernel!
     const dim3 blockDim(8, 8);
     const dim3 gridDim(iDivUp(img_width,blockDim.x), iDivUp(img_height,blockDim.y));

@@ -172,10 +172,12 @@ public:
         free();
         // Double check size...
         size = shape.n() * shape.c() * shape.h() * shape.w() * sizeof(T);
-        if(!cudaAllocMapped((void**)&cpu, (void**)&cuda, size)) {
-            LOG(FATAL) << "Failed to allocate CUDA mapped memory for tensor: " << name;
-            return false;
-        }
+        if (size) {
+            if (!cudaAllocMapped((void**)&cpu, (void**)&cuda, size)) {
+                LOG(FATAL) << "Failed to allocate CUDA mapped memory for tensor: " << name;
+                return false;
+            }
+        }   
         return true;
     }
     /** Free allocated memory and reset pointers. */
@@ -201,11 +203,11 @@ public:
         return tfrt::nchw<float>::tensor_map(cpu, shape.n(), shape.c(), shape.h(), shape.w());
     }
     /** Get the cuda pointer, at a given batch index.  */
-    T* cuda_ptr(size_t batch_idx=0) {
+    T* cuda_ptr(size_t batch_idx=0) const {
         return (cuda + batch_idx*shape.c()*shape.h()*shape.w());
     }
     /** Get the cpu pointer, at a given batch index.  */
-    T* cpu_ptr(size_t batch_idx=0) {
+    T* cpu_ptr(size_t batch_idx=0) const {
         return (cpu + batch_idx*shape.c()*shape.h()*shape.w());
     }
 
@@ -223,7 +225,7 @@ public:
     int binding_index;
 };
 
-// Common typedef
+// Common CUDA tensors.
 typedef cuda_tensor_t<float>  cuda_tensor;
 typedef cuda_tensor_t<uint8_t>  cuda_tensor_u8;
 
