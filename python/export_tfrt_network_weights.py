@@ -74,11 +74,13 @@ def restore_checkpoint(sess, ckpt_filename, moving_average_decay=None):
     tf_global_step = slim.get_or_create_global_step()
     # Restore moving average variables or classic stuff!
     if moving_average_decay:
+        print('Restoring moving average variables.')
         variable_averages = tf.train.ExponentialMovingAverage(moving_average_decay, tf_global_step)
         variables_to_restore = variable_averages.variables_to_restore(
             tf.contrib.framework.get_model_variables())
         variables_to_restore[tf_global_step.op.name] = tf_global_step
     else:
+        print('Restoring last batch variables.')
         variables_to_restore = tf.contrib.framework.get_variables_to_restore()
     # Restore method.
     fn_restore = slim.assign_from_checkpoint_fn(ckpt_filename,
