@@ -31,6 +31,7 @@ void seg_network::init_tensors_cached()
 }
 void seg_network::post_processing()
 {
+    CUDA(cudaDeviceSynchronize());
     this->init_tensors_cached();
     // For God sake, used a fucking CUDA kernel for that!
     const auto& rtensor = m_cuda_outputs[0].tensor();
