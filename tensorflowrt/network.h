@@ -26,6 +26,7 @@
 
 #include "utils.h"
 #include "types.h"
+
 #include "tfrt_jetson.h"
 #include "network.pb.h"
 #include "cuda/cudaMappedMemory.h"
@@ -64,52 +65,116 @@ inline nvinfer1::ITensor* find_end_point(tfrt::map_tensor* end_points, const std
  * ========================================================================== */
 /** CUDA tensor with shared memory between CUDA and CPU.
  */
-struct cuda_tensor
-{
-public:
-    cuda_tensor();
-    /** Constructor: provide tensor shape. */
-    cuda_tensor(const std::string&, const nvinfer1::DimsNCHW&);
-    /** Move constructor and assignement. */
-    cuda_tensor(cuda_tensor&& t);
-    cuda_tensor& operator=(cuda_tensor&& t);
-    /** Destructor: CUDA free memory.  */
-    ~cuda_tensor();
-    /** Allocate shared memory between CPU and GPU/CUDA. */
-    bool allocate();
-    /** Free allocated memory and reset pointers. */
-    void free();
-    /** Is the tensor allocated. */
-    bool is_allocated() const {
-        return (cpu != nullptr && cuda != nullptr);
-    }
+// struct cuda_tensor
+// {
+// public:
+//     cuda_tensor();
+//     /** Constructor: provide tensor shape. */
+//     cuda_tensor(const std::string&, const nvinfer1::DimsNCHW&);
+//     /** Move constructor and assignement. */
+//     cuda_tensor(cuda_tensor&& t);
+//     cuda_tensor& operator=(cuda_tensor&& t);
+//     /** Destructor: CUDA free memory.  */
+//     ~cuda_tensor();
+//     /** Allocate shared memory between CPU and GPU/CUDA. */
+//     bool allocate();
+//     /** Free allocated memory and reset pointers. */
+//     void free();
+//     /** Is the tensor allocated. */
+//     bool is_allocated() const {
+//         return (cpu != nullptr && cuda != nullptr);
+//     }
 
-public:
-    /** Get an Eigen tensor representation of the CPU tensor.  */
-    tfrt::nchw<float>::tensor tensor() const;
-    /** Get the cuda pointer, at a given batch index.  */
-    float* cuda_ptr(size_t batch_idx=0) {
-        return (cuda + batch_idx*shape.c()*shape.h()*shape.w());
-    }
-    /** Get the cpu pointer, at a given batch index.  */
-    float* cpu_ptr(size_t batch_idx=0) {
-        return (cpu + batch_idx*shape.c()*shape.h()*shape.w());
-    }
+// public:
+//     /** Get an Eigen tensor representation of the CPU tensor.  */
+//     tfrt::nchw<float>::tensor tensor() const;
+//     /** Get the cuda pointer, at a given batch index.  */
+//     float* cuda_ptr(size_t batch_idx=0) {
+//         return (cuda + batch_idx*shape.c()*shape.h()*shape.w());
+//     }
+//     /** Get the cpu pointer, at a given batch index.  */
+//     float* cpu_ptr(size_t batch_idx=0) {
+//         return (cpu + batch_idx*shape.c()*shape.h()*shape.w());
+//     }
 
 
-private:
-    cuda_tensor(const cuda_tensor&) = default;
-public:
-    // Tensor name, shape and size.
-    std::string  name;
-    nvinfer1::DimsNCHW  shape;
-    size_t  size;
-    // TODO: use std::unique_ptr with custom deleter. Cleaner?
-    float*  cpu;
-    float*  cuda;
-    // Binding index.
-    int binding_index;
-};
+// private:
+//     cuda_tensor(const cuda_tensor&) = default;
+// public:
+//     // Tensor name, shape and size.
+//     std::string  name;
+//     nvinfer1::DimsNCHW  shape;
+//     size_t  size;
+//     // TODO: use std::unique_ptr with custom deleter. Cleaner?
+//     float*  cpu;
+//     float*  cuda;
+//     // Binding index.
+//     int binding_index;
+// };
+// /* ============================================================================
+//  * tfrt::cuda_tensor implementation.
+//  * ========================================================================== */
+// inline cuda_tensor::cuda_tensor() :
+//     name{}, shape{}, size{0}, cpu{nullptr}, cuda{nullptr}, binding_index{0}
+// {
+// }
+// inline cuda_tensor::cuda_tensor(const std::string& _name, const nvinfer1::DimsNCHW& _shape) :
+//     name{_name}, shape{_shape},
+//     size{_shape.n() * _shape.c() * _shape.h() * _shape.w() * sizeof(float)},
+//     cpu{nullptr}, cuda{nullptr}, binding_index{0}
+// {
+// }
+// inline cuda_tensor::cuda_tensor(cuda_tensor&& t) :
+//     name{}, shape{}, size{0}, cpu{nullptr}, cuda{nullptr}
+// {
+//     this->operator=(std::move(t));
+// }
+// inline cuda_tensor& cuda_tensor::operator=(cuda_tensor&& t) {
+//     // Free allocated memory...
+//     free();
+//     // Copy.
+//     name = t.name;
+//     shape = t.shape;
+//     size = t.size;
+//     cpu = t.cpu;
+//     cuda = t.cuda;
+//     // Reset.
+//     t.name = "";
+//     t.shape = nvinfer1::DimsNCHW();
+//     t.size = 0;
+//     t.cpu = nullptr;
+//     t.cuda = nullptr;
+//     return *this;
+// }
+// inline cuda_tensor::~cuda_tensor()
+// {
+//     free();
+// }
+// inline bool cuda_tensor::allocate()
+// {
+//     free();
+//     // Double check size...
+//     size = shape.n() * shape.c() * shape.h() * shape.w() * sizeof(float);
+//     if(!cudaAllocMapped((void**)&cpu, (void**)&cuda, size)) {
+//         LOG(FATAL) << "Failed to allocate CUDA mapped memory for tensor: " << name;
+//         return false;
+//     }
+//     return true;
+// }
+// inline void cuda_tensor::free()
+// {
+//     if(cpu) {
+//         CUDA(cudaFreeHost(cpu));
+//         cpu = nullptr;
+//         cuda = nullptr;
+//     }
+// }
+// inline tfrt::nchw<float>::tensor cuda_tensor::tensor() const
+// {
+//     // Tensor using existing memory.
+//     CHECK_NOTNULL(cpu);
+//     return tfrt::nchw<float>::tensor_map(cpu, shape.n(), shape.c(), shape.h(), shape.w());
+// }
 
 /* ============================================================================
  * tfrt::network
