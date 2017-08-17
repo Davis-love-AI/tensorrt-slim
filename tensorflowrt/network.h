@@ -214,6 +214,8 @@ public:
     network& input(std::string name, nvinfer1::DimsCHW shape);
     nvinfer1::DimsCHW input_shape() const;
     std::string input_name(bool fullname) const;
+
+    network& outputs(std::vector<std::string> names, std::vector<nvinfer1::DimsCHW> shapes);
     std::vector<nvinfer1::DimsCHW> outputs_shape() const;
     std::vector<std::string> outputs_name(bool fullname, bool suffix) const;
     // Input and output setters.

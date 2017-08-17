@@ -246,11 +246,25 @@ network& network::datatype(nvinfer1::DataType dt)
 // Input and outputs getters / setters.
 network& network::input(std::string name, nvinfer1::DimsCHW shape)
 { 
-    auto input = m_pb_network->mutable_input();
-    input->set_name(name);
-    input->set_c(shape.c());
-    input->set_h(shape.h());
-    input->set_w(shape.w());
+    // Only change shape if positive.
+    if(shape.c() && shape.h() && shape.w()) {
+        auto input = m_pb_network->mutable_input();
+        input->set_name(name);
+        input->set_c(shape.c());
+        input->set_h(shape.h());
+        input->set_w(shape.w());
+    }
+    return *this;
+}
+tfrt::network& network::input_shape(const nvinfer1::DimsCHW& shape)
+{
+    // Only change shape if positive.
+    if(shape.c() && shape.h() && shape.w()) {
+        auto input = m_pb_network->mutable_input();
+        input->set_c(shape.c());
+        input->set_h(shape.h());
+        input->set_w(shape.w());
+    }
     return *this;
 }
 nvinfer1::DimsCHW network::input_shape() const
@@ -265,6 +279,21 @@ std::string network::input_name(bool fullname) const
         iname = (this->name() + "/") + iname;
     }
     return iname;
+}
+
+network& network::outputs(
+    std::vector<std::string> names, std::vector<nvinfer1::DimsCHW> shapes)
+{
+    CHECK_EQ(names.size(), shapes.size()) << "Invalid size of names and shapes vectors.";
+    m_pb_network->clear_outputs();
+    for(size_t i = 0 ; i < names.size() ; ++i) {
+        auto out = m_pb_network->add_outputs();
+        out->set_name(names[i]);
+        out->set_c(shapes[i].c());
+        out->set_h(shapes[i].h());
+        out->set_w(shapes[i].w());
+    }
+    return *this;
 }
 std::vector<nvinfer1::DimsCHW> network::outputs_shape() const
 {
@@ -294,17 +323,7 @@ std::vector<std::string> network::outputs_name(bool fullname, bool suffix) const
     }
     return v;
 }
-tfrt::network& network::input_shape(const nvinfer1::DimsCHW& shape)
-{
-    // Only change shape if positive.
-    if(shape.c() && shape.h() && shape.w()) {
-        auto input = m_pb_network->mutable_input();
-        input->set_c(shape.c());
-        input->set_h(shape.h());
-        input->set_w(shape.w());
-    }
-    return *this;
-}
+
 tfrt::cuda_tensor* network::find_cuda_output(const std::string& name) const
 {
     DLOG(INFO) << "Finding CUDA output tensor named: \'" << name << "\'";
