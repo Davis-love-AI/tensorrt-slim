@@ -193,7 +193,9 @@ public:
         m_nv_infer{nullptr}, m_nv_engine{nullptr}, m_nv_context{nullptr},
         m_max_batch_size{2}, m_workspace_size{16 << 20},
         m_enable_profiler{false}, m_enable_debug{false},
-        m_missing_tensors{false}  {
+        m_missing_tensors{false}  
+    {
+        this->name(name);
     }
     virtual ~network();
     /** Clear the network and its weights. */
@@ -231,6 +233,8 @@ public:
      */
     const tfrt_pb::tensor& create_tensor(std::string name, nvinfer1::Dims shape,
         float val, nvinfer1::DataType dt) const;
+    const tfrt_pb::tensor& create_tensor(
+        std::string name, const tfrt::nchw<float>::tensor& t, nvinfer1::DataType dt) const;   
     /** Get a tensor by name. If not found, either create a new tensor to replace
      * or just return an empty tensor. */
     const tfrt_pb::tensor& tensor_by_name(std::string name, nvinfer1::Dims wshape) const;

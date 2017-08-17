@@ -38,6 +38,63 @@ DEFINE_double(value, 1.0, "Float value.");
 void cuda_float2half_array(float* host_input, uint16_t* host_output, uint32_t size);
 void cuda_half2float_array(uint16_t* host_input, float* host_output, uint32_t size);
 
+void print_tensor_hw(const tfrt::nchw<float>::tensor& t)
+{
+    for (int i = 0 ; i < t.dimension(2) ; ++i){
+        for (int j = 0 ; j < t.dimension(3) ; ++j){
+            std::cout << t(0, 0, i, j) << " "; 
+        }
+        std::cout << std::endl;
+    }
+}
+
+
+typedef tfrt::convolution2d_transpose<tfrt::ActivationType::NONE, tfrt::PaddingType::CUSTOM, false>  conv2d_transpose;
+class transpose_conv_net : public tfrt::network
+{
+public:
+    /** Constructor with default name.  */
+    transpose_conv_net(int width=2, int height=2) : 
+        tfrt::network("tranpose_net"), m_width{width}, m_height{height} {}
+    /** Build network. */
+    virtual nvinfer1::ITensor* build(tfrt::scope sc) 
+    {
+        // Set basic parameters.
+        this->datatype(nvinfer1::DataType::kFLOAT);
+        this->input("input", {1, m_height, m_width});
+        this->outputs({"tconv"}, {{1, m_height*2, m_width*2}});
+
+        // Construct simple network...
+        auto net = tfrt::input(sc)();
+        // Tranpose convolution. Weights in CKRS format (C: input)
+        tfrt::nchw<float>::tensor  weights(1, 1, 2, 2);
+        weights(0, 0, 0, 0) = 0;
+        weights(0, 0, 0, 1) = 1;
+        weights(0, 0, 1, 0) = 2;
+        weights(0, 0, 1, 1) = 3;
+        
+        // weights(0, 0, 0, 0) = 1;
+        // weights(0, 0, 0, 1) = 1;
+        // weights(0, 0, 1, 0) = 1;
+        // weights(0, 0, 1, 1) = 1;
+        std::cout << "Weights:" << std::endl;
+        print_tensor_hw(weights);
+
+        this->create_tensor(sc.sub("tconv").sub("weights").name(), weights, this->datatype());
+        net = conv2d_transpose(sc, "tconv")
+            .noutputs(1).ksize({2, 2}).stride({2, 2}).padding({0, 0}).is_output(true)(net);
+        return net;
+    }
+    tfrt::nchw<float>::tensor inference(const tfrt::nchw<float>::tensor& tensor)
+    {
+        this->network::inference(tensor);
+        return m_cuda_outputs[0].tensor();
+    }
+private:
+    int  m_width;
+    int  m_height;
+};
+
 
 void print_half(uint16_t* half)
 {
@@ -77,16 +134,6 @@ int main(int argc, char **argv)
 
     vx_rectangle_t rect;
     vxGetValidRegionImage(frame, &rect);
-
-    // vx_map_id src_map_id;
-    // vx_uint8* src_ptr;
-    // vx_imagepatch_addressing_t src_addr;
-    // NVXIO_SAFE_CALL(vxMapImagePatch(frame, nullptr, 0, &src_map_id, &src_addr, (void **)&src_ptr, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA, 0));
-    // LOG(INFO) << "CUDA ptr: " << (void*)src_ptr << ", ID: " << src_map_id;
-    // LOG(INFO) << "CUDA addr: " << src_addr.stride_x << " | " << src_addr.stride_y;
-    // LOG(INFO) << "CUDA addr: " << src_addr.dim_x << " | " << src_addr.dim_y;
-    // LOG(INFO) << "CUDA addr: " << src_addr.scale_x << " | " << src_addr.scale_y;
-
     tfrt::nvx_image_inpatch img_patch{frame};
     
     
@@ -99,10 +146,31 @@ int main(int argc, char **argv)
     
     CUDA(cudaDeviceSynchronize());
     int start = 20000-10;
-    for (int i = start ; i < start+200 ; ++i) {
+    for (int i = start ; i < start+1 ; ++i) {
         LOG(INFO) << "CUDA tensor: " << i << " | " << ctensor.cpu[i] << " | " << ctensor.cpu[i];
     }
+
+    // Try out the network...
+    int width = 2;
+    int height = 2;
+    transpose_conv_net net(width, height);
+    net.load("");
+
+    tfrt::nchw<float>::tensor  inputs(1, 1, height, width);
+    int count = 1;
+    for (int i = 0 ; i < inputs.dimension(2) ; ++i){
+        for (int j = 0 ; j < inputs.dimension(3) ; ++j){
+            inputs(0, 0, i, j) = count;
+            count++;
+        }
+    }
+    std::cout << "Input tensor: " << std::endl;
+    print_tensor_hw(inputs);
+    auto output = net.inference(inputs);
+    std::cout << "Output tensor: " << std::endl;
+    print_tensor_hw(output);
+    std::cout << "Output dimensions: " 
+        << output.dimension(1) << " | " << output.dimension(2) << " | " << output.dimension(3) << std::endl;
     
-    // tfrt::nvx_image_inpatch img_patch{frame};
     return 0;
 }
