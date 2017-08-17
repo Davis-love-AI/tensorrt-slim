@@ -238,7 +238,21 @@ nvinfer1::DataType network::datatype() const {
     auto dt = m_pb_network->datatype();
     return nvinfer1::DataType(int(dt));
 }
+network& network::datatype(nvinfer1::DataType dt)
+{
+    m_pb_network->set_datatype(tfrt_pb::DataType(int(dt)));
+    return *this;
+}
 // Input and outputs getters / setters.
+network& network::input(std::string name, nvinfer1::DimsCHW shape)
+{ 
+    auto input = m_pb_network->mutable_input();
+    input->set_name(name);
+    input->set_c(shape.c());
+    input->set_h(shape.h());
+    input->set_w(shape.w());
+    return *this;
+}
 nvinfer1::DimsCHW network::input_shape() const
 {
     auto input = m_pb_network->input();

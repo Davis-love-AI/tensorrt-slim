@@ -209,7 +209,9 @@ public:
     const std::string& name() const;
     network& name(const std::string& name);
     nvinfer1::DataType datatype() const;
+    network& datatype(nvinfer1::DataType dt);
     // Input and outputs getters.
+    network& input(std::string name, nvinfer1::DimsCHW shape);
     nvinfer1::DimsCHW input_shape() const;
     std::string input_name(bool fullname) const;
     std::vector<nvinfer1::DimsCHW> outputs_shape() const;
