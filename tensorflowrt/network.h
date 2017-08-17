@@ -261,6 +261,10 @@ public:
 
 protected:
     // Basic inference methods: single image, nvx images, ...
+    /** Inference on a NCHW tensor (host memory). 
+     * Note: easy to use, but not optimized as performing a copy + cuda sync at every call.
+     */
+    void inference(const tfrt::nchw<float>::tensor& tensor);
     /** Inference on a single RGBA image. */
     void inference(float* rgba, uint32_t height, uint32_t width);
     /** Inference on a single VX image.
