@@ -334,8 +334,14 @@ bool network::parse_protobuf(const std::string& filename, google::protobuf::Mess
 }
 bool network::load_weights(const std::string& filename)
 {
-    LOG(INFO) << "Loading network parameters and weights from: " << filename;
-    return parse_protobuf(filename, m_pb_network.get());
+    if (filename.length() == 0) {
+        LOG(WARNING) << "No protobuf filename provided.";
+        return true;
+    }
+    else {
+        LOG(INFO) << "Loading network parameters and weights from: " << filename;
+        return parse_protobuf(filename, m_pb_network.get());
+    }
 }
 void network::clear_weights()
 {
@@ -431,7 +437,7 @@ bool network::serialize_model(const std::string& filename, std::string& model_bu
     // Try to read serialized model from cache.
     std::ostringstream  filename_cache;
     filename_cache << filename << "."  << m_max_batch_size << ".cache";
-    if(caching) {
+    if(caching && filename.length()) {
         LOG(INFO) << LOG_GIE << "Try reading cached model from: "<< filename_cache.str();
         // Successful read of cached file => load and return.
         std::ifstream model_cached(filename_cache.str());
@@ -456,7 +462,7 @@ bool network::serialize_model(const std::string& filename, std::string& model_bu
     model_buffer.assign((char*)nv_model_stream->data(), nv_model_stream->size());
     nv_model_stream->destroy();
 
-    if(caching) {
+    if(caching && filename.length()) {
         LOG(INFO) << LOG_GIE << "Writing cached model to: " << filename_cache.str();
         std::ofstream model_cached;
         model_cached.open(filename_cache.str());
