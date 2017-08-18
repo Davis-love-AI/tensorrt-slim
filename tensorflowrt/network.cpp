@@ -661,6 +661,7 @@ void network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& 
     r = cuda_rgba_to_chw(img_patch2.cuda, m_cuda_input.cuda_ptr(1), 
         inshape.w(), inshape.h(), img_patch2.addr.stride_x, img_patch2.addr.stride_y);
     CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 1 to CHW format. CUDA error: " << r;
+   
     CUDA(cudaDeviceSynchronize());
     // Execute TensorRT network (batch size = 1).
     size_t num_batches = 2;

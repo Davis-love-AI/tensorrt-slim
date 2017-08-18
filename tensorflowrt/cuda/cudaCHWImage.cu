@@ -64,10 +64,10 @@ __global__ void kernel_chw_to_rgbx(float* input, uint8_t* output,
         input[n * 2 + y * width + x], 255);
     // Use stride to compute the image index.
     const int idx_out = y * stride_y + x * stride_x;
-    input[idx_out+0] = rgb.x;
-    input[idx_out+1] = rgb.y;
-    input[idx_out+2] = rgb.z;
-    input[idx_out+3] = rgb.w;
+    output[idx_out+0] = rgb.x;
+    output[idx_out+1] = rgb.y;
+    output[idx_out+2] = rgb.z;
+    output[idx_out+3] = rgb.w;
 }
 cudaError_t cuda_chw_to_rgba(float* d_input, uint8_t* d_output, 
     uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y)

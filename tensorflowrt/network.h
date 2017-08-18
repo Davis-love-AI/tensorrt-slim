@@ -327,7 +327,7 @@ protected:
         }
     }
 
-protected:
+public:
     // Protobuf network object.
     std::unique_ptr<tfrt_pb::network>  m_pb_network;
     // TensorRT elements...
