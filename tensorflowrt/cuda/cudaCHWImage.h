@@ -23,4 +23,8 @@
 cudaError_t cuda_rgba_to_chw(uint8_t* d_input, float* d_output, 
     uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y);
 
+/** Convert a CHW float image into unit8 RGBX format.  */
+cudaError_t cuda_chw_to_rgba(float* d_input, uint8_t* d_output, 
+    uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y);
+    
 #endif

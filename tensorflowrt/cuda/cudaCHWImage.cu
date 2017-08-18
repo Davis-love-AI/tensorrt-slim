@@ -24,7 +24,7 @@ __global__ void kernel_rgbx_to_chw(uint8_t* input, float* output,
     if( x >= width || y >= height ) {
         return;
     }
-    // Use stride to compute the index?
+    // Use stride to compute the index.
     const int idx = y * stride_y + x * stride_x;
     // Simple re-ordering. Nothing fancy!
     const float3 rgb = make_float3(input[idx], input[idx+1], input[idx+2]);
@@ -45,5 +45,42 @@ cudaError_t cuda_rgba_to_chw(uint8_t* d_input, float* d_output,
     const dim3 blockDim(8, 8);
     const dim3 gridDim(iDivUp(width, blockDim.x), iDivUp(height, blockDim.y));
     kernel_rgbx_to_chw<<<gridDim, blockDim>>>(d_input, d_output, width, height, stride_x, stride_y);
+    return CUDA(cudaGetLastError());
+}
+
+__global__ void kernel_chw_to_rgbx(float* input, uint8_t* output, 
+    int width, int height, uint32_t stride_x, uint32_t stride_y)
+{
+    const int x = blockIdx.x * blockDim.x + threadIdx.x;
+    const int y = blockIdx.y * blockDim.y + threadIdx.y;
+    const int n = width * height;
+    if( x >= width || y >= height ) {
+        return;
+    }
+    // Get the pixel values.
+    const uchar4 rgb = make_uchar4(
+        input[n * 0 + y * width + x],
+        input[n * 1 + y * width + x],
+        input[n * 2 + y * width + x], 255);
+    // Use stride to compute the image index.
+    const int idx_out = y * stride_y + x * stride_x;
+    input[idx_out+0] = rgb.x;
+    input[idx_out+1] = rgb.y;
+    input[idx_out+2] = rgb.z;
+    input[idx_out+3] = rgb.w;
+}
+cudaError_t cuda_chw_to_rgba(float* d_input, uint8_t* d_output, 
+    uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y)
+{
+    if( !d_input || !d_output ) {
+        return cudaErrorInvalidDevicePointer;
+    }
+    if( height == 0 || width == 0) {
+        return cudaErrorInvalidValue;
+    }
+    // Launch convertion kernel.
+    const dim3 blockDim(8, 8);
+    const dim3 gridDim(iDivUp(width, blockDim.x), iDivUp(height, blockDim.y));
+    kernel_chw_to_rgbx<<<gridDim, blockDim>>>(d_input, d_output, width, height, stride_x, stride_y);
     return CUDA(cudaGetLastError());
 }
