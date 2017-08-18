@@ -196,11 +196,11 @@ public:
 
 public:
     /** Get an Eigen tensor representation of the CPU tensor.  */
-    typename tfrt::nchw<T>::tensor tensor() const
+    typename tfrt::nchw<T>::tensor_map tensor() const
     {
          // Tensor using existing memory.
         CHECK_NOTNULL(cpu);
-        return tfrt::nchw<float>::tensor_map(cpu, shape.n(), shape.c(), shape.h(), shape.w());
+        return typename tfrt::nchw<T>::tensor_map(cpu, shape.n(), shape.c(), shape.h(), shape.w());
     }
     /** Get the cuda pointer, at a given batch index.  */
     T* cuda_ptr(size_t batch_idx=0) const {

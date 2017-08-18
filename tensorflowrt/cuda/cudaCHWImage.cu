@@ -27,7 +27,7 @@ __global__ void kernel_rgbx_to_chw(uint8_t* input, float* output,
     // Use stride to compute the index.
     const int idx = y * stride_y + x * stride_x;
     // Simple re-ordering. Nothing fancy!
-    const float3 rgb = make_float3(input[idx], input[idx+1], input[idx+2]);
+    const float3 rgb = make_float3(input[idx+0], input[idx+1], input[idx+2]);
     output[n * 0 + y * width + x] = rgb.x;
     output[n * 1 + y * width + x] = rgb.y;
     output[n * 2 + y * width + x] = rgb.z;

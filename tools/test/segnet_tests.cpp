@@ -51,10 +51,39 @@ std::unique_ptr<tfrt::network>&& networks_map(const std::string& key)
     return std::move(nets.at(key));
 }
 
-void fill_input_tensor(tfrt::nchw<uint8_t>& t)
+template <class T>
+void print_tensor_hw(const typename tfrt::nchw<T>::tensor& t, int _i, int _j, int size, bool nhwc=false)
 {
-
-    CUDA(cudaDeviceSynchronize());
+    int c = 0;
+    // LOG(INFO) << "Sub-tensor of size: " << size;
+    for (int i = _i ; i < _i+size ; ++i) {
+        for (int j = _j ; j < _j+size ; ++j) {
+            if (nhwc) {
+                std::cout << float(t(0, i, j, c)) << " ";                 
+            }
+            else {
+                std::cout << float(t(0, c, i, j)) << " "; 
+            }
+        }
+        std::cout << std::endl;
+    }
+}
+void fill_input_tensor(tfrt::nchw<uint8_t>::tensor_map&& t)
+{
+    // Fill with pseudo-random values. NHWC organisation!
+    // uint8_t c = 0;
+    for (long n = 0 ; n < t.dimension(0) ; ++n) {
+        for (long i = 0 ; i < t.dimension(1) ; ++i) {
+            for (long j = 0 ; j < t.dimension(2) ; ++j) {
+                // Channel loop.
+                for (long k = 0 ; k < t.dimension(3) ; ++k) {
+                    t(n, i, j, k) = (i+1)*(j+2)*(k+3) % 256;
+                    // c = (i+1)*(j+2)*(k+3) % 256;
+                }
+            }
+        }
+    }
+    // CUDA(cudaDeviceSynchronize());
 }
 
 int main(int argc, char **argv)
@@ -67,8 +96,28 @@ int main(int argc, char **argv)
     auto segnet = networks_map(FLAGS_network);
     segnet->load(FLAGS_network_pb);
     // Input CUDA buffer, uint8.
-    tfrt::cuda_tensor_u8  in_tensor{"input_u8", {1, 3, FLAGS_height, FLAGS_width}};
+    tfrt::cuda_tensor_u8  in_tensor{"input_u8", {1, FLAGS_height, FLAGS_width, 4}};
     in_tensor.allocate();
+    fill_input_tensor(in_tensor.tensor());
+    LOG(INFO) << "Sub-u8 tensor... " << tfrt::dims_str(in_tensor.shape);
+    print_tensor_hw<uint8_t>(in_tensor.tensor(), 3, 5, 6, true);
+
+    // Copy input to network input buffer and execute network.
+    LOG(INFO) << "Inference on network: " << FLAGS_network;
+    cuda_rgba_to_chw(in_tensor.cuda, segnet->m_cuda_input.cuda, 
+        FLAGS_width, FLAGS_height, 4, FLAGS_width*4);
+    CUDA(cudaDeviceSynchronize());
+    segnet->m_nv_context->execute(FLAGS_batch_size, (void**)segnet->m_cached_bindings.data());
+    CUDA(cudaDeviceSynchronize());
+    
+    // Printing information...
+    LOG(INFO) << "Sub-input tensor... " << tfrt::dims_str(segnet->m_cuda_input.shape);
+    print_tensor_hw<float>(segnet->m_cuda_input.tensor(), 3, 5, 6, false);
+
+    for(size_t i = 0 ; i < segnet->m_cuda_outputs.size() ; ++i) {
+        LOG(INFO) << "Sub-output tensor: " << segnet->m_cuda_outputs[i].name << " | " << tfrt::dims_str(segnet->m_cuda_outputs[i].shape);
+        print_tensor_hw<float>(segnet->m_cuda_outputs[i].tensor(), 3, 5, 6, false);
+    }
 
     return 0;
 }
