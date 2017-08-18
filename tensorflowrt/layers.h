@@ -139,7 +139,7 @@ public:
             << "Shape: " << dims_str(input->getDimensions());
         // Input scaling.
         input = this->scale(input);
-        return input;
+        return this->mark_output(input);
     }
 protected:
     /** Scaling input tensor.
@@ -313,6 +313,33 @@ public:
     }
 };
 
+/** TensorFlow output formula.  */
+class tf_conv2d_formula : public nvinfer1::IOutputDimensionsFormula
+{
+public:
+    virtual nvinfer1::DimsHW compute(
+        nvinfer1::DimsHW inshape, nvinfer1::DimsHW ksize,
+        nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, const char* layerName)
+    {
+        // if (padding.h() == 0 && padding.w() == 0) {
+        //     // Zero padding, assume it is VALID TF padding.
+        //     nvinfer1::DimsHW odims{
+        //         int(std::ceil(float(inshape.h() - ksize.h() + 1) / float(stride.h()))),
+        //         int(std::ceil(float(inshape.w() - ksize.w() + 1) / float(stride.w())))
+        //     };
+        //     return odims;
+        // }
+        // else {
+            // SAME TF padding?
+            nvinfer1::DimsHW odims{
+                int(std::ceil(float(inshape.h()) / float(stride.h()))),
+                int(std::ceil(float(inshape.w()) / float(stride.w())))
+            };
+            return odims;
+        // }
+    }
+};
+
 /** Generic 2D operation, with the following common structure:
  * op2d (with padding) -> batch norm/bias -> activation.
  */
@@ -392,8 +419,26 @@ public:
     /** Compute real padding values depending on the padding type parameter.
      * Not exactly equivalent to TF padding because of symmetry.
      */
-    nvinfer1::DimsHW padding() const {
+    nvinfer1::DimsHW padding(const nvinfer1::DimsCHW& inshape) const {
         if(PAD == PaddingType::SAME) {
+            // auto ksize = this->ksize();
+            // auto stride = this->stride();
+            // // Try to follow TF convention, depending on input shape.
+            // int pad_along_height, pad_along_width;
+            // if (inshape.h() % stride.h() == 0) {
+            //     pad_along_height = std::max(ksize.h() - stride.h(), 0);
+            // }
+            // else {
+            //     pad_along_height = std::max(ksize.h() - (inshape.h() % stride.h()), 0);
+            // }
+            // if (inshape.w() % stride.w() == 0) {
+            //     pad_along_width = std::max(ksize.w() - stride.w(), 0);
+            // }
+            // else {
+            //     pad_along_width = std::max(ksize.w() - (inshape.w() % stride.w()), 0);
+            // }
+            // // Use the left padding as general value, and adapt the output size.
+            // return nvinfer1::DimsHW{pad_along_height / 2, pad_along_width / 2};
             // Rough estimate...
             return nvinfer1::DimsHW{m_ksize.h() / 2, m_ksize.w() / 2};
         }
@@ -407,6 +452,8 @@ public:
     }
 
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* input) = 0;
+
+// public:
 
 protected:
     /** Set up a batch normalization operation.
@@ -523,7 +570,7 @@ protected:
             << "noutputs: " << this->noutputs() << " | "
             << "ngroups: " << ngroups << " | "
             << "stride: " << dims_str(this->stride()) << " | "
-            << "padding: " << dims_str(this->padding());
+            << "padding: " << dims_str(this->padding(inshape));
         nvinfer1::IConvolutionLayer* convlayer = nullptr;
         // Batch normalization: no bias.
         if(BN) {
@@ -542,7 +589,7 @@ protected:
         CHECK_NOTNULL(convlayer);
         // Set name, padding, stride and nb groups.
         convlayer->setName((this->m_scope.name() + lnamesuffix).c_str());
-        convlayer->setPadding(DIMRT(this->padding()));
+        convlayer->setPadding(DIMRT(this->padding(inshape)));
         convlayer->setStride(DIMRT(this->stride()));
         convlayer->setNbGroups(ngroups);
         return convlayer->getOutput(0);
@@ -612,6 +659,28 @@ protected:
     // Depth multiplier.
     int  m_depth_multiplier;
 };
+
+/** TensorFlow output formula. Do you floor the output dimensions or not?
+ */
+class tf_conv2d_transpose_formula : public nvinfer1::IOutputDimensionsFormula
+{
+public:
+    tf_conv2d_transpose_formula(int cut_val=0) : m_cutshape{cut_val, cut_val} {}
+    tf_conv2d_transpose_formula(nvinfer1::DimsHW cutshape) : m_cutshape(cutshape) {}
+    virtual nvinfer1::DimsHW compute(
+        nvinfer1::DimsHW inshape, nvinfer1::DimsHW ksize,
+        nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, const char* layerName)
+    {
+        // Change a bit the formula...
+        nvinfer1::DimsHW odims{
+            (inshape.h() - 1) * stride.h() + ksize.h() - 2 * padding.h() - m_cutshape.h(),
+            (inshape.w() - 1) * stride.w() + ksize.w() - 2 * padding.w() - m_cutshape.w()
+        };
+        return odims;
+    }
+private:
+    nvinfer1::DimsHW  m_cutshape;
+};
 /** Transpose 2D convolution layer.
  */
 template <ActivationType ACT, PaddingType PAD, bool BN>
@@ -679,15 +748,15 @@ protected:
             << "ksize: " << dims_str(this->ksize()) << " | "
             << "noutputs: " << this->noutputs() << " | "
             << "stride: " << dims_str(this->stride()) << " | "
-            << "padding: " << dims_str(this->padding());
+            << "padding: " << dims_str(this->padding(inshape));
         nvinfer1::IDeconvolutionLayer* convlayer = nullptr;
         // Output formula used?
-        if (m_ceil_mode) {
-            this->m_scope.network()->setDeconvolutionOutputDimensionsFormula(&m_ceil_formula);
-        }
-        else {
-            this->m_scope.network()->setDeconvolutionOutputDimensionsFormula(nullptr);
-        }
+        // if (m_ceil_mode) {
+        //     this->m_scope.network()->setDeconvolutionOutputDimensionsFormula(&m_ceil_formula);
+        // }
+        // else {
+        //     this->m_scope.network()->setDeconvolutionOutputDimensionsFormula(nullptr);
+        // }
         // Batch normalization: no bias.
         if(BN) {
             auto weights = this->m_scope.weights(wname, wshape);
@@ -706,7 +775,7 @@ protected:
         CHECK_NOTNULL(convlayer);
         // Set name, padding, stride and nb groups.
         convlayer->setName((this->m_scope.name() + lnamesuffix).c_str());
-        convlayer->setPadding(DIMRT(this->padding()));
+        convlayer->setPadding(DIMRT(this->padding(inshape)));
         convlayer->setStride(DIMRT(this->stride()));
         return convlayer->getOutput(0);
     }
@@ -780,13 +849,14 @@ private:
     /** Set up the convolution operation.
      */
     nvinfer1::ITensor* pooling(nvinfer1::ITensor* input) {
+        auto inshape = static_cast<nvinfer1::DimsCHW&&>(input->getDimensions());
         nvinfer1::IPoolingLayer* poollayer = nullptr;
         poollayer = this->m_scope.network()->addPooling(
             *input, POOL, DIMRT(this->ksize()));
         CHECK_NOTNULL(poollayer);
         // Set name, padding and stride.
         poollayer->setName(this->m_scope.cname());
-        poollayer->setPadding(DIMRT(this->padding()));
+        poollayer->setPadding(DIMRT(this->padding(inshape)));
         poollayer->setStride(DIMRT(this->stride()));
         return poollayer->getOutput(0);
     }

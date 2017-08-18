@@ -100,7 +100,7 @@ int main(int argc, char **argv)
     in_tensor.allocate();
     fill_input_tensor(in_tensor.tensor());
     LOG(INFO) << "Sub-u8 tensor... " << tfrt::dims_str(in_tensor.shape);
-    print_tensor_hw<uint8_t>(in_tensor.tensor(), 3, 5, 6, true);
+    print_tensor_hw<uint8_t>(in_tensor.tensor(), 0, 0, 7, true);
 
     // Copy input to network input buffer and execute network.
     LOG(INFO) << "Inference on network: " << FLAGS_network;
@@ -112,11 +112,11 @@ int main(int argc, char **argv)
     
     // Printing information...
     LOG(INFO) << "Sub-input tensor... " << tfrt::dims_str(segnet->m_cuda_input.shape);
-    print_tensor_hw<float>(segnet->m_cuda_input.tensor(), 3, 5, 6, false);
+    print_tensor_hw<float>(segnet->m_cuda_input.tensor(), 0, 0, 7, false);
 
     for(size_t i = 0 ; i < segnet->m_cuda_outputs.size() ; ++i) {
         LOG(INFO) << "Sub-output tensor: " << segnet->m_cuda_outputs[i].name << " | " << tfrt::dims_str(segnet->m_cuda_outputs[i].shape);
-        print_tensor_hw<float>(segnet->m_cuda_outputs[i].tensor(), 3, 5, 6, false);
+        print_tensor_hw<float>(segnet->m_cuda_outputs[i].tensor(), 0, 0, 7, false);
     }
 
     return 0;
