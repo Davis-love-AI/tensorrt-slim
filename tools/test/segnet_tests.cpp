@@ -34,8 +34,8 @@ DEFINE_string(network, "seg_inception2_v1", "SegNet to test.");
 DEFINE_string(network_pb, "../data/networks/seg_inception2_v1.25.tfrt32",
     "Network protobuf parameter file.");
 DEFINE_int32(batch_size, 2, "Batch size.");
-DEFINE_int32(height, 224, "Input height.");
-DEFINE_int32(width, 384, "Input width.");
+DEFINE_int32(height, 225, "Input height.");
+DEFINE_int32(width, 385, "Input width.");
 
 /* ============================================================================
  * Static collection of nets.
@@ -95,8 +95,10 @@ int main(int argc, char **argv)
     LOG(INFO) << "Loading network: " << FLAGS_network;
     auto segnet = networks_map(FLAGS_network);
     segnet->load(FLAGS_network_pb);
+    auto inshape = segnet->input_shape();
+
     // Input CUDA buffer, uint8.
-    tfrt::cuda_tensor_u8  in_tensor{"input_u8", {1, FLAGS_height, FLAGS_width, 4}};
+    tfrt::cuda_tensor_u8  in_tensor{"input_u8", {1, inshape.h(), inshape.w(), 4}};
     in_tensor.allocate();
     fill_input_tensor(in_tensor.tensor());
     LOG(INFO) << "Sub-u8 tensor... " << tfrt::dims_str(in_tensor.shape);
@@ -105,7 +107,7 @@ int main(int argc, char **argv)
     // Copy input to network input buffer and execute network.
     LOG(INFO) << "Inference on network: " << FLAGS_network;
     cuda_rgba_to_chw(in_tensor.cuda, segnet->m_cuda_input.cuda, 
-        FLAGS_width, FLAGS_height, 4, FLAGS_width*4);
+        inshape.w(), inshape.h(), 4, inshape.w()*4);
     CUDA(cudaDeviceSynchronize());
     segnet->m_nv_context->execute(FLAGS_batch_size, (void**)segnet->m_cached_bindings.data());
     CUDA(cudaDeviceSynchronize());
