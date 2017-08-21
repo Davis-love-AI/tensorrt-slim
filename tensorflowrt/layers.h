@@ -139,7 +139,8 @@ public:
             << "Shape: " << dims_str(input->getDimensions());
         // Input scaling.
         input = this->scale(input);
-        return this->mark_output(input);
+        // return this->mark_output(input);
+        return input;
     }
 protected:
     /** Scaling input tensor.

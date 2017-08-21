@@ -42,22 +42,24 @@ void print_tensor_hw(const tfrt::nchw<float>::tensor& t)
 {
     for (int i = 0 ; i < t.dimension(2) ; ++i){
         for (int j = 0 ; j < t.dimension(3) ; ++j){
-            std::cout << t(0, 0, i, j) << " "; 
+            std::cout << t(0, 0, i, j) << " ";
         }
         std::cout << std::endl;
     }
 }
 
-
+/* ============================================================================
+ * Test transpose convolution.
+ * ========================================================================== */
 typedef tfrt::convolution2d_transpose<tfrt::ActivationType::NONE, tfrt::PaddingType::CUSTOM, false>  conv2d_transpose;
 class transpose_conv_net : public tfrt::network
 {
 public:
     /** Constructor with default name.  */
-    transpose_conv_net(int width=2, int height=2) : 
+    transpose_conv_net(int width=2, int height=2) :
         tfrt::network("tranpose_net"), m_width{width}, m_height{height} {}
     /** Build network. */
-    virtual nvinfer1::ITensor* build(tfrt::scope sc) 
+    virtual nvinfer1::ITensor* build(tfrt::scope sc)
     {
         // Set basic parameters.
         this->datatype(nvinfer1::DataType::kFLOAT);
@@ -72,17 +74,44 @@ public:
         weights(0, 0, 0, 1) = 1;
         weights(0, 0, 1, 0) = 2;
         weights(0, 0, 1, 1) = 3;
-        
-        // weights(0, 0, 0, 0) = 1;
-        // weights(0, 0, 0, 1) = 1;
-        // weights(0, 0, 1, 0) = 1;
-        // weights(0, 0, 1, 1) = 1;
         std::cout << "Weights:" << std::endl;
         print_tensor_hw(weights);
 
         this->create_tensor(sc.sub("tconv").sub("weights").name(), weights, this->datatype());
         net = conv2d_transpose(sc, "tconv")
             .noutputs(1).ksize({2, 2}).stride({2, 2}).padding({0, 0}).is_output(true)(net);
+        return net;
+    }
+    tfrt::nchw<float>::tensor inference(const tfrt::nchw<float>::tensor& tensor)
+    {
+        this->network::inference(tensor);
+        return m_cuda_outputs[0].tensor();
+    }
+private:
+    int  m_width;
+    int  m_height;
+};
+
+/* ============================================================================
+ * Test average pooling
+ * ========================================================================== */
+class avg_pool_net : public tfrt::network
+{
+public:
+    /** Constructor with default name.  */
+    avg_pool_net(int width=4, int height=4) :
+        tfrt::network("avg_pool_net"), m_width{width}, m_height{height} {}
+    /** Build network. */
+    virtual nvinfer1::ITensor* build(tfrt::scope sc)
+    {
+        // Set basic parameters.
+        this->datatype(nvinfer1::DataType::kFLOAT);
+        this->input("input", {1, m_height, m_width});
+        this->outputs({"avgpool"}, {{1, m_height, m_width}});
+
+        // Construct simple network...
+        auto net = tfrt::input(sc)();
+        net = tfrt::avg_pool2d(sc, "avgpool").ksize({3, 3}).is_output(true)(net);
         return net;
     }
     tfrt::nchw<float>::tensor inference(const tfrt::nchw<float>::tensor& tensor)
@@ -135,42 +164,65 @@ int main(int argc, char **argv)
     vx_rectangle_t rect;
     vxGetValidRegionImage(frame, &rect);
     tfrt::nvx_image_inpatch img_patch{frame};
-    
-    
+
+
     // Interaction with cuda tensor?
     tfrt::cuda_tensor ctensor{"test", {1, 3, 100, 200}};
     ctensor.allocate();
     LOG(INFO) << "CUDA tensor: " << tfrt::dims_str(ctensor.shape);
-    auto r = cuda_rgba_to_chw(img_patch.cuda, ctensor.cuda, 200, 100, 
+    auto r = cuda_rgba_to_chw(img_patch.cuda, ctensor.cuda, 200, 100,
         img_patch.addr.stride_x, img_patch.addr.stride_y);
-    
+
     CUDA(cudaDeviceSynchronize());
     int start = 20000-10;
     for (int i = start ; i < start+1 ; ++i) {
         LOG(INFO) << "CUDA tensor: " << i << " | " << ctensor.cpu[i] << " | " << ctensor.cpu[i];
     }
 
-    // Try out the network...
-    int width = 2;
-    int height = 2;
-    transpose_conv_net net(width, height);
-    net.load("");
+    // TEST TRANSPOSE CONVOLUTION.
+    {
+        // int width = 2;
+        // int height = 2;
+        // transpose_conv_net net(width, height);
+        // net.load("");
 
-    tfrt::nchw<float>::tensor  inputs(1, 1, height, width);
-    int count = 1;
-    for (int i = 0 ; i < inputs.dimension(2) ; ++i){
-        for (int j = 0 ; j < inputs.dimension(3) ; ++j){
-            inputs(0, 0, i, j) = count;
-            count++;
-        }
+        // tfrt::nchw<float>::tensor  inputs(1, 1, height, width);
+        // int count = 1;
+        // for (int i = 0 ; i < inputs.dimension(2) ; ++i){
+        //     for (int j = 0 ; j < inputs.dimension(3) ; ++j){
+        //         inputs(0, 0, i, j) = count;
+        //         count++;
+        //     }
+        // }
+        // std::cout << "Input tensor: " << std::endl;
+        // print_tensor_hw(inputs);
+        // auto output = net.inference(inputs);
+        // std::cout << "Output tensor: " << std::endl;
+        // print_tensor_hw(output);
+        // std::cout << "Output dimensions: "
+        //     << output.dimension(1) << " | " << output.dimension(2) << " | " << output.dimension(3) << std::endl;
     }
-    std::cout << "Input tensor: " << std::endl;
-    print_tensor_hw(inputs);
-    auto output = net.inference(inputs);
-    std::cout << "Output tensor: " << std::endl;
-    print_tensor_hw(output);
-    std::cout << "Output dimensions: " 
-        << output.dimension(1) << " | " << output.dimension(2) << " | " << output.dimension(3) << std::endl;
-    
+    // TEST AVG POOLING
+    {
+        int width = 4;
+        int height = 4;
+        avg_pool_net net(width, height);
+        net.load("");
+
+        tfrt::nchw<float>::tensor  inputs(1, 1, height, width);
+        int count = 1;
+        for (int i = 0 ; i < inputs.dimension(2) ; i+=2){
+            for (int j = 0 ; j < inputs.dimension(3) ; j+=2){
+                inputs(0, 0, i, j) = count;
+                count++;
+            }
+        }
+        std::cout << "Input tensor: " << std::endl;
+        print_tensor_hw(inputs);
+        auto output = net.inference(inputs);
+        std::cout << "Output tensor: " << std::endl;
+        print_tensor_hw(output);
+    }
+
     return 0;
 }
