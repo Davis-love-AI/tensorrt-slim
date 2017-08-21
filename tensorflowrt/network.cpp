@@ -202,7 +202,55 @@ const tfrt_pb::tensor& network::create_tensor(
     }
     return *pb_tensor;
 }
-
+const tfrt_pb::tensor& network::create_tensor(
+    std::string name, const tfrt::chw<float>::tensor& t, nvinfer1::DataType dt) const
+{
+    LOG(INFO) << "CREATE tfrt_pb::tensor '" << name;
+    // Create new tensor in the weights collection.
+    auto pb_tensor = m_pb_network->add_weights();
+    pb_tensor->set_name(name);
+    pb_tensor->set_datatype(tfrt_pb::DataType(int(dt)));
+    pb_tensor->set_size(0);
+    for (int i = 0 ; i < t.NumDimensions ; ++i) {
+        pb_tensor->add_shape(t.dimension(i));
+    }
+    // Set-up the weights.
+    pb_tensor->set_size(t.size());
+    if (dt == nvinfer1::DataType::kHALF) {
+        auto t_half = tfrt::chw<uint16_t>::tensor(
+            t.dimension(0), t.dimension(1), t.dimension(2));
+        cuda_float2half_array((float*)t.data(), t_half.data(), t.size());
+        pb_tensor->set_data(t_half.data(), t_half.size() * sizeof(uint16_t));
+    }
+    else {
+        pb_tensor->set_data(t.data(), t.size() * sizeof(float));
+    }
+    return *pb_tensor;
+}
+const tfrt_pb::tensor& network::create_tensor(
+    std::string name, const tfrt::c<float>::tensor& t, nvinfer1::DataType dt) const
+{
+    LOG(INFO) << "CREATE tfrt_pb::tensor '" << name;
+    // Create new tensor in the weights collection.
+    auto pb_tensor = m_pb_network->add_weights();
+    pb_tensor->set_name(name);
+    pb_tensor->set_datatype(tfrt_pb::DataType(int(dt)));
+    pb_tensor->set_size(0);
+    for (int i = 0 ; i < t.NumDimensions ; ++i) {
+        pb_tensor->add_shape(t.dimension(i));
+    }
+    // Set-up the weights.
+    pb_tensor->set_size(t.size());
+    if (dt == nvinfer1::DataType::kHALF) {
+        auto t_half = tfrt::c<uint16_t>::tensor(t.dimension(0));
+        cuda_float2half_array((float*)t.data(), t_half.data(), t.size());
+        pb_tensor->set_data(t_half.data(), t_half.size() * sizeof(uint16_t));
+    }
+    else {
+        pb_tensor->set_data(t.data(), t.size() * sizeof(float));
+    }
+    return *pb_tensor;
+} 
 
 const tfrt_pb::tensor& network::tensor_by_name(std::string name, nvinfer1::Dims wshape) const
 {

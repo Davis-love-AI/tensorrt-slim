@@ -235,6 +235,11 @@ public:
         float val, nvinfer1::DataType dt) const;
     const tfrt_pb::tensor& create_tensor(
         std::string name, const tfrt::nchw<float>::tensor& t, nvinfer1::DataType dt) const;   
+    const tfrt_pb::tensor& create_tensor(
+        std::string name, const tfrt::chw<float>::tensor& t, nvinfer1::DataType dt) const;
+    const tfrt_pb::tensor& create_tensor(
+        std::string name, const tfrt::c<float>::tensor& t, nvinfer1::DataType dt) const;   
+    
     /** Get a tensor by name. If not found, either create a new tensor to replace
      * or just return an empty tensor. */
     const tfrt_pb::tensor& tensor_by_name(std::string name, nvinfer1::Dims wshape) const;

@@ -910,6 +910,88 @@ protected:
     nvinfer1::ITensor* operator()(nvinfer1::ITensor*) { return nullptr; }
 };
 
+/* ============================================================================
+ * Non-standard layers!
+ * ========================================================================== */
+/** Bilinear 2d interpolation. Input is supposed to be "checkerboard" tensor,
+ * with zero entries between known values. Using a 3x3 filter by default.
+ */
+ class bilinear2d : public layer
+ {
+ public:
+     /** Constructor: declare the layer.
+      */
+    bilinear2d(const tfrt::scope& sc, const std::string& lname) :
+        layer(sc, lname) {
+    }
+    /** Add the layer to network graph, using operator(root).
+     */
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+         LOG(INFO) << "LAYER 2D bilinear interpolation '" << this->m_scope.name() << "'. "
+             << "Input shape: " << dims_str(net->getDimensions());
+         net = this->interpolation(net);
+         return this->mark_output(net);
+     }
+ 
+ private:
+    /** Bilinear interpolation. */
+    nvinfer1::ITensor* interpolation(nvinfer1::ITensor* input) {
+        auto inshape = static_cast<nvinfer1::DimsCHW&&>(input->getDimensions());
+        nvinfer1::IPoolingLayer* avglayer = nullptr;
+        // Average pooling as a first step.
+        avglayer = this->m_scope.network()->addPooling(
+            *input, nvinfer1::PoolingType::kAVERAGE, {3, 3});
+        CHECK_NOTNULL(avglayer);
+        // Set name, padding and stride.
+        avglayer->setName(this->m_scope.sub("avg_pool2d").cname());
+        avglayer->setPadding({1, 1});
+        avglayer->setStride({1, 1});
+        auto net = avglayer->getOutput(0);
+
+        // Second step: rescaling to adjust weights.
+        auto tf_net = this->m_scope.tfrt_network();
+        auto dt = tf_net->datatype();
+        auto wname = m_scope.sub("weights_scale").name();
+        auto wtensor = tf_net->create_tensor(wname, weights_scale(inshape), dt);
+        nvinfer1::Weights wzero{dt, nullptr, 0};    
+        auto slayer = this->m_scope.network()->addScale(
+            *net, nvinfer1::ScaleMode::kELEMENTWISE, 
+            tf_net->tensor_to_weights(wtensor), wzero, wzero);
+        CHECK_NOTNULL(slayer);
+        slayer->setName(this->m_scope.sub("scale").cname());
+        return slayer->getOutput(0);
+    }
+    /** Generate scaling weights.  */
+    tfrt::chw<float>::tensor weights_scale(const nvinfer1::DimsCHW& inshape)
+    {
+        tfrt::chw<float>::tensor w{inshape.c(), inshape.h(), inshape.c()};
+        // Generate scaling weights. A bit of a dirty hack for now...
+        for (long i = 0 ; i < w.dimension(1) ; ++i) {
+            for (long j = 0 ; j < w.dimension(2) ; ++j) {
+                // Rescaling value.
+                float val = 1.;
+                if (i % 2 == 0 && j % 2 == 0) {
+                    val = 9.;
+                }
+                else if (i % 2 == 1 && j % 2 == 0) {
+                    val = 9. / 2.;
+                }
+                else if (i % 2 == 0 && j % 2 == 1) {
+                    val = 9. / 2.;
+                }
+                else if (i % 2 == 1 && j % 2 == 1) {
+                    val = 9. / 4.;
+                }                      
+                for (long k = 0 ; k < w.dimension(0) ; ++k) {
+                    w(k, i, j) = val;
+                }
+            }
+        }
+        return w;
+    }
+ };
+ 
+
 /** Default layer configurations: ReLU activation, SAME padding and
  * no batch normalization.
  */

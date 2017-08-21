@@ -107,7 +107,7 @@ public:
      */
     virtual nvinfer1::ITensor* build(tfrt::scope sc)
     {
-        auto inshape = this->input_shape();
+        // auto inshape = this->input_shape();
         auto net = tfrt::input(sc)();
         tfrt::map_tensor end_points;
 
