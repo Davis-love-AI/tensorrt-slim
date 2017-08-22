@@ -917,9 +917,9 @@ protected:
 /** Bilinear 2d interpolation. Input is supposed to be "checkerboard" tensor,
  * with zero entries between known values. Using a 3x3 filter by default.
  */
- class bilinear2d : public layer
- {
- public:
+class bilinear2d : public layer
+{
+public:
      /** Constructor: declare the layer.
       */
     bilinear2d(const tfrt::scope& sc, const std::string& lname) :
@@ -934,13 +934,15 @@ protected:
          return this->mark_output(net);
      }
  
- private:
+private:
     /** Bilinear interpolation. */
     nvinfer1::ITensor* interpolation(nvinfer1::ITensor* input) {
+        auto tf_net = this->m_scope.tfrt_network();
+        auto dt = tf_net->datatype();
         auto inshape = static_cast<nvinfer1::DimsCHW&&>(input->getDimensions());
-        nvinfer1::IPoolingLayer* avglayer = nullptr;
+        
         // Average pooling as a first step.
-        avglayer = this->m_scope.network()->addPooling(
+        auto avglayer = this->m_scope.network()->addPooling(
             *input, nvinfer1::PoolingType::kAVERAGE, {3, 3});
         CHECK_NOTNULL(avglayer);
         // Set name, padding and stride.
@@ -948,24 +950,24 @@ protected:
         avglayer->setPadding({1, 1});
         avglayer->setStride({1, 1});
         auto net = avglayer->getOutput(0);
-
-        // Second step: rescaling to adjust weights.
-        auto tf_net = this->m_scope.tfrt_network();
-        auto dt = tf_net->datatype();
+        
+        // Compute scaling weights.
         auto wname = m_scope.sub("weights_scale").name();
-        auto wtensor = tf_net->create_tensor(wname, weights_scale(inshape), dt);
+        auto wtensor = tf_net->create_tensor(wname, this->weights_scale(inshape), dt);
+        nvinfer1::Weights wscale = tf_net->weights_by_name(wname, inshape);
         nvinfer1::Weights wzero{dt, nullptr, 0};    
+        // Second step: rescaling to adjust weights.
         auto slayer = this->m_scope.network()->addScale(
-            *net, nvinfer1::ScaleMode::kELEMENTWISE, 
-            tf_net->tensor_to_weights(wtensor), wzero, wzero);
+            *net, nvinfer1::ScaleMode::kELEMENTWISE,  wzero, wscale, wzero);
         CHECK_NOTNULL(slayer);
         slayer->setName(this->m_scope.sub("scale").cname());
-        return slayer->getOutput(0);
+        net = slayer->getOutput(0);
+        return net;
     }
     /** Generate scaling weights.  */
     tfrt::chw<float>::tensor weights_scale(const nvinfer1::DimsCHW& inshape)
     {
-        tfrt::chw<float>::tensor w{inshape.c(), inshape.h(), inshape.c()};
+        tfrt::chw<float>::tensor w{inshape.c(), inshape.h(), inshape.w()};
         // Generate scaling weights. A bit of a dirty hack for now...
         for (long i = 0 ; i < w.dimension(1) ; ++i) {
             for (long j = 0 ; j < w.dimension(2) ; ++j) {

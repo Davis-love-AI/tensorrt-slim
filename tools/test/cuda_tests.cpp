@@ -104,14 +104,16 @@ public:
     /** Build network. */
     virtual nvinfer1::ITensor* build(tfrt::scope sc)
     {
+        // this->create_missing_tensors(true);
         // Set basic parameters.
         this->datatype(nvinfer1::DataType::kFLOAT);
         this->input("input", {1, m_height, m_width});
         this->outputs({"avgpool"}, {{1, m_height, m_width}});
-
+        
         // Construct simple network...
         auto net = tfrt::input(sc)();
-        net = tfrt::avg_pool2d(sc, "avgpool").ksize({3, 3}).is_output(true)(net);
+        // net = tfrt::avg_pool2d(sc, "avgpool").ksize({3, 3}).is_output(true)(net);
+        net = tfrt::bilinear2d(sc, "avgpool").is_output(true)(net);
         return net;
     }
     tfrt::nchw<float>::tensor inference(const tfrt::nchw<float>::tensor& tensor)
@@ -181,26 +183,27 @@ int main(int argc, char **argv)
 
     // TEST TRANSPOSE CONVOLUTION.
     {
-        // int width = 2;
-        // int height = 2;
-        // transpose_conv_net net(width, height);
-        // net.load("");
+        int width = 2;
+        int height = 2;
+        transpose_conv_net net(width, height);
+        net.load("");
 
-        // tfrt::nchw<float>::tensor  inputs(1, 1, height, width);
-        // int count = 1;
-        // for (int i = 0 ; i < inputs.dimension(2) ; ++i){
-        //     for (int j = 0 ; j < inputs.dimension(3) ; ++j){
-        //         inputs(0, 0, i, j) = count;
-        //         count++;
-        //     }
-        // }
-        // std::cout << "Input tensor: " << std::endl;
-        // print_tensor_hw(inputs);
-        // auto output = net.inference(inputs);
-        // std::cout << "Output tensor: " << std::endl;
-        // print_tensor_hw(output);
-        // std::cout << "Output dimensions: "
-        //     << output.dimension(1) << " | " << output.dimension(2) << " | " << output.dimension(3) << std::endl;
+        tfrt::nchw<float>::tensor  inputs(1, 1, height, width);
+        inputs.setConstant(0.0);
+        int count = 1;
+        for (int i = 0 ; i < inputs.dimension(2) ; ++i){
+            for (int j = 0 ; j < inputs.dimension(3) ; ++j){
+                inputs(0, 0, i, j) = count;
+                count++;
+            }
+        }
+        std::cout << "Input tensor: " << std::endl;
+        print_tensor_hw(inputs);
+        auto output = net.inference(inputs);
+        std::cout << "Output tensor: " << std::endl;
+        print_tensor_hw(output);
+        std::cout << "Output dimensions: "
+            << output.dimension(1) << " | " << output.dimension(2) << " | " << output.dimension(3) << std::endl;
     }
     // TEST AVG POOLING
     {
@@ -210,6 +213,7 @@ int main(int argc, char **argv)
         net.load("");
 
         tfrt::nchw<float>::tensor  inputs(1, 1, height, width);
+        inputs.setConstant(0.0);
         int count = 1;
         for (int i = 0 ; i < inputs.dimension(2) ; i+=2){
             for (int j = 0 ; j < inputs.dimension(3) ; j+=2){
@@ -221,6 +225,7 @@ int main(int argc, char **argv)
         print_tensor_hw(inputs);
         auto output = net.inference(inputs);
         std::cout << "Output tensor: " << std::endl;
+        CUDA(cudaDeviceSynchronize());
         print_tensor_hw(output);
     }
 
