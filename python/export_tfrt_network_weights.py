@@ -58,11 +58,14 @@ tf.app.flags.DEFINE_float(
     'input_shift', 0.0, 'Input preprocessing shift.')
 tf.app.flags.DEFINE_float(
     'input_scale', 1.0, 'Input preprocessing scale.')
-
 tf.app.flags.DEFINE_string(
     'outputs_name', '', 'Name of the output tensors.')
+
 tf.app.flags.DEFINE_string(
     'fix_scopes', '', 'Scopes to be modify. Format: old0:new0,old1:new1')
+tf.app.flags.DEFINE_boolean(
+    'fix_1x1_transpose', False, 
+    'Fix 1x1 transpose convolution by replacing with 2x2 faster ones.')
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -143,6 +146,7 @@ def tensor_np_to_tfrt(sess, name, np_tensor, pb_tensor, permutation=[3, 2, 0, 1]
     # Permutation of axes.
     if permutation and a.ndim == len(permutation):
         a = np.transpose(a, axes=permutation)
+    
     # Modify 'depthwise weights'
     if 'depthwise_weights' in name:
         # GKCRS order. G == nb groups, K: nb outputs, C: nb inputs.
@@ -163,6 +167,15 @@ def tensor_np_to_tfrt(sess, name, np_tensor, pb_tensor, permutation=[3, 2, 0, 1]
         # for i in range(shape[1]):
         #     a_conv[i*shape[0]:(i+1)*shape[0], i] = a[:, i]
         a = a_conv
+
+    # Fixing 1x1 transpose convolution by replacing with 2x2 kernel.
+    if FLAGS.fix_1x1_transpose and a.ndim == 4 and a.shape[2] == 1 and a.shape[3] == 1 and 'tconv_weights' in name:
+        print('Fixing 1x1 transpose convolution by replacing with 2x2 kernel in:', name)
+        shape = list(a.shape)
+        shape[2] = shape[3] = 2
+        a_rt = np.zeros(shape, a.dtype)
+        a_rt[:, :, 0, 0] = np.squeeze(a)
+        a =  a_rt
 
     # Batch norm moving variables: transform into scaling parameters.
     # Must satisfy the equation y = s*x + b
