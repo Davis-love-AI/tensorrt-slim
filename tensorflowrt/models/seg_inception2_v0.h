@@ -39,13 +39,16 @@ typedef tfrt::convolution2d_transpose<tfrt::ActivationType::RELU, tfrt::PaddingT
 /** Additional feature layer.
  */
 inline nvinfer1::ITensor* seg_inception2_extra_feature(
-    nvinfer1::ITensor* net, nvinfer1::ITensor* net_side, tfrt::scope sc, int num_outputs, tfrt::map_tensor* end_points=nullptr)
+    nvinfer1::ITensor* net, nvinfer1::ITensor* net_side, tfrt::scope sc, 
+    int num_outputs, tfrt::map_tensor* end_points=nullptr)
 {
     LOG(INFO) << "BLOCK SEG inception2 extra-features '" << sc.name() << "'. "
             << "Input shape: " << tfrt::dims_str(net->getDimensions());
-    // 3x3 transpose convolution with stride=2.
+    // 2x2 transpose convolution with stride=2.
     net = conv2d_transpose(sc, "tconv3x3")
-        .ceil(true).noutputs(num_outputs).ksize({3, 3}).stride({2, 2})(net);
+        .noutputs(num_outputs).ksize({2, 2}).stride({2, 2}).padding({0, 0})(net);
+    // 3x3 convolution to smooth out the result...
+    net = conv2d(sc, "conv3x3").noutputs(num_outputs).ksize({3, 3})(net);
     // Additional side feature to add.
     if(net_side != nullptr) {
         LOG(INFO) << "Additional link shape: " << tfrt::dims_str(net_side->getDimensions());
@@ -66,7 +69,6 @@ inline nvinfer1::ITensor* seg_inception2_last_layer(
     net = conv2d(sc, "conv3x3").noutputs(num_outputs).ksize({3, 3})(net);
     return tfrt::add_end_point(end_points, sc.name(), net);
 }
-
 
 /** Inception2 base network.
  */
@@ -109,27 +111,40 @@ public:
         auto net = tfrt::input(sc)();
         tfrt::map_tensor end_points;
 
+         // Set (de)convolution formulas...
+         m_deconv2d_formula = tfrt::tf_conv2d_transpose_formula{1};
+         sc.network()->setDeconvolutionOutputDimensionsFormula(&m_deconv2d_formula);
+         // sc.network()->setConvolutionOutputDimensionsFormula(&tf_out_formula);
+         // sc.network()->setPoolingOutputDimensionsFormula(&tf_out_formula);
+ 
+
         // Build the Inception2 base.
         net = inception2_base(net, sc.sub("inception2_base"), &end_points);
         // Add segmentation extra-features.
         std::vector<std::string> feat_names = {"block6", "block7", "block8", "block9"};
-        std::vector<std::string> feat_names_in = {"Mixed_4e", "", "", "Conv2d_1a_7x7"};
-        std::vector<std::size_t> feat_size = {576, 256, 256, 64};
+        std::vector<std::string> feat_names_side =
+            {"Mixed_4e", "Mixed_3c", "Conv2d_2c_3x3", "Conv2d_1a_7x7"};
+        std::vector<std::size_t> feat_size = {384, 192, 96, 48};
         auto ssc = sc.sub("feat_layers_extra");
         for (size_t i = 0 ; i < feat_names.size() ; ++i) {
             // auto net1 = tfrt::find_end_point(&end_points, feat_names[i]);
-            auto net_in = tfrt::find_end_point(&end_points, feat_names_in[i]);
-            std::cout << "extra feat layer " << i << " " << net << " / " << net_in << std::endl;
+            auto net_in = tfrt::find_end_point(&end_points, feat_names_side[i]);
             net = seg_inception2_extra_feature(net, net_in, ssc.sub(feat_names[i]), feat_size[i]);
         }
         // Last convolution layer and softmax.
-        net = seg_inception2_last_layer(net, ssc.sub("block10"), 15);
+        int num_classes = this->num_classes() - int(!m_empty_class);
+        net = seg_inception2_last_layer(net, ssc.sub("block10"), num_classes);
         net = tfrt::softmax(sc, "Softmax")(net);
 
         // Clear any cached stuff...
         // this->clear_cache();
         return net;
     }
+
+private:
+    // TF output formulas.
+    tfrt::tf_conv2d_formula  m_conv2d_formula;
+    tfrt::tf_conv2d_transpose_formula  m_deconv2d_formula;
 };
 
 }
