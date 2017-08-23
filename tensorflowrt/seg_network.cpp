@@ -39,9 +39,9 @@ void seg_network::post_processing()
     // For God sake, used a fucking CUDA kernel for that!
     const auto& rtensor = m_cuda_outputs[0].tensor();
     const auto& oshape = m_cuda_outputs[0].shape;
-    DLOG(INFO) << "SEGNET: post-processing of output with shape: " 
+    LOG(INFO) << "SEGNET: post-processing of output with shape: " 
         << dims_str(m_cuda_outputs[0].shape);
-    CUDA(cudaDeviceSynchronize());
+    // CUDA(cudaDeviceSynchronize());
     for (long n = 0 ; n < rtensor.dimension(0) ; ++n) {
         for (long i = 0 ; i < rtensor.dimension(2) ; ++i) {
             for (long j = 0 ; j < rtensor.dimension(3) ; ++j) {
@@ -62,18 +62,20 @@ void seg_network::post_processing()
             }
         }
     }
-    CUDA(cudaDeviceSynchronize());
-    DLOG(INFO) << "SEGNET: done with post-processing of output";
+    // CUDA(cudaDeviceSynchronize());
+    LOG(INFO) << "SEGNET: done with post-processing of output";
 }
 
 void seg_network::inference(vx_image image)
 {
+    LOG(INFO) << "SEGNET: inference with single input.";    
     network::inference(image);
     // Post-processing of the output: computing classes and scores.
     this->post_processing();
 }
 void seg_network::inference(const nvx_image_inpatch& image)
 {
+    LOG(INFO) << "SEGNET: inference with single input.";    
     network::inference(image);
     // Post-processing of the output: computing classes and scores.
     this->post_processing();
@@ -81,14 +83,16 @@ void seg_network::inference(const nvx_image_inpatch& image)
 
 void seg_network::inference(vx_image img1, vx_image img2)
 {
+    LOG(INFO) << "SEGNET: inference with two inputs.";    
     network::inference(img1, img2);
-    CUDA(cudaDeviceSynchronize());
+    // CUDA(cudaDeviceSynchronize());
     this->post_processing();
 }
 void seg_network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2)
 {
+    LOG(INFO) << "SEGNET: inference with two inputs.";    
     network::inference(img1, img2);
-    CUDA(cudaDeviceSynchronize());
+    // CUDA(cudaDeviceSynchronize());
     this->post_processing();
 }   
 
