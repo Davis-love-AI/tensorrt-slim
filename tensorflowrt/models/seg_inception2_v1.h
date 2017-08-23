@@ -39,9 +39,12 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
 {
     LOG(INFO) << "BLOCK SEG inception2 extra-features '" << sc.name() << "'. "
             << "Input shape: " << tfrt::dims_str(net->getDimensions());
-    // 2x2 transpose convolution with stride=2.
-    net = conv2d_transpose(sc, "tconv3x3")
+
+    // 2x2 (1x1 in fact) convolution + bilinear interpolation.
+    net = conv2d_transpose(sc, "tconv1x1_bilinear")
         .noutputs(num_outputs).ksize({2, 2}).stride({2, 2}).padding({0, 0})(net);
+    net = tfrt::bilinear2d(sc, "interpolation_bilinear")(net);
+        
     // 3x3 convolution to smooth out the result...
     net = conv2d(sc, "conv3x3").noutputs(num_outputs).ksize({3, 3})(net);
     // Additional side feature to add.
