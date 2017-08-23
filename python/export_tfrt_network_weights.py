@@ -176,6 +176,8 @@ def tensor_np_to_tfrt(sess, name, np_tensor, pb_tensor, permutation=[3, 2, 0, 1]
         a_rt = np.zeros(shape, a.dtype)
         a_rt[:, :, 0, 0] = np.squeeze(a)
         a =  a_rt
+        # FIX name. TODO: find a better way than this stupid naming convention in TF layer.
+        name = name.replace('tconv_weights', 'weights')
 
     # Batch norm moving variables: transform into scaling parameters.
     # Must satisfy the equation y = s*x + b
