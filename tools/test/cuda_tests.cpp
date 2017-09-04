@@ -210,6 +210,7 @@ int main(int argc, char **argv)
         int width = 4;
         int height = 4;
         avg_pool_net net(width, height);
+        net.datatype(nvinfer1::DataType::kHALF);
         net.load("");
 
         tfrt::nchw<float>::tensor  inputs(1, 1, height, width);

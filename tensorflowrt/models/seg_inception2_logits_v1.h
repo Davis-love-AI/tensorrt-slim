@@ -67,8 +67,7 @@ inline nvinfer1::ITensor* seg_inception2_logits(
             << "Input shape: " << tfrt::dims_str(net->getDimensions());
     // 3x3 logits convolution.
     typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
-    auto net_logits1 = conv2d(sc, "conv3x3_logits")
-        .noutputs(num_classes).ksize({3, 3})(net);
+    auto net_logits1 = conv2d(sc, "conv3x3_logits").noutputs(num_classes).ksize({3, 3})(net);
     
     // Connect to top logits if existing.
     if (top_logits != nullptr) {
@@ -166,8 +165,7 @@ public:
         // Last logits.
         {
             auto ssc = fsc.sub("block10");
-            logits = seg_inception2_logits(net, logits, ssc, num_classes,
-                false);   
+            logits = seg_inception2_logits(net, logits, ssc, num_classes, false);   
         }
         // softmax prediction...
         net = tfrt::softmax(sc, "Softmax")(logits);
