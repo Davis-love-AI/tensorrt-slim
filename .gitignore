@@ -19,6 +19,7 @@ __pycache__*
 *.ckpt.meta
 *.ckpt.data-00000-of-00001
 data/networks/*.tar.gz
+data/networks/checkpoints/*
 
 # Build directory.
 build/

@@ -150,11 +150,16 @@ public:
         
         for (size_t i = 0 ; i < feat_names.size() ; ++i) {
             auto ssc = fsc.sub(feat_names[i]);
-            // Construct feature.
+            // Compute logits using previous feature.
+            logits = seg_inception2_logits(net, logits, ssc, num_classes);
+            // Construct next feature.
             auto net_in = tfrt::find_end_point(&end_points, feat_names_side[i]);
             net = seg_inception2_extra_feature(net, net_in, ssc, feat_size[i]);
-            // Compute logits using the feature.
-            logits = seg_inception2_logits(net, logits, ssc, num_classes);
+        }
+        // Last logits.
+        {
+            auto ssc = fsc.sub("block10");
+            logits = seg_inception2_logits(net, logits, ssc, num_classes);   
         }
         // softmax prediction...
         net = tfrt::softmax(sc, "Softmax")(logits);
