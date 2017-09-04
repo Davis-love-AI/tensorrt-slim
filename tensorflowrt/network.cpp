@@ -611,8 +611,8 @@ bool network::profile_model(nvinfer1::IHostMemory** nv_model_stream)
                     builder->platformHasFastFp16());
     LOG_IF(INFO, useFP16) << LOG_GIE << "Configure network with FP16 data type.";
     LOG_IF(INFO, !useFP16) << LOG_GIE << "Configure network with FP32 data type.";
-    builder->setHalf2Mode(useFP16);
-    // builder->setHalf2Mode(builder->platformHasFastFp16());
+    // builder->setHalf2Mode(useFP16);
+    builder->setHalf2Mode(builder->platformHasFastFp16());
 
     nvinfer1::ICudaEngine* engine = builder->buildCudaEngine(*network);
     CHECK_NOTNULL(engine);
