@@ -60,7 +60,8 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
  */
 inline nvinfer1::ITensor* seg_inception2_logits(
     nvinfer1::ITensor* net, nvinfer1::ITensor* top_logits, tfrt::scope sc,
-    int num_classes, tfrt::map_tensor* end_points=nullptr)
+    int num_classes, bool maxpool2d_interp=true,
+    tfrt::map_tensor* end_points=nullptr)
 {
     LOG(INFO) << "BLOCK SEG inception2 logits '" << sc.name() << "'. "
             << "Input shape: " << tfrt::dims_str(net->getDimensions());
@@ -75,7 +76,13 @@ inline nvinfer1::ITensor* seg_inception2_logits(
         // MAX pool upscaling.
         auto net_logits2 = conv2d_transpose(sc, "tconv1x1_bilinear_logits")
             .noutputs(num_classes).ksize({2, 2}).stride({2, 2}).padding({0, 0})(top_logits);
-        net_logits2 = tfrt::max_pool2d(sc, "maxpool2d_interpolation").ksize({3, 3})(net_logits2);
+        if (maxpool2d_interp) {
+            net_logits2 = tfrt::max_pool2d(sc, "maxpool2d_interpolation")
+                .ksize({3, 3})(net_logits2);
+        }
+        else {
+            net_logits2 = tfrt::bilinear2d(sc, "interpolation_bilinear")(net_logits2);
+        }
         // ADD the two!
         net_logits1 = tfrt::add(sc, "add_logits")(net_logits1, net_logits2);
     }
@@ -159,7 +166,8 @@ public:
         // Last logits.
         {
             auto ssc = fsc.sub("block10");
-            logits = seg_inception2_logits(net, logits, ssc, num_classes);   
+            logits = seg_inception2_logits(net, logits, ssc, num_classes,
+                false);   
         }
         // softmax prediction...
         net = tfrt::softmax(sc, "Softmax")(logits);
