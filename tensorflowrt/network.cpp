@@ -250,7 +250,7 @@ const tfrt_pb::tensor& network::create_tensor(
         pb_tensor->set_data(t.data(), t.size() * sizeof(float));
     }
     return *pb_tensor;
-} 
+}
 
 const tfrt_pb::tensor& network::tensor_by_name(std::string name, nvinfer1::Dims wshape) const
 {
@@ -317,6 +317,25 @@ network& network::datatype(nvinfer1::DataType dt)
 {
     m_pb_network->set_datatype(tfrt_pb::DataType(int(dt)));
     return *this;
+}
+// Max batch size and workspace.
+network& network::max_batch_size(uint32_t bsize)
+{
+    m_max_batch_size = bsize;
+    return *this;
+}
+uint32_t network::max_batch_size() const
+{
+    return m_max_batch_size;
+}
+network& network::max_workspace_size(uint32_t wsize)
+{
+    m_workspace_size = wsize;
+    return *this;
+}
+uint32_t network::max_workspace_size() const
+{
+    return m_workspace_size;
 }
 // Input and outputs getters / setters.
 network& network::input(std::string name, nvinfer1::DimsCHW shape)
@@ -601,7 +620,9 @@ bool network::profile_model(nvinfer1::IHostMemory** nv_model_stream)
 
     // Build the engine
     LOG(INFO) << LOG_GIE << "Configuring CUDA engine.";
+    LOG(INFO) << LOG_GIE << "Max batch size: " << m_max_batch_size;
     builder->setMaxBatchSize(m_max_batch_size);
+    LOG(INFO) << LOG_GIE << "Max workspace size: " << m_workspace_size;
     builder->setMaxWorkspaceSize(m_workspace_size);
     // Set up the floating mode.
     bool compatibleType = (this->datatype() == nvinfer1::DataType::kFLOAT ||

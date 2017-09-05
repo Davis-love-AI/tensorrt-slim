@@ -109,7 +109,7 @@ public:
         this->datatype(nvinfer1::DataType::kFLOAT);
         this->input("input", {1, m_height, m_width});
         this->outputs({"avgpool"}, {{1, m_height, m_width}});
-        
+
         // Construct simple network...
         auto net = tfrt::input(sc)();
         // net = tfrt::avg_pool2d(sc, "avgpool").ksize({3, 3}).is_output(true)(net);
@@ -211,6 +211,7 @@ int main(int argc, char **argv)
         int height = 4;
         avg_pool_net net(width, height);
         net.datatype(nvinfer1::DataType::kHALF);
+        net.max_workspace_size(16 << 24);
         net.load("");
 
         tfrt::nchw<float>::tensor  inputs(1, 1, height, width);

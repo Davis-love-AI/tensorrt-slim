@@ -191,9 +191,9 @@ public:
         // m_pb_network(new tfrt_pb::network()),
         m_pb_network(std::make_unique<tfrt_pb::network>()),
         m_nv_infer{nullptr}, m_nv_engine{nullptr}, m_nv_context{nullptr},
-        m_max_batch_size{2}, m_workspace_size{16 << 22},
+        m_max_batch_size{2}, m_workspace_size{16 << 20},
         m_enable_profiler{false}, m_enable_debug{false},
-        m_missing_tensors{false}  
+        m_missing_tensors{false}
     {
         this->name(name);
     }
@@ -212,6 +212,13 @@ public:
     network& name(const std::string& name);
     nvinfer1::DataType datatype() const;
     network& datatype(nvinfer1::DataType dt);
+
+    // Max batch size and workspace.
+    network& max_batch_size(uint32_t bsize);
+    uint32_t max_batch_size() const;
+    network& max_workspace_size(uint32_t wsize);
+    uint32_t max_workspace_size() const;
+
     // Input and outputs getters.
     network& input(std::string name, nvinfer1::DimsCHW shape);
     nvinfer1::DimsCHW input_shape() const;
@@ -234,12 +241,12 @@ public:
     const tfrt_pb::tensor& create_tensor(std::string name, nvinfer1::Dims shape,
         float val, nvinfer1::DataType dt) const;
     const tfrt_pb::tensor& create_tensor(
-        std::string name, const tfrt::nchw<float>::tensor& t, nvinfer1::DataType dt) const;   
+        std::string name, const tfrt::nchw<float>::tensor& t, nvinfer1::DataType dt) const;
     const tfrt_pb::tensor& create_tensor(
         std::string name, const tfrt::chw<float>::tensor& t, nvinfer1::DataType dt) const;
     const tfrt_pb::tensor& create_tensor(
-        std::string name, const tfrt::c<float>::tensor& t, nvinfer1::DataType dt) const;   
-    
+        std::string name, const tfrt::c<float>::tensor& t, nvinfer1::DataType dt) const;
+
     /** Get a tensor by name. If not found, either create a new tensor to replace
      * or just return an empty tensor. */
     const tfrt_pb::tensor& tensor_by_name(std::string name, nvinfer1::Dims wshape) const;
@@ -274,7 +281,7 @@ public:
 
 protected:
     // Basic inference methods: single image, nvx images, ...
-    /** Inference on a NCHW tensor (host memory). 
+    /** Inference on a NCHW tensor (host memory).
      * Note: easy to use, but not optimized as performing a copy + cuda sync at every call.
      */
     void inference(const tfrt::nchw<float>::tensor& tensor);
@@ -284,13 +291,13 @@ protected:
      * Input image is supposed to be in RGBA, uint8 format.
      */
     void inference(vx_image image);
-    void inference(const tfrt::nvx_image_inpatch& image);     
+    void inference(const tfrt::nvx_image_inpatch& image);
     /** Inference on two VX images.
      * Input images are supposed to be in RGBA, uint8 format.
      */
     void inference(vx_image img1, vx_image img2);
-    void inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2);     
-    
+    void inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2);
+
 protected:
     /** Find a output CUDA tensor from the all collection! Return first partial match.
      */
