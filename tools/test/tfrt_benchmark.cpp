@@ -132,7 +132,7 @@ ICudaEngine* tfrt_to_gie_model()
 
     // Build the engine
     builder->setMaxBatchSize(FLAGS_batch_size);
-    builder->setMaxWorkspaceSize(FLAGS_workspace << 20);
+    builder->setMaxWorkspaceSize(FLAGS_workspace << 22);
     // Set up the floating mode.
     bool compatibleType = (tf_network->datatype() == nvinfer1::DataType::kFLOAT ||
                             builder->platformHasFastFp16());
@@ -144,9 +144,9 @@ ICudaEngine* tfrt_to_gie_model()
     builder->setHalf2Mode(useFP16);
 
     ICudaEngine* engine = builder->buildCudaEngine(*network);
-    if (engine == nullptr)
-        std::cout << "could not build engine" << std::endl;
-
+    if (engine == nullptr) {
+        std::cout << "Could not build engine" << std::endl;
+    }
     network->destroy();
     builder->destroy();
     tf_network->clear_weights();
