@@ -30,6 +30,10 @@
 
 namespace nvinfer1
 {
+/** Host memory object. */
+typedef std::stringstream IHostMemory;
+
+/** Dimension types. */
 enum class DimensionType : int
 {
     kSPATIAL = 0,			//!< elements correspond to different spatial data
@@ -37,6 +41,7 @@ enum class DimensionType : int
     kINDEX = 2,				//!< elements correspond to different batch index
     kSEQUENCE = 3			//!< elements correspond to different sequence values
 };
+/** Dimensions classes. */
 class Dims
 {
 public:

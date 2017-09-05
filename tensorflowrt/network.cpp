@@ -488,8 +488,15 @@ bool network::load(std::string filename)
     // Inference runtime + engine + execution context.
     nvinfer1::IRuntime* infer = nvinfer1::createInferRuntime(m_gie_logger);
     CHECK_NOTNULL(infer);
+    // TensorRT 1
+    #ifndef NV_TENSORRT_MAJOR
+    std::istringstream  model_stream{model_buffer};
+    nvinfer1::ICudaEngine* engine = infer->deserializeCudaEngine(model_stream);
+    // TensorRT 2
+    #else
     nvinfer1::ICudaEngine* engine = infer->deserializeCudaEngine(
         model_buffer.data(), model_buffer.size(), nullptr);
+    #endif
     CHECK_NOTNULL(engine);
     nvinfer1::IExecutionContext* context = engine->createExecutionContext();
     CHECK_NOTNULL(context);
@@ -584,12 +591,22 @@ bool network::serialize_model(const std::string& filename, std::string& model_bu
         LOG(WARNING) << LOG_GIE << "Could not read cached model. Back to th' old way.";
     }
     LOG(INFO) << LOG_GIE << "Building and profiling the network model.";
+    // TensorRT 1
+    #ifndef NV_TENSORRT_MAJOR   
+    nvinfer1::IHostMemory  nv_model_stream;
+    nv_model_stream.seekg(0, nv_model_stream.beg);
+    auto pnv_model_stream = &nv_model_stream;
+    this->profile_model(&pnv_model_stream);
+    model_buffer = nv_model_stream.str();
+    // TensorRT 2
+    #else   
     nvinfer1::IHostMemory* nv_model_stream{nullptr};
     this->profile_model(&nv_model_stream);
     this->clear_weights();
     // TODO: fix this ugly copy of buffer!
     model_buffer.assign((char*)nv_model_stream->data(), nv_model_stream->size());
     nv_model_stream->destroy();
+    #endif
 
     if(caching && filename.length()) {
         LOG(INFO) << LOG_GIE << "Writing cached model to: " << filename_cache.str();
@@ -644,8 +661,11 @@ bool network::profile_model(nvinfer1::IHostMemory** nv_model_stream)
     network->destroy();
     // Serialize the engine, then close everything down
     LOG(INFO) << LOG_GIE << "Serializing the engine.";
-    // engine->serialize(model_stream);
+    #ifndef NV_TENSORRT_MAJOR   // TensorRT 1
+    engine->serialize(**nv_model_stream);
+    #else   // TensorRT 2
     (*nv_model_stream) = engine->serialize();
+    #endif
     engine->destroy();
     builder->destroy();
     return true;
