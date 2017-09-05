@@ -152,11 +152,17 @@ ICudaEngine* tfrt_to_gie_model()
     tf_network->clear_weights();
     return engine;
 }
-void model_serialized(IHostMemory *&gieModelStream)
+void model_serialized(IHostMemory*& gieModelStream)
 {
     auto engine = tfrt_to_gie_model();
     // serialize the engine.
+    // TensorRT 1
+    #ifndef NV_TENSORRT_MAJOR   
+    engine->serialize(*gieModelStream);
+    // TensorRT 2
+    #else   
     gieModelStream = engine->serialize();
+    #endif
     engine->destroy();
 }
 
@@ -205,32 +211,39 @@ int main(int argc, char** argv)
 
     std::cout << "Building and running a GPU inference engine N=2..." << std::endl;
 
-    // parse the caffe model and the mean file
+    // Parse the model file.
+    #ifndef NV_TENSORRT_MAJOR   
+    nvinfer1::IHostMemory  gieModelStream;
+    gieModelStream.seekg(0, gieModelStream.beg);
+    auto pgieModelStream = &gieModelStream;
+    model_serialized(pgieModelStream);
+    #else
     IHostMemory* gieModelStream{nullptr};
     model_serialized(gieModelStream);
+    #endif
 
-    // create an engine
+    // Create an engine
     IRuntime* infer = createInferRuntime(gLogger);
-    ICudaEngine* engine = infer->deserializeCudaEngine(gieModelStream->data(), gieModelStream->size(), nullptr);
+    #ifndef NV_TENSORRT_MAJOR   
+    nvinfer1::ICudaEngine* engine = infer->deserializeCudaEngine(gieModelStream);
+    #else
+    ICudaEngine* engine = infer->deserializeCudaEngine(gieModelStream->data(),
+        gieModelStream->size(), nullptr);
+    #endif
 
-        printf("Bindings after deserializing:\n");
-        for (int bi = 0; bi < engine->getNbBindings(); bi++) {
-               if (engine->bindingIsInput(bi) == true) {
-        printf("Binding %d (%s): Input.\n",  bi, engine->getBindingName(bi));
-               } else {
-        printf("Binding %d (%s): Output.\n", bi, engine->getBindingName(bi));
-               }
-           }
-
+    printf("Bindings after deserializing:\n");
+    for (int bi = 0; bi < engine->getNbBindings(); bi++) {
+        if (engine->bindingIsInput(bi) == true) {
+            printf("Binding %d (%s): Input.\n",  bi, engine->getBindingName(bi));
+        } else {
+            printf("Binding %d (%s): Output.\n", bi, engine->getBindingName(bi));
+        }
+    }
     // run inference with null data to time network performance
     timeInference(engine, FLAGS_batch_size);
-
     engine->destroy();
     infer->destroy();
-
     gProfiler.printLayerTimes();
-
     std::cout << "Done." << std::endl;
-
     return 0;
 }
