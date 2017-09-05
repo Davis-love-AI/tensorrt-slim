@@ -311,13 +311,13 @@ network& network::name(const std::string& name) {
 nvinfer1::DataType network::datatype() const {
     // Datatype of the network. Hopefully consistent with weights...
     auto dt = m_pb_network->datatype();
-    LOG(INFO) << LOG_GIE << "Network datatype: " << int(this->datatype());
+    LOG(INFO) << LOG_GIE << "Get network datatype: " << int(m_pb_network->datatype());
     return nvinfer1::DataType(int(dt));
 }
 network& network::datatype(nvinfer1::DataType dt)
 {
     m_pb_network->set_datatype(tfrt_pb::DataType(int(dt)));
-    LOG(INFO) << LOG_GIE << "Network datatype: " << int(this->datatype());
+    LOG(INFO) << LOG_GIE << "Set network datatype: " << int(this->datatype());
     return *this;
 }
 // Max batch size and workspace.

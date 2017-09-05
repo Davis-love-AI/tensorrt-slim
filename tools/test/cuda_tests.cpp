@@ -62,7 +62,7 @@ public:
     virtual nvinfer1::ITensor* build(tfrt::scope sc)
     {
         // Set basic parameters.
-        this->datatype(nvinfer1::DataType::kFLOAT);
+        // this->datatype(nvinfer1::DataType::kFLOAT);
         this->input("input", {1, m_height, m_width});
         this->outputs({"tconv"}, {{1, m_height*2, m_width*2}});
 
@@ -106,7 +106,7 @@ public:
     {
         // this->create_missing_tensors(true);
         // Set basic parameters.
-        this->datatype(nvinfer1::DataType::kFLOAT);
+        // this->datatype(nvinfer1::DataType::kFLOAT);
         this->input("input", {1, m_height, m_width});
         this->outputs({"avgpool"}, {{1, m_height, m_width}});
 
@@ -186,7 +186,7 @@ int main(int argc, char **argv)
         int width = 2;
         int height = 2;
         transpose_conv_net net(width, height);
-        // net.datatype(nvinfer1::DataType::kHALF);
+        net.datatype(nvinfer1::DataType::kHALF);
         net.max_workspace_size(16 << 24);
         net.load("");
 
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
         int width = 4;
         int height = 4;
         avg_pool_net net(width, height);
-        // net.datatype(nvinfer1::DataType::kHALF);
+        net.datatype(nvinfer1::DataType::kHALF);
         net.max_workspace_size(16 << 24);
         net.load("");
 
