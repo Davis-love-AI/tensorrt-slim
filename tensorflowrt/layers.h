@@ -339,6 +339,20 @@ public:
             return odims;
         // }
     }
+    // TensorRT 1 compatibility.
+    #ifndef NV_TENSORRT_MAJOR
+    virtual nvinfer1::Dims2 compute(
+        nvinfer1::Dims2 inshape, nvinfer1::Dims2 ksize,
+        nvinfer1::Dims2 stride, nvinfer1::Dims2 padding, const char* layerName)
+    {
+        // SAME TF padding?
+        nvinfer1::Dims2 odims{
+            int(std::ceil(float(inshape.h / float(stride.h)))),
+            int(std::ceil(float(inshape.w / float(stride.w))))
+        };
+        return odims;
+    }
+    #endif
 };
 
 /** Generic 2D operation, with the following common structure:
@@ -679,6 +693,20 @@ public:
         };
         return odims;
     }
+    // TensorRT 1 compatibility.
+    #ifndef NV_TENSORRT_MAJOR
+    virtual nvinfer1::Dims2 compute(
+        nvinfer1::Dims2 inshape, nvinfer1::Dims2 ksize,
+        nvinfer1::Dims2 stride, nvinfer1::Dims2 padding, const char* layerName)
+    {
+        // Change a bit the formula...
+        nvinfer1::Dims2 odims{
+            (inshape.h - 1) * stride.h + ksize.h - 2 * padding.h - m_cutshape.h(),
+            (inshape.w - 1) * stride.w + ksize.w - 2 * padding.w - m_cutshape.w()
+        };
+        return odims;
+    }
+    #endif
 private:
     nvinfer1::DimsHW  m_cutshape;
 };
@@ -731,6 +759,20 @@ public:
             };
             return odims;
         }
+        // TensorRT 1 compatibility.
+        #ifndef NV_TENSORRT_MAJOR
+        virtual nvinfer1::Dims2 compute(
+            nvinfer1::Dims2 inshape, nvinfer1::Dims2 ksize,
+            nvinfer1::Dims2 stride, nvinfer1::Dims2 padding, const char* layerName)
+        {
+            // Change a bit the formula...
+            nvinfer1::Dims2 odims{
+                (inshape.h - 1) * stride.h + ksize.h - 2 * padding.h + 1 ,
+                (inshape.w - 1) * stride.w + ksize.w - 2 * padding.w + 1
+            };
+            return odims;
+        }
+        #endif
     };
 
 protected:
