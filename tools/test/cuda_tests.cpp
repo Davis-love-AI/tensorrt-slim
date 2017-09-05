@@ -186,6 +186,8 @@ int main(int argc, char **argv)
         int width = 2;
         int height = 2;
         transpose_conv_net net(width, height);
+        net.datatype(nvinfer1::DataType::kHALF);
+        net.max_workspace_size(16 << 24);
         net.load("");
 
         tfrt::nchw<float>::tensor  inputs(1, 1, height, width);
