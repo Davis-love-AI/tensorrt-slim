@@ -625,6 +625,7 @@ bool network::profile_model(nvinfer1::IHostMemory** nv_model_stream)
     LOG(INFO) << LOG_GIE << "Max workspace size: " << m_workspace_size;
     builder->setMaxWorkspaceSize(m_workspace_size);
     // Set up the floating mode.
+    LOG(INFO) << LOG_GIE << "Network datatype: " << int(this->datatype());
     bool compatibleType = (this->datatype() == nvinfer1::DataType::kFLOAT ||
                            builder->platformHasFastFp16());
     CHECK(compatibleType) << LOG_GIE << "Can not build network with FP16 data type. Platform not compatible.";
