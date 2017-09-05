@@ -311,7 +311,7 @@ network& network::name(const std::string& name) {
 nvinfer1::DataType network::datatype() const {
     // Datatype of the network. Hopefully consistent with weights...
     auto dt = m_pb_network->datatype();
-    LOG(INFO) << LOG_GIE << "Get network datatype: " << int(m_pb_network->datatype());
+    // LOG(INFO) << LOG_GIE << "Get network datatype: " << int(m_pb_network->datatype());
     return nvinfer1::DataType(int(dt));
 }
 network& network::datatype(nvinfer1::DataType dt)
