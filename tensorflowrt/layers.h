@@ -1106,7 +1106,8 @@ private:
         return w;
     }
 };
-typedef bilinear2d_conv  bilinear2d;
+// typedef bilinear2d_conv  bilinear2d;
+typedef bilinear2d_pool  bilinear2d;
 
 /* ============================================================================
  * Naming.
