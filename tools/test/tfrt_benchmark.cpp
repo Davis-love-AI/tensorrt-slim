@@ -48,7 +48,9 @@ DEFINE_int32(batch_size, 2, "Batch size.");
 DEFINE_int32(workspace, 16, "Workspace size in MB.");
 DEFINE_int32(height, 224, "Input height.");
 DEFINE_int32(width, 224, "Input height.");
+
 DEFINE_bool(debug, false, "TensorRT debug mode.");
+DEFINE_bool(verbose, false, "TensorRT verbose mode.");
 
 // static const int BATCH_SIZE = 2;
 static const int TIMING_ITERATIONS = 1000;
@@ -61,8 +63,9 @@ class Logger : public ILogger
 {
     void log(Severity severity, const char* msg) override
     {
-        if (severity!=Severity::kINFO)
+        if (severity != Severity::kINFO || FLAGS_verbose) {
             std::cout << msg << std::endl;
+        }
     }
 } gLogger;
 
