@@ -135,6 +135,7 @@ void createMemory(const ICudaEngine& engine, std::vector<void*>& buffers, const 
     float* localMem = new float[eltCount];
     for (size_t i = 0; i < eltCount; i++) {
         localMem[i] = (float(rand()) / RAND_MAX) * 2 - 1;
+        localMem[i] = 0.f;
     }
     void* deviceMem;
     CHECK_CUDA(cudaMalloc(&deviceMem, memSize));
