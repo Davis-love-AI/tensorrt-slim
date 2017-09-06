@@ -128,8 +128,9 @@ public:
             {"Mixed_4e", "Mixed_3c", "Conv2d_2c_3x3", "Conv2d_1a_7x7"};
         std::vector<std::size_t> feat_size = {384, 192, 96, 48};
         auto ssc = sc.sub("feat_layers_extra");
-        for (size_t i = 0 ; i < feat_names.size() ; ++i) {
-            // auto net1 = tfrt::find_end_point(&end_points, feat_names[i]);
+        // for (size_t i = 0 ; i < feat_names.size() ; ++i) {
+        for (size_t i = 0 ; i < 1 ; ++i) {
+                // auto net1 = tfrt::find_end_point(&end_points, feat_names[i]);
             auto net_in = tfrt::find_end_point(&end_points, feat_names_side[i]);
             net = seg_inception2_extra_feature(net, net_in, ssc.sub(feat_names[i]), feat_size[i]);
         }
