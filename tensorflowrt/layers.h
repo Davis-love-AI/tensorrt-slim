@@ -958,17 +958,16 @@ protected:
  * ========================================================================== */
 /** Bilinear 2d interpolation. Input is supposed to be "checkerboard" tensor,
  * with zero entries between known values. Using a 3x3 filter by default.
+ * This implementation is based on average pooling.
  */
-class bilinear2d : public layer
+class bilinear2d_pool : public layer
 {
 public:
-     /** Constructor: declare the layer.
-      */
-    bilinear2d(const tfrt::scope& sc, const std::string& lname) :
+    /** Constructor: declare the layer. */
+    bilinear2d_pool(const tfrt::scope& sc, const std::string& lname) :
         layer(sc, lname) {
     }
-    /** Add the layer to network graph, using operator(root).
-     */
+    /** Add the layer to network graph, using operator(root).*/
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
          LOG(INFO) << "LAYER 2D bilinear interpolation '" << this->m_scope.name() << "'. "
              << "Input shape: " << dims_str(net->getDimensions());
@@ -1034,9 +1033,82 @@ private:
         }
         return w;
     }
- };
+};
  
 
+/** Bilinear 2d interpolation. Input is supposed to be "checkerboard" tensor,
+ * with zero entries between known values. Using a 3x3 filter by default.
+ * This implementation is based 3x3 convolution, which surprisingly seems
+ * to perform better.
+ */
+class bilinear2d_conv : public layer
+{
+public:
+    /** Constructor: declare the layer. */
+    bilinear2d_conv(const tfrt::scope& sc, const std::string& lname) :
+        layer(sc, lname) {
+    }
+    /** Add the layer to network graph, using operator(root). */
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        LOG(INFO) << "LAYER 2D bilinear interpolation '" << this->m_scope.name() << "'. "
+            << "Input shape: " << dims_str(net->getDimensions());
+        net = this->interpolation(net);
+        return this->mark_output(net);
+    }
+
+private:
+    /** Bilinear interpolation. */
+    nvinfer1::ITensor* interpolation(nvinfer1::ITensor* input) {
+        auto tf_net = this->m_scope.tfrt_network();
+        auto dt = tf_net->datatype();
+        auto inshape = static_cast<nvinfer1::DimsCHW&&>(input->getDimensions());
+        // Interpolation weights.
+        auto wname = m_scope.sub("weights_interpolation").name();
+        auto wtensor = tf_net->create_tensor(wname, 
+            this->weights_interpolation(inshape), dt);
+        nvinfer1::Weights weights = tf_net->weights_by_name(wname, inshape);
+        nvinfer1::Weights biases{dt, nullptr, 0};   
+        // Convolution layer.
+        nvinfer1::IConvolutionLayer* convlayer = nullptr;
+        convlayer = this->m_scope.network()->addConvolution(
+            *input, inshape.c(), {3, 3}, weights, biases);
+        CHECK_NOTNULL(convlayer);
+        // Set name, padding, stride and nb groups.
+        convlayer->setName(this->m_scope.sub("conv2d_interpolation").cname());
+        convlayer->setPadding({1, 1});
+        convlayer->setStride({1, 1});
+        convlayer->setNbGroups(1);
+        return convlayer->getOutput(0);
+    }
+    /** Generate convolution weights. */
+    tfrt::nchw<float>::tensor weights_interpolation(const nvinfer1::DimsCHW& inshape)
+    {
+        // Try group convolution?
+        // GKCRS order: G == nb groups, K: nb outputs, C: nb inputs.
+        tfrt::nchw<float>::tensor w{inshape.c(), inshape.c(), 3, 3};
+        w.setConstant(0.0);
+        for (long i = 0 ; i < inshape.c() ; ++i) {
+            // Interpolation grid.
+            w(i, i, 0, 0) = 0.25;
+            w(i, i, 2, 2) = 0.25;
+            w(i, i, 0, 2) = 0.25;
+            w(i, i, 2, 0) = 0.25;
+
+            w(i, i, 1, 0) = 0.5;
+            w(i, i, 0, 1) = 0.5;
+            w(i, i, 2, 1) = 0.5;
+            w(i, i, 1, 2) = 0.5;
+
+            w(i, i, 1, 1) = 1.;            
+        }
+        return w;
+    }
+};
+typedef bilinear2d_conv  bilinear2d;
+
+/* ============================================================================
+ * Naming.
+ * ========================================================================== */
 /** Default layer configurations: ReLU activation, SAME padding and
  * no batch normalization.
  */
@@ -1051,6 +1123,9 @@ typedef activation<ActivationType::RELU>    relu;
 typedef activation<ActivationType::SIGMOID> sigmoid;
 typedef activation<ActivationType::TANH>    tanh;
 typedef activation<ActivationType::SOFTMAX> softmax;
+
+typedef add sum;
+typedef multiply mul;
 
 }
 
