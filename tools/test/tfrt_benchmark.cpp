@@ -45,7 +45,7 @@ DEFINE_string(network, "ssd_inception2_v0", "SSD network network to test.");
 DEFINE_string(network_pb, "../data/networks/ssd_inception2_v0_orig.tfrt32",
     "Network protobuf parameter file.");
 DEFINE_int32(batch_size, 2, "Batch size.");
-DEFINE_int32(workspace, 16, "Workspace size.");
+DEFINE_int32(workspace, 16, "Workspace size in MB.");
 DEFINE_int32(height, 224, "Input height.");
 DEFINE_int32(width, 224, "Input height.");
 
@@ -133,7 +133,7 @@ ICudaEngine* tfrt_to_gie_model()
 
     // Build the engine
     builder->setMaxBatchSize(FLAGS_batch_size);
-    builder->setMaxWorkspaceSize(FLAGS_workspace << 22);
+    builder->setMaxWorkspaceSize(FLAGS_workspace << 20);
     // Set up the floating mode.
     bool compatibleType = (tf_network->datatype() == nvinfer1::DataType::kFLOAT ||
                             builder->platformHasFastFp16());
