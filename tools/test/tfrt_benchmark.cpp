@@ -180,12 +180,19 @@ void timeInference(ICudaEngine* engine, int batchSize)
     int outputIndex = engine->getBindingIndex(OUTPUT_BLOB_NAME.c_str());
 
     // allocate GPU buffers
-    DimsCHW inputDims = static_cast<DimsCHW&&>(engine->getBindingDimensions(inputIndex)), outputDims = static_cast<DimsCHW&&>(engine->getBindingDimensions(outputIndex));
+    DimsCHW inputDims = static_cast<DimsCHW&&>(engine->getBindingDimensions(inputIndex));
+    DimsCHW outputDims = static_cast<DimsCHW&&>(engine->getBindingDimensions(outputIndex));
     size_t inputSize = batchSize * inputDims.c() * inputDims.h() * inputDims.w() * sizeof(float);
     size_t outputSize = batchSize * outputDims.c() * outputDims.h() * outputDims.w() * sizeof(float);
 
-    std::cout << "Input index: " << inputIndex << " of size: " << inputSize << std::endl;
-    std::cout << "Output index: " << outputIndex << " of size: " << outputSize << std::endl;
+    std::cout << "Input index: " << inputIndex 
+        << " of size: " << inputSize 
+        << " and shape: " << tfrt::dims_str(inputDims)
+        << std::endl;
+    std::cout << "Output index: " << outputIndex 
+        << " of size: " << outputSize 
+        << " and shape: " << tfrt::dims_str(outputDims)
+        << std::endl;
     CHECK_CUDA(cudaMalloc(&buffers[inputIndex], inputSize));
     CHECK_CUDA(cudaMalloc(&buffers[outputIndex], outputSize));
 
