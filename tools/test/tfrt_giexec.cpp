@@ -46,7 +46,7 @@ struct Params
     std::vector<std::string> outputs;
     int device{ 0 }, batchSize{ 1 }, workspaceSize{ 16 }, iterations{ 10 }, avgRuns{ 10 };
     int inwidth{ 224 }, inheight{ 224 };
-    bool half2{ false }, verbose{ false }, hostTime{ false }, debug{ false };
+    bool half2{ false }, verbose{ false }, hostTime{ true }, debug{ false };
 } gParams;
 std::vector<std::string> gInputs;
 
@@ -152,7 +152,7 @@ void createMemory(const ICudaEngine& engine, std::vector<void*>& buffers, const 
 void doInference(ICudaEngine& engine)
 {
     IExecutionContext *context = engine.createExecutionContext();
-    context->setDebugSync(gParams.debug);
+    context->setDebugSync(true);
     // input and output buffer pointers that we pass to the engine - the engine requires exactly IEngine::getNbBindings(),
     // of these, but in this case we know that there is exactly one input and one output.
 
