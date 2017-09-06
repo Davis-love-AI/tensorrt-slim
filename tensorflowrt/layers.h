@@ -969,11 +969,12 @@ public:
     }
     /** Add the layer to network graph, using operator(root).*/
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
-         LOG(INFO) << "LAYER 2D bilinear interpolation '" << this->m_scope.name() << "'. "
-             << "Input shape: " << dims_str(net->getDimensions());
-         net = this->interpolation(net);
-         return this->mark_output(net);
-     }
+        LOG(INFO) << "LAYER 2D bilinear-pool interpolation '" 
+            << this->m_scope.name() << "'. "
+            << "Input shape: " << dims_str(net->getDimensions());
+        net = this->interpolation(net);
+        return this->mark_output(net);
+    }
  
 private:
     /** Bilinear interpolation. */
@@ -1050,7 +1051,8 @@ public:
     }
     /** Add the layer to network graph, using operator(root). */
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
-        LOG(INFO) << "LAYER 2D bilinear interpolation '" << this->m_scope.name() << "'. "
+        LOG(INFO) << "LAYER 2D bilinear-conv interpolation '" 
+            << this->m_scope.name() << "'. "
             << "Input shape: " << dims_str(net->getDimensions());
         net = this->interpolation(net);
         return this->mark_output(net);
