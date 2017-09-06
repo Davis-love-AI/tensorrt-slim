@@ -46,7 +46,7 @@ struct Params
     std::vector<std::string> outputs;
     int device{ 0 }, batchSize{ 1 }, workspaceSize{ 16 }, iterations{ 10 }, avgRuns{ 10 };
     int inwidth{ 224 }, inheight{ 224 };
-    bool half2{ false }, verbose{ false }, hostTime{ false };
+    bool half2{ false }, verbose{ false }, hostTime{ false }, debug{ false };
 } gParams;
 std::vector<std::string> gInputs;
 
@@ -152,7 +152,7 @@ void createMemory(const ICudaEngine& engine, std::vector<void*>& buffers, const 
 void doInference(ICudaEngine& engine)
 {
     IExecutionContext *context = engine.createExecutionContext();
-    context->setDebugSync(true);
+    context->setDebugSync(gParams.debug);
     // input and output buffer pointers that we pass to the engine - the engine requires exactly IEngine::getNbBindings(),
     // of these, but in this case we know that there is exactly one input and one output.
 
@@ -224,6 +224,7 @@ static void printUsage()
     printf("  --avgRuns=N          Set avgRuns to N - perf is measured as an average of avgRuns (default=%d)\n", gParams.avgRuns);
     printf("  --workspace=N        Set workspace size in megabytes (default = %d)\n", gParams.workspaceSize);
     printf("  --half2              Run in paired fp16 mode - default = false\n");
+    printf("  --debug              Run debug mode - default = false\n");
     printf("  --verbose            Use verbose logging - default = false\n");
     printf("  --hostTime	       Measure host time rather than GPU time - default = false\n");
     printf("  --engine=<file>      Generate a serialized GIE engine\n");
@@ -298,7 +299,10 @@ bool parseArgs(int argc, char* argv[])
             parseInt(argv[j], "workspace", gParams.workspaceSize))
             continue;
 
-        if (parseBool(argv[j], "half2", gParams.half2) || parseBool(argv[j], "verbose", gParams.verbose) || parseBool(argv[j], "hostTime", gParams.hostTime))
+        if (parseBool(argv[j], "half2", gParams.half2) || 
+            parseBool(argv[j], "verbose", gParams.verbose) || 
+            parseBool(argv[j], "hostTime", gParams.hostTime) || 
+            parseBool(argv[j], "debug", gParams.debug))
             continue;
 
         printf("Unknown argument: %s\n", argv[j]);

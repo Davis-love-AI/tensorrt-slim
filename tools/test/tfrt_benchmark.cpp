@@ -48,6 +48,7 @@ DEFINE_int32(batch_size, 2, "Batch size.");
 DEFINE_int32(workspace, 16, "Workspace size in MB.");
 DEFINE_int32(height, 224, "Input height.");
 DEFINE_int32(width, 224, "Input height.");
+DEFINE_bool(debug, false, "TensorRT debug mode.");
 
 // static const int BATCH_SIZE = 2;
 static const int TIMING_ITERATIONS = 1000;
@@ -196,16 +197,17 @@ void timeInference(ICudaEngine* engine, int batchSize)
     CHECK_CUDA(cudaMalloc(&buffers[inputIndex], inputSize));
     CHECK_CUDA(cudaMalloc(&buffers[outputIndex], outputSize));
 
+    // CUDA executation context + profiler and debug mode.
     IExecutionContext* context = engine->createExecutionContext();
     context->setProfiler(&gProfiler);
+    context->setDebugSync(FLAGS_debug);
 
-    // zero the input buffer
+    // Zero the input buffer
     CHECK_CUDA(cudaMemset(buffers[inputIndex], 0, inputSize));
-
-    for (int i = 0; i < TIMING_ITERATIONS;i++)
+    for (int i = 0; i < TIMING_ITERATIONS;i++) {
         context->execute(batchSize, buffers);
-
-    // release the context and buffers
+    }
+    // Release the context and buffers
     context->destroy();
     CHECK_CUDA(cudaFree(buffers[inputIndex]));
     CHECK_CUDA(cudaFree(buffers[outputIndex]));
