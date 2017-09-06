@@ -151,6 +151,7 @@ void createMemory(const ICudaEngine& engine, std::vector<void*>& buffers, const 
 void doInference(ICudaEngine& engine)
 {
     IExecutionContext *context = engine.createExecutionContext();
+    context->setDebugSync(true);
     // input and output buffer pointers that we pass to the engine - the engine requires exactly IEngine::getNbBindings(),
     // of these, but in this case we know that there is exactly one input and one output.
 
