@@ -136,7 +136,7 @@ public:
         }
         // Last convolution layer and softmax.
         int num_classes = this->num_classes() - int(!m_empty_class);
-        net = seg_inception2_last_layer(net, ssc.sub("block10"), num_classes);
+        // net = seg_inception2_last_layer(net, ssc.sub("block10"), num_classes);
         net = tfrt::softmax(sc, "Softmax")(net);
 
         // Clear any cached stuff...
