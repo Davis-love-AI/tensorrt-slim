@@ -138,7 +138,7 @@ public:
         LOG(INFO) << "LAYER input '" << m_scope.name() << "'. "
             << "Shape: " << dims_str(input->getDimensions());
         // Input scaling.
-        input = this->scale(input);
+        // input = this->scale(input);
         // return this->mark_output(input);
         return input;
     }
