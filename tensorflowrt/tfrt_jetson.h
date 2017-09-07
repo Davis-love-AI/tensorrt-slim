@@ -79,9 +79,9 @@ public:
     int w() const { return d[1]; }
 
     // Implicit Dims2 conversion.
-    operator Dims2() const { 
-        return Dims2{d[0], d[1]}; 
-    }
+    // operator Dims2() const {
+    //     return Dims2{d[0], d[1]};
+    // }
 };
 
 class DimsCHW : public Dims
@@ -121,9 +121,9 @@ public:
     int w() const { return d[2]; }
 
     // Implicit Dims3 conversion.
-    operator Dims3() const { 
-        return Dims3{d[0], d[1], d[2]}; 
-    }
+    // operator Dims3() const {
+    //     return Dims3{d[0], d[1], d[2]};
+    // }
 };
 
 class DimsNCHW : public Dims
@@ -173,9 +173,9 @@ public:
     int w() const { return d[3]; }
 
     // Implicit Dims4 conversion.
-    operator Dims4() const { 
-        return Dims4{d[0], d[1], d[2], d[3]}; 
-    }
+    // operator Dims4() const {
+    //     return Dims4{d[0], d[1], d[2], d[3]};
+    // }
 };
 
 }
