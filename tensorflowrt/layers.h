@@ -1068,7 +1068,19 @@ private:
         auto wname = m_scope.sub("weights_interpolation").name();
         auto wtensor = tf_net->create_tensor(wname,
             this->weights_interpolation(inshape), dt);
-        nvinfer1::Weights weights = tf_net->weights_by_name(wname, inshape);
+
+        nvinfer1::Weights weights = tf_net->tensor_to_weights(wtensor);
+        LOG(INFO) << "WEIGHTS: "
+            << weights.count << " | "
+            << weights.values << " | "
+            << ((float*)weights.values)[0] << " | "
+            << ((float*)weights.values)[1] << " | "
+            << ((float*)weights.values)[2] << " | "
+            << ((float*)weights.values)[3] << " | "
+            << ((float*)weights.values)[4] << " | "
+            << int(weights.type);
+        // nvinfer1::Weights weights = tf_net->weights_by_name(wname, inshape);
+
         nvinfer1::Weights biases{dt, nullptr, 0};
         // Convolution layer.
         nvinfer1::IConvolutionLayer* convlayer = nullptr;
