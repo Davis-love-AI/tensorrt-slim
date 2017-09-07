@@ -258,9 +258,9 @@ const tfrt_pb::tensor& network::tensor_by_name(std::string name, nvinfer1::Dims 
     for(int i = 0 ; i < m_pb_network->weights_size() ; ++i) {
         const tfrt_pb::tensor& tensor = m_pb_network->weights(i);
         if(tensor.name() == name) {
-            DLOG(INFO) << "FOUND tfrt_pb::tensor '" << name << "'. "
+            LOG(INFO) << "FOUND tfrt_pb::tensor '" << name << "'. "
                 << "SHAPE: " << dims_str(tensor_shape(tensor)) << " "
-                << "SIZE: " << tensor.size();
+                << "SIZE: " << tensor.size() << " PTR: " << &tensor;
             return tensor;
         }
     }
@@ -282,6 +282,8 @@ nvinfer1::Weights network::weights_by_name(std::string name, nvinfer1::Dims wsha
 nvinfer1::Weights network::tensor_to_weights(
     const tfrt_pb::tensor& tensor, nvinfer1::DataType default_dt)
 {
+    // tfrt_pb::tensor* ptensor = (tfrt_pb::tensor*) &tensor;
+    // LOG(INFO) << "TENSOR DATA: " << ptensor << " | " << ptensor->mutable_data();
     nvinfer1::Weights w{
         .type = nvinfer1::DataType(int(tensor.datatype())),
         .values = tensor.data().data(),
