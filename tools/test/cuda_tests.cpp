@@ -33,6 +33,7 @@
 #include <cuda/cudaCHWImage.h>
 
 DEFINE_double(value, 1.0, "Float value.");
+DEFINE_bool(half, false, "Half mode?");
 
 // CUDA methods...
 void cuda_float2half_array(float* host_input, uint16_t* host_output, uint32_t size);
@@ -52,6 +53,9 @@ void print_tensor_hw(const tfrt::nchw<float>::tensor& t)
  * Test transpose convolution.
  * ========================================================================== */
 typedef tfrt::convolution2d_transpose<tfrt::ActivationType::NONE, tfrt::PaddingType::CUSTOM, false>  conv2d_transpose;
+typedef tfrt::bilinear2d_conv  bilinear2d;
+// typedef tfrt::bilinear2d_pool  bilinear2d;
+
 class transpose_conv_net : public tfrt::network
 {
 public:
@@ -113,7 +117,7 @@ public:
         // Construct simple network...
         auto net = tfrt::input(sc)();
         // net = tfrt::avg_pool2d(sc, "avgpool").ksize({3, 3}).is_output(true)(net);
-        net = tfrt::bilinear2d(sc, "avgpool").is_output(true)(net);
+        net = bilinear2d(sc, "avgpool").is_output(true)(net);
         return net;
     }
     tfrt::nchw<float>::tensor inference(const tfrt::nchw<float>::tensor& tensor)
@@ -137,6 +141,11 @@ int main(int argc, char **argv)
 {
     // google::InitGoogleLogging(argv[0]);
     gflags::ParseCommandLineFlags(&argc, &argv, true);
+    auto dt = nvinfer1::DataType::kFLOAT;
+    if (FLAGS_half) {
+        dt = nvinfer1::DataType::kHALF;
+        LOG(INFO) << "!!!USING HALF MODE!!!";
+    }
 
     // Half precision tests.
     LOG(INFO) << "Half size: " << sizeof(half_float::half);
@@ -186,7 +195,7 @@ int main(int argc, char **argv)
         int width = 2;
         int height = 2;
         transpose_conv_net net(width, height);
-        // net.datatype(nvinfer1::DataType::kHALF);
+        net.datatype(dt);
         net.max_workspace_size(16 << 24);
         net.load("");
 
@@ -212,7 +221,7 @@ int main(int argc, char **argv)
         int width = 4;
         int height = 4;
         avg_pool_net net(width, height);
-        // net.datatype(nvinfer1::DataType::kHALF);
+        net.datatype(dt);
         net.max_workspace_size(16 << 24);
         net.load("");
 
