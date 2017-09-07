@@ -114,16 +114,17 @@ public:
      */
     virtual nvinfer1::ITensor* build(tfrt::scope sc)
     {
-        // auto inshape = this->input_shape();
+        auto inshape = this->input_shape();
+        // Set custom convolution formulas...
+        if (inshape.h() % 2 == 1 || inshape.w() % 2 == 1) {
+            m_deconv2d_formula = tfrt::tf_conv2d_transpose_formula{1};
+            sc.network()->setDeconvolutionOutputDimensionsFormula(&m_deconv2d_formula);
+            // sc.network()->setConvolutionOutputDimensionsFormula(&tf_out_formula);
+            // sc.network()->setPoolingOutputDimensionsFormula(&tf_out_formula);
+        }
+
         auto net = tfrt::input(sc)();
         tfrt::map_tensor end_points;
-
-        // Set convolution formulas...
-        m_deconv2d_formula = tfrt::tf_conv2d_transpose_formula{1};
-        sc.network()->setDeconvolutionOutputDimensionsFormula(&m_deconv2d_formula);
-        // sc.network()->setConvolutionOutputDimensionsFormula(&tf_out_formula);
-        // sc.network()->setPoolingOutputDimensionsFormula(&tf_out_formula);
-
         // Build the Inception2 base.
         net = inception2_base(net, sc.sub("inception2_base"), &end_points);
         // Add segmentation extra-features.
