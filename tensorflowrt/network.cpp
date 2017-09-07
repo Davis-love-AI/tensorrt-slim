@@ -180,7 +180,7 @@ const tfrt_pb::tensor& network::create_tensor(
 const tfrt_pb::tensor& network::create_tensor(
     std::string name, const tfrt::nchw<float>::tensor& t, nvinfer1::DataType dt) const
 {
-    LOG(INFO) << "CREATE tfrt_pb::tensor '" << name;
+    LOG(INFO) << "CREATE tfrt_pb::tensor '" << name << "' with datatype: " << int(dt);
     // Create new tensor in the weights collection.
     auto pb_tensor = m_pb_network->add_weights();
     pb_tensor->set_name(name);
@@ -205,7 +205,7 @@ const tfrt_pb::tensor& network::create_tensor(
 const tfrt_pb::tensor& network::create_tensor(
     std::string name, const tfrt::chw<float>::tensor& t, nvinfer1::DataType dt) const
 {
-    LOG(INFO) << "CREATE tfrt_pb::tensor '" << name;
+    LOG(INFO) << "CREATE tfrt_pb::tensor '" << name << "' with datatype: " << int(dt);
     // Create new tensor in the weights collection.
     auto pb_tensor = m_pb_network->add_weights();
     pb_tensor->set_name(name);
@@ -230,7 +230,7 @@ const tfrt_pb::tensor& network::create_tensor(
 const tfrt_pb::tensor& network::create_tensor(
     std::string name, const tfrt::c<float>::tensor& t, nvinfer1::DataType dt) const
 {
-    LOG(INFO) << "CREATE tfrt_pb::tensor '" << name;
+    LOG(INFO) << "CREATE tfrt_pb::tensor '" << name << "' with datatype: " << int(dt);
     // Create new tensor in the weights collection.
     auto pb_tensor = m_pb_network->add_weights();
     pb_tensor->set_name(name);
@@ -592,14 +592,14 @@ bool network::serialize_model(const std::string& filename, std::string& model_bu
     }
     LOG(INFO) << LOG_GIE << "Building and profiling the network model.";
     // TensorRT 1
-    #ifndef NV_TENSORRT_MAJOR   
+    #ifndef NV_TENSORRT_MAJOR
     nvinfer1::IHostMemory  nv_model_stream;
     nv_model_stream.seekg(0, nv_model_stream.beg);
     auto pnv_model_stream = &nv_model_stream;
     this->profile_model(&pnv_model_stream);
     model_buffer = nv_model_stream.str();
     // TensorRT 2
-    #else   
+    #else
     nvinfer1::IHostMemory* nv_model_stream{nullptr};
     this->profile_model(&nv_model_stream);
     this->clear_weights();
