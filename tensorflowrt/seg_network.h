@@ -46,14 +46,21 @@ public:
         return m_desc_classes[idx];
     }
 
+    bool empty_class() {
+        return m_empty_class;
+    }
+    void empty_class(bool v) {
+        m_empty_class = v;
+    }
+
 public:
     /** Inference on a single VX image. */
     void inference(vx_image image);
-    void inference(const nvx_image_inpatch& image);     
+    void inference(const nvx_image_inpatch& image);
     /** Inference on two VX images. */
     void inference(vx_image img1, vx_image img2);
-    void inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2);     
-    
+    void inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2);
+
     // Getting raw results.
     const tfrt::cuda_tensor_u8& raw_classes() const {
         return m_rclasses_cached;

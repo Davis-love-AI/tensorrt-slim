@@ -63,6 +63,7 @@ inline nvinfer1::ITensor* seg_inception2_last_layer(
     nvinfer1::ITensor* net, tfrt::scope sc, int num_outputs, tfrt::map_tensor* end_points=nullptr)
 {
     typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
+    // typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, false>  conv2d;
 
     LOG(INFO) << "BLOCK SEG inception2 last layer '" << sc.name() << "'. "
             << "Input shape: " << tfrt::dims_str(net->getDimensions());
@@ -130,6 +131,7 @@ public:
         std::vector<std::string> feat_names_side =
             {"Mixed_4e", "Mixed_3c", "Conv2d_2c_3x3", "Conv2d_1a_7x7"};
         std::vector<std::size_t> feat_size = {384, 192, 96, 48};
+        // std::vector<std::size_t> feat_size = {256, 128, 64, 48};
         auto ssc = sc.sub("feat_layers_extra");
         for (size_t i = 0 ; i < feat_names.size() ; ++i) {
         // for (size_t i = 0 ; i < 3 ; ++i) {
