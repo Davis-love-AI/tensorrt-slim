@@ -199,8 +199,8 @@ int main(int argc, char **argv)
 
     // TEST TRANSPOSE CONVOLUTION.
     {
-        int width = 2;
-        int height = 2;
+        int width = 4;
+        int height = 4;
         transpose_conv_net net(width, height);
         net.datatype(dt);
         net.max_workspace_size(16 << 24);
