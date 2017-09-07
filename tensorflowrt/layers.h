@@ -131,7 +131,7 @@ public:
     /** Input construction */
     virtual nvinfer1::ITensor* operator()() {
         auto dt = m_scope.tfrt_network()->datatype();
-        // dt = nvinfer1::DataType::kFLOAT;
+        dt = nvinfer1::DataType::kFLOAT;
         // TensorRT input.
         nvinfer1::ITensor* input = m_scope.network()->addInput(
             m_scope.name().c_str(), dt, DIMRT(this->m_shape));
@@ -969,20 +969,20 @@ public:
     }
     /** Add the layer to network graph, using operator(root).*/
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
-        LOG(INFO) << "LAYER 2D bilinear-pool interpolation '" 
+        LOG(INFO) << "LAYER 2D bilinear-pool interpolation '"
             << this->m_scope.name() << "'. "
             << "Input shape: " << dims_str(net->getDimensions());
         net = this->interpolation(net);
         return this->mark_output(net);
     }
- 
+
 private:
     /** Bilinear interpolation. */
     nvinfer1::ITensor* interpolation(nvinfer1::ITensor* input) {
         auto tf_net = this->m_scope.tfrt_network();
         auto dt = tf_net->datatype();
         auto inshape = static_cast<nvinfer1::DimsCHW&&>(input->getDimensions());
-        
+
         // Average pooling as a first step.
         auto avglayer = this->m_scope.network()->addPooling(
             *input, nvinfer1::PoolingType::kAVERAGE, {3, 3});
@@ -992,12 +992,12 @@ private:
         avglayer->setPadding({1, 1});
         avglayer->setStride({1, 1});
         auto net = avglayer->getOutput(0);
-        
+
         // Compute scaling weights.
         auto wname = m_scope.sub("weights_scale").name();
         auto wtensor = tf_net->create_tensor(wname, this->weights_scale(inshape), dt);
         nvinfer1::Weights wscale = tf_net->weights_by_name(wname, inshape);
-        nvinfer1::Weights wzero{dt, nullptr, 0};    
+        nvinfer1::Weights wzero{dt, nullptr, 0};
         // Second step: rescaling to adjust weights.
         auto slayer = this->m_scope.network()->addScale(
             *net, nvinfer1::ScaleMode::kELEMENTWISE,  wzero, wscale, wzero);
@@ -1026,7 +1026,7 @@ private:
                 }
                 else if (i % 2 == 1 && j % 2 == 1) {
                     val = 9. / 4.;
-                }                      
+                }
                 for (long k = 0 ; k < w.dimension(0) ; ++k) {
                     w(k, i, j) = val;
                 }
@@ -1035,7 +1035,7 @@ private:
         return w;
     }
 };
- 
+
 
 /** Bilinear 2d interpolation. Input is supposed to be "checkerboard" tensor,
  * with zero entries between known values. Using a 3x3 filter by default.
@@ -1051,7 +1051,7 @@ public:
     }
     /** Add the layer to network graph, using operator(root). */
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
-        LOG(INFO) << "LAYER 2D bilinear-conv interpolation '" 
+        LOG(INFO) << "LAYER 2D bilinear-conv interpolation '"
             << this->m_scope.name() << "'. "
             << "Input shape: " << dims_str(net->getDimensions());
         net = this->interpolation(net);
@@ -1066,10 +1066,10 @@ private:
         auto inshape = static_cast<nvinfer1::DimsCHW&&>(input->getDimensions());
         // Interpolation weights.
         auto wname = m_scope.sub("weights_interpolation").name();
-        auto wtensor = tf_net->create_tensor(wname, 
+        auto wtensor = tf_net->create_tensor(wname,
             this->weights_interpolation(inshape), dt);
         nvinfer1::Weights weights = tf_net->weights_by_name(wname, inshape);
-        nvinfer1::Weights biases{dt, nullptr, 0};   
+        nvinfer1::Weights biases{dt, nullptr, 0};
         // Convolution layer.
         nvinfer1::IConvolutionLayer* convlayer = nullptr;
         convlayer = this->m_scope.network()->addConvolution(
@@ -1101,7 +1101,7 @@ private:
             w(i, i, 2, 1) = 0.5;
             w(i, i, 1, 2) = 0.5;
 
-            w(i, i, 1, 1) = 1.;            
+            w(i, i, 1, 1) = 1.;
         }
         return w;
     }
