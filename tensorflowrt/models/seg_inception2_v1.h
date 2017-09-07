@@ -31,6 +31,9 @@ typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME,
 typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
 typedef tfrt::convolution2d_transpose<tfrt::ActivationType::NONE, tfrt::PaddingType::CUSTOM, false>  conv2d_transpose;
 
+typedef bilinear2d_conv  bilinear2d;
+// typedef bilinear2d_pool  bilinear2d;
+
 /** Additional feature layer.
  */
 inline nvinfer1::ITensor* seg_inception2_extra_feature(
@@ -44,7 +47,7 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
     net = conv2d_transpose(sc, "tconv1x1_bilinear")
         .noutputs(num_outputs).ksize({2, 2}).stride({2, 2}).padding({0, 0})(net);
     net = tfrt::bilinear2d(sc, "interpolation_bilinear")(net);
-        
+
     // 3x3 convolution to smooth out the result...
     net = conv2d(sc, "conv3x3").noutputs(num_outputs).ksize({3, 3})(net);
     // Additional side feature to add.
