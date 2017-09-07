@@ -65,6 +65,10 @@ public:
     /** Build network. */
     virtual nvinfer1::ITensor* build(tfrt::scope sc)
     {
+        // Set convolution formulas...
+        m_deconv2d_formula = tfrt::tf_conv2d_transpose_formula{1};
+        sc.network()->setDeconvolutionOutputDimensionsFormula(&m_deconv2d_formula);
+
         // Set basic parameters.
         // this->datatype(nvinfer1::DataType::kFLOAT);
         this->input("input", {1, m_height, m_width});
@@ -94,6 +98,9 @@ public:
 private:
     int  m_width;
     int  m_height;
+    // TF output formulas.
+    tfrt::tf_conv2d_formula  m_conv2d_formula;
+    tfrt::tf_conv2d_transpose_formula  m_deconv2d_formula;
 };
 
 /* ============================================================================
