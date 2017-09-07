@@ -31,8 +31,8 @@ typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME,
 typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
 typedef tfrt::convolution2d_transpose<tfrt::ActivationType::NONE, tfrt::PaddingType::CUSTOM, false>  conv2d_transpose;
 
-// typedef tfrt::bilinear2d_conv  bilinear2d;
-typedef tfrt::bilinear2d_pool  bilinear2d;
+typedef tfrt::bilinear2d_conv  bilinear2d;
+// typedef tfrt::bilinear2d_pool  bilinear2d;
 
 /** Additional feature layer.
  */
