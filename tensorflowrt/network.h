@@ -87,7 +87,7 @@ public:
     void clear();
 
     /** Load network configuration and weights + build + profile model. */
-    bool load(std::string filename);
+    bool load(std::string filename, nvinfer1::DimsCHW inshape={0,0,0});
     /** Get the default scope for this network. */
     tfrt::scope scope(nvinfer1::INetworkDefinition* nv_network) const;
 
@@ -151,17 +151,21 @@ public:
     virtual bool load_weights(const std::string& filename);
     /** Clear out the collections of network weights, to save memory. */
     virtual void clear_weights();
-
     /** Build the complete network. Input + all layers.
      * VIRTUAL: to be re-implemented in children classes.
      */
     virtual nvinfer1::ITensor* build(tfrt::scope sc);
+
+    /** Generate the filename of the cached network, based on filename of the
+     * checkpoint and the input shape.
+     */
+    std::string filename_cached_model(const std::string& filename) const;
     /** Serialize a network model. If caching=True, try to first load from
      * a cached file. If no file, construct the usual way and save the cache.
      */
-    bool serialize_model(const std::string& filename, std::string& model_buffer, bool caching=true);
-    /** Build and profile a model.
-     */
+    bool serialize_model(const std::string& filename, std::string& model_buffer,
+        bool caching=true, nvinfer1::DimsCHW inshape={0,0,0});
+    /** Build and profile a model. */
     bool profile_model(nvinfer1::IHostMemory** model_stream);
 
 protected:

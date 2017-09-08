@@ -479,7 +479,7 @@ void network::clear_weights()
     m_pb_network->clear_weights();
 }
 
-bool network::load(std::string filename)
+bool network::load(std::string filename, nvinfer1::DimsCHW _inshape)
 {
     // Serialize model.
     // std::stringstream model_stream;
@@ -562,23 +562,33 @@ bool network::load(std::string filename)
     return true;
 }
 
-
 nvinfer1::ITensor* network::build(tfrt::scope sc)
 {
     return nullptr;
 }
-bool network::serialize_model(const std::string& filename, std::string& model_buffer, bool caching)
+std::string network::filename_cached_model(const std::string& filename) const
+{
+    auto inshape = this->input_shape();
+    std::ostringstream  filename_cache;
+    filename_cache << filename << "."  << m_max_batch_size
+        << "x" << inshape.c() << "x" << inshape.h() << "x" << inshape.w() << ".cache";
+    return filename_cache.str();
+}
+bool network::serialize_model(
+    const std::string& filename, std::string& model_buffer,
+    bool caching, nvinfer1::DimsCHW inshape)
 {
     // Load model parameters and weights.
     this->load_weights(filename);
+    // Update input shape, if necessary.
+    this->input_shape(inshape);
 
     // Try to read serialized model from cache.
-    std::ostringstream  filename_cache;
-    filename_cache << filename << "."  << m_max_batch_size << ".cache";
+    auto filename_cache = this->filename_cached_model(filename);
     if(caching && filename.length()) {
-        LOG(INFO) << LOG_GIE << "Try reading cached model from: "<< filename_cache.str();
+        LOG(INFO) << LOG_GIE << "Try reading cached model from: "<< filename_cache;
         // Successful read of cached file => load and return.
-        std::ifstream model_cached(filename_cache.str());
+        std::ifstream model_cached(filename_cache);
         if(model_cached) {
             // Set model stream back to beginning.
             std::stringstream model_stream;
@@ -611,9 +621,9 @@ bool network::serialize_model(const std::string& filename, std::string& model_bu
     #endif
 
     if(caching && filename.length()) {
-        LOG(INFO) << LOG_GIE << "Writing cached model to: " << filename_cache.str();
+        LOG(INFO) << LOG_GIE << "Writing cached model to: " << filename_cache;
         std::ofstream model_cached;
-        model_cached.open(filename_cache.str());
+        model_cached.open(filename_cache);
         model_cached << model_buffer;
         model_cached.close();
         // model_stream.seekg(0, model_stream.beg);
