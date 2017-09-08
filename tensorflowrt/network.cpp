@@ -485,7 +485,7 @@ bool network::load(std::string filename, nvinfer1::DimsCHW _inshape)
     // std::stringstream model_stream;
     // nvinfer1::IHostMemory* model_stream{nullptr};
     std::string model_buffer;
-    this->serialize_model(filename, model_buffer, true);
+    this->serialize_model(filename, model_buffer, true, _inshape);
 
     // Inference runtime + engine + execution context.
     nvinfer1::IRuntime* infer = nvinfer1::createInferRuntime(m_gie_logger);
@@ -582,6 +582,7 @@ bool network::serialize_model(
     this->load_weights(filename);
     // Update input shape, if necessary.
     this->input_shape(inshape);
+    LOG(INFO) << LOG_GIE << "Network with input shape: "<< dims_str(inshape);
 
     // Try to read serialized model from cache.
     auto filename_cache = this->filename_cached_model(filename);
