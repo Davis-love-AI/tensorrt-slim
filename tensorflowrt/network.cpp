@@ -258,7 +258,7 @@ const tfrt_pb::tensor& network::tensor_by_name(std::string name, nvinfer1::Dims 
     for(int i = 0 ; i < m_pb_network->weights_size() ; ++i) {
         const tfrt_pb::tensor& tensor = m_pb_network->weights(i);
         if(tensor.name() == name) {
-            LOG(INFO) << "FOUND tfrt_pb::tensor '" << name << "'. "
+            DLOG(INFO) << "FOUND tfrt_pb::tensor '" << name << "'. "
                 << "SHAPE: " << dims_str(tensor_shape(tensor)) << " "
                 << "SIZE: " << tensor.size() << " PTR: " << &tensor;
             return tensor;
@@ -640,8 +640,8 @@ bool network::profile_model(nvinfer1::IHostMemory** nv_model_stream)
     builder->setDebugSync(m_enable_debug);
     builder->setMinFindIterations(5);	    // allow time for TX1/2 GPU to spin up.
     builder->setAverageFindIterations(5);
-    // builder->setMinFindIterations(1);	    // allow time for TX1/2 GPU to spin up.
-    // builder->setAverageFindIterations(1);
+    builder->setMinFindIterations(1);	    // allow time for TX1/2 GPU to spin up.
+    builder->setAverageFindIterations(1);
 
     // Build the network.
     LOG(INFO) << LOG_GIE << "Building network from scratch!";
