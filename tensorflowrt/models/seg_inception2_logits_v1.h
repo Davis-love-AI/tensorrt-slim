@@ -31,6 +31,9 @@ typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME,
 typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
 typedef tfrt::convolution2d_transpose<tfrt::ActivationType::NONE, tfrt::PaddingType::CUSTOM, false>  conv2d_transpose;
 
+typedef tfrt::bilinear2d_conv  bilinear2d;
+// typedef tfrt::bilinear2d_pool  bilinear2d;
+
 /** Additional feature layer.
  */
 inline nvinfer1::ITensor* seg_inception2_extra_feature(
@@ -43,8 +46,8 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
     // 2x2 (1x1 in fact) convolution + bilinear interpolation.
     net = conv2d_transpose(sc, "tconv1x1_bilinear")
         .noutputs(num_outputs).ksize({2, 2}).stride({2, 2}).padding({0, 0})(net);
-    net = tfrt::bilinear2d(sc, "interpolation_bilinear")(net);
-        
+    net = bilinear2d(sc, "interpolation_bilinear")(net);
+
     // 3x3 convolution to smooth out the result...
     net = conv2d(sc, "conv3x3").noutputs(num_outputs).ksize({3, 3})(net);
     // Additional side feature to add.
@@ -68,7 +71,7 @@ inline nvinfer1::ITensor* seg_inception2_logits(
     // 3x3 logits convolution.
     typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
     auto net_logits1 = conv2d(sc, "conv3x3_logits").noutputs(num_classes).ksize({3, 3})(net);
-    
+
     // Connect to top logits if existing.
     if (top_logits != nullptr) {
         LOG(INFO) << "ADD up-scaled top logits.";
@@ -80,7 +83,7 @@ inline nvinfer1::ITensor* seg_inception2_logits(
                 .ksize({3, 3})(net_logits2);
         }
         else {
-            net_logits2 = tfrt::bilinear2d(sc, "interpolation_bilinear")(net_logits2);
+            net_logits2 = bilinear2d(sc, "interpolation_bilinear")(net_logits2);
         }
         // ADD the two!
         net_logits1 = tfrt::add(sc, "add_logits")(net_logits1, net_logits2);
@@ -130,22 +133,23 @@ public:
      */
     virtual nvinfer1::ITensor* build(tfrt::scope sc)
     {
-        // auto inshape = this->input_shape();
-        auto net = tfrt::input(sc)();
+        auto inshape = this->input_shape();
+        // Set custom convolution formulas...
+        if (inshape.h() % 2 == 1 || inshape.w() % 2 == 1) {
+            m_deconv2d_formula = tfrt::tf_conv2d_transpose_formula{1};
+            sc.network()->setDeconvolutionOutputDimensionsFormula(&m_deconv2d_formula);
+            // sc.network()->setConvolutionOutputDimensionsFormula(&tf_out_formula);
+            // sc.network()->setPoolingOutputDimensionsFormula(&tf_out_formula);
+        }
+
         tfrt::map_tensor end_points;
-
-        // Set convolution formulas...
-        m_deconv2d_formula = tfrt::tf_conv2d_transpose_formula{1};
-        sc.network()->setDeconvolutionOutputDimensionsFormula(&m_deconv2d_formula);
-        // sc.network()->setConvolutionOutputDimensionsFormula(&tf_out_formula);
-        // sc.network()->setPoolingOutputDimensionsFormula(&tf_out_formula);
-
         // Build the Inception2 base.
+        auto net = tfrt::input(sc)();
         net = inception2_base(net, sc.sub("inception2_base"), &end_points);
-        
+
         // Add segmentation extra-features.
         std::vector<std::string> feat_names = {"block6", "block7", "block8", "block9"};
-        std::vector<std::string> feat_names_side = 
+        std::vector<std::string> feat_names_side =
             {"Mixed_4e", "Mixed_3c", "Conv2d_2c_3x3", "Conv2d_1a_7x7"};
         std::vector<std::size_t> feat_size = {384, 192, 96, 48};
 
@@ -153,7 +157,7 @@ public:
         int num_classes = this->num_classes() - int(!m_empty_class);
         auto fsc = sc.sub("feat_layers_extra");
         nvinfer1::ITensor* logits{nullptr};
-        
+
         for (size_t i = 0 ; i < feat_names.size() ; ++i) {
             auto ssc = fsc.sub(feat_names[i]);
             // Compute logits using previous feature.
@@ -165,7 +169,7 @@ public:
         // Last logits.
         {
             auto ssc = fsc.sub("block10");
-            logits = seg_inception2_logits(net, logits, ssc, num_classes, false);   
+            logits = seg_inception2_logits(net, logits, ssc, num_classes, false);
         }
         // softmax prediction...
         net = tfrt::softmax(sc, "Softmax")(logits);
