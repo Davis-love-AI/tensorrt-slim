@@ -39,7 +39,7 @@ void seg_network::post_processing()
     // For God sake, used a fucking CUDA kernel for that!
     const auto& rtensor = m_cuda_outputs[0].tensor();
     const auto& oshape = m_cuda_outputs[0].shape;
-    LOG(INFO) << "SEGNET: post-processing of output with shape: " 
+    LOG(INFO) << "SEGNET: post-processing of output with shape: "
         << dims_str(m_cuda_outputs[0].shape);
     // CUDA(cudaDeviceSynchronize());
     for (long n = 0 ; n < rtensor.dimension(0) ; ++n) {
@@ -56,8 +56,14 @@ void seg_network::post_processing()
                     }
                     // Save to cached tensors.
                     long idx = n * oshape.h() * oshape.w() + i * oshape.w() + j;
-                    m_rclasses_cached.cpu[idx] = max_idx + int(!m_empty_class);
-                    m_rscores_cached.cpu[idx] = max_score;
+                    if (max_score > m_detection_threshold) {
+                        m_rclasses_cached.cpu[idx] = max_idx + int(!m_empty_class);
+                        m_rscores_cached.cpu[idx] = max_score;
+                    }
+                    else {
+                        m_rclasses_cached.cpu[idx] = 0;
+                        m_rscores_cached.cpu[idx] = max_score;
+                    }
                 }
             }
         }
@@ -68,14 +74,14 @@ void seg_network::post_processing()
 
 void seg_network::inference(vx_image image)
 {
-    LOG(INFO) << "SEGNET: inference with single input.";    
+    LOG(INFO) << "SEGNET: inference with single input.";
     network::inference(image);
     // Post-processing of the output: computing classes and scores.
     this->post_processing();
 }
 void seg_network::inference(const nvx_image_inpatch& image)
 {
-    LOG(INFO) << "SEGNET: inference with single input.";    
+    LOG(INFO) << "SEGNET: inference with single input.";
     network::inference(image);
     // Post-processing of the output: computing classes and scores.
     this->post_processing();
@@ -83,17 +89,17 @@ void seg_network::inference(const nvx_image_inpatch& image)
 
 void seg_network::inference(vx_image img1, vx_image img2)
 {
-    LOG(INFO) << "SEGNET: inference with two inputs.";    
+    LOG(INFO) << "SEGNET: inference with two inputs.";
     network::inference(img1, img2);
     // CUDA(cudaDeviceSynchronize());
     this->post_processing();
 }
 void seg_network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2)
 {
-    LOG(INFO) << "SEGNET: inference with two inputs.";    
+    LOG(INFO) << "SEGNET: inference with two inputs.";
     network::inference(img1, img2);
     // CUDA(cudaDeviceSynchronize());
     this->post_processing();
-}   
+}
 
 }

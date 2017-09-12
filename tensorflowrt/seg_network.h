@@ -32,8 +32,11 @@ public:
      * 'empty_class': if the network predict the 0-index empty class?
      */
     seg_network(std::string name, uint32_t num_classes_seg=2, bool empty_class=true) :
-        tfrt::network(name), m_num_classes{num_classes_seg}, m_empty_class{empty_class},
-        m_desc_classes{num_classes_seg, "Nothing"} {}
+        tfrt::network(name), m_num_classes{num_classes_seg},
+        m_empty_class{empty_class},
+        m_detection_threshold{0.0f},
+        m_desc_classes{num_classes_seg, "Nothing"}
+    {}
 
 
 public:
@@ -45,12 +48,19 @@ public:
     std::string description(uint32_t idx) const {
         return m_desc_classes[idx];
     }
-
+    /** Empty class? */
     bool empty_class() {
         return m_empty_class;
     }
     void empty_class(bool v) {
         m_empty_class = v;
+    }
+    /** Detection threshold. */
+    float detection_threshold() {
+        return m_detection_threshold;
+    }
+    void detection_threshold(float v) {
+        m_detection_threshold = v;
     }
 
 public:
@@ -83,6 +93,8 @@ protected:
     uint32_t  m_num_classes;
     // Empty class in the first coordinate?
     bool  m_empty_class;
+    // Detection threshold.
+    float  m_detection_threshold;
     // Segmentation classes descriptions
     std::vector<std::string>  m_desc_classes;
 

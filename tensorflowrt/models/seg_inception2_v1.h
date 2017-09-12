@@ -105,7 +105,9 @@ class net : public tfrt::seg_network
 {
 public:
     /** Constructor with default name.  */
-    net() : tfrt::seg_network("seg_inception2", robik::seg_descriptions().size(), false)
+    net(bool empty_class=false, std::vector<std::size_t> feat_size={384, 192, 96, 48}) :
+        tfrt::seg_network("seg_inception2", robik::seg_descriptions().size(), empty_class),
+        m_features_size{feat_size}
     {
         // Set up the descriptions of the classes.
         this->m_desc_classes = robik::seg_descriptions();
@@ -131,14 +133,14 @@ public:
         std::vector<std::string> feat_names = {"block6", "block7", "block8", "block9"};
         std::vector<std::string> feat_names_side =
             {"Mixed_4e", "Mixed_3c", "Conv2d_2c_3x3", "Conv2d_1a_7x7"};
-        std::vector<std::size_t> feat_size = {384, 192, 96, 48};
+        // std::vector<std::size_t> feat_size = {384, 192, 96, 48};
         // std::vector<std::size_t> feat_size = {256, 128, 64, 48};
         auto ssc = sc.sub("feat_layers_extra");
         for (size_t i = 0 ; i < feat_names.size() ; ++i) {
         // for (size_t i = 0 ; i < 3 ; ++i) {
                 // auto net1 = tfrt::find_end_point(&end_points, feat_names[i]);
             auto net_in = tfrt::find_end_point(&end_points, feat_names_side[i]);
-            net = seg_inception2_extra_feature(net, net_in, ssc.sub(feat_names[i]), feat_size[i]);
+            net = seg_inception2_extra_feature(net, net_in, ssc.sub(feat_names[i]), m_features_size[i]);
         }
         // Last convolution layer and softmax.
         int num_classes = this->num_classes() - int(!m_empty_class);
@@ -154,6 +156,9 @@ private:
     // TF output formulas.
     tfrt::tf_conv2d_formula  m_conv2d_formula;
     tfrt::tf_conv2d_transpose_formula  m_deconv2d_formula;
+    // Features size.
+    std::vector<std::size_t>  m_features_size;
+
 };
 
 }

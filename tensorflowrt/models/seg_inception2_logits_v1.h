@@ -83,7 +83,7 @@ inline nvinfer1::ITensor* seg_inception2_logits(
                 .ksize({3, 3})(net_logits2);
         }
         else {
-            net_logits2 = bilinear2d(sc, "interpolation_bilinear")(net_logits2);
+            net_logits2 = bilinear2d(sc, "interpolation_bilinear_logits")(net_logits2);
         }
         // ADD the two!
         net_logits1 = tfrt::add(sc, "add_logits")(net_logits1, net_logits2);
@@ -161,7 +161,7 @@ public:
         for (size_t i = 0 ; i < feat_names.size() ; ++i) {
             auto ssc = fsc.sub(feat_names[i]);
             // Compute logits using previous feature.
-            logits = seg_inception2_logits(net, logits, ssc, num_classes);
+            logits = seg_inception2_logits(net, logits, ssc, num_classes, false);
             // Construct next feature.
             auto net_in = tfrt::find_end_point(&end_points, feat_names_side[i]);
             net = seg_inception2_extra_feature(net, net_in, ssc, feat_size[i]);
