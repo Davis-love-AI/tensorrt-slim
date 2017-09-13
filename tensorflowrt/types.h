@@ -89,6 +89,19 @@ struct nachw {
 };
 
 
+/** EIGEN typedefs
+ * TODO: naming convention + column major. 
+ */
+typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor>  Matrix3f;
+typedef Eigen::Matrix<float, 4, 4, Eigen::RowMajor>  Matrix4f;
+
+typedef Eigen::Matrix<float, 3, 4, Eigen::RowMajor>  Matrix34f;
+typedef Eigen::Matrix<float, 4, 3, Eigen::RowMajor>  Matrix43f;
+
+typedef Eigen::Matrix<float, 3, 1>  Vector3f;
+typedef Eigen::Matrix<float, 4, 1>  Vector4f;
+
+
 }
 
 #endif
