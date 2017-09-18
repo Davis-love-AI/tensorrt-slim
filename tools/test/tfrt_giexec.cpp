@@ -64,21 +64,21 @@ class Logger : public ILogger
 /* ============================================================================
  * Static collection of nets.
  * ========================================================================== */
-std::unique_ptr<tfrt::network>&& networks_map(const std::string& key)
-{
-    static std::map<std::string, std::unique_ptr<tfrt::network> > nets;
-    // Fill the map at first call!
-    if(nets.empty()) {
-        nets["inception1"] = std::make_unique<inception1::net>();
-        nets["inception2"] = std::make_unique<inception2::net>();
-        nets["ssd_inception2_v0"] = std::make_unique<ssd_inception2_v0::net>();
-        nets["seg_inception2_v1"] = std::make_unique<seg_inception2_v1::net>();
-        nets["seg_inception2_v1_5x5"] = std::make_unique<seg_inception2_v1_5x5::net>();
-        nets["seg_inception2_logits_v1"] = std::make_unique<seg_inception2_logits_v1::net>();
-        nets["seg_inception2_2x2"] = std::make_unique<seg_inception2_2x2::net>();
-    }
-    return std::move(nets.at(key));
-}
+// std::unique_ptr<tfrt::network>&& networks_map(const std::string& key)
+// {
+//     static std::map<std::string, std::unique_ptr<tfrt::network> > nets;
+//     // Fill the map at first call!
+//     if(nets.empty()) {
+//         nets["inception1"] = std::make_unique<inception1::net>();
+//         nets["inception2"] = std::make_unique<inception2::net>();
+//         nets["ssd_inception2_v0"] = std::make_unique<ssd_inception2_v0::net>();
+//         nets["seg_inception2_v1"] = std::make_unique<seg_inception2_v1::net>();
+//         nets["seg_inception2_v1_5x5"] = std::make_unique<seg_inception2_v1_5x5::net>();
+//         nets["seg_inception2_logits_v1"] = std::make_unique<seg_inception2_logits_v1::net>();
+//         nets["seg_inception2_2x2"] = std::make_unique<seg_inception2_2x2::net>();
+//     }
+//     return std::move(nets.at(key));
+// }
 
 /* ============================================================================
  * Build + inference.
@@ -90,7 +90,7 @@ ICudaEngine* tfrtToGIEModel()
     INetworkDefinition* network = builder->createNetwork();
 
     // Build TF-RT network.
-    auto tf_network = networks_map(gParams.modelName);
+    auto tf_network = tfrt::nets_factory(gParams.modelName);
     tf_network->create_missing_tensors(true);
     tf_network->load_weights(gParams.modelFile.c_str());
     tf_network->input_shape({3, gParams.inheight, gParams.inwidth});
@@ -299,9 +299,9 @@ bool parseArgs(int argc, char* argv[])
             parseInt(argv[j], "workspace", gParams.workspaceSize))
             continue;
 
-        if (parseBool(argv[j], "half2", gParams.half2) || 
-            parseBool(argv[j], "verbose", gParams.verbose) || 
-            parseBool(argv[j], "hostTime", gParams.hostTime) || 
+        if (parseBool(argv[j], "half2", gParams.half2) ||
+            parseBool(argv[j], "verbose", gParams.verbose) ||
+            parseBool(argv[j], "hostTime", gParams.hostTime) ||
             parseBool(argv[j], "debug", gParams.debug))
             continue;
 

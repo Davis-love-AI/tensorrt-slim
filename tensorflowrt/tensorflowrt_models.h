@@ -15,6 +15,22 @@
 #ifndef TFRT_MODELS
 #define TFRT_MODELS
 
+// ========================================================================== //
+// ImageNet models
+// ========================================================================== //
+#include "nets/inception1.h"
+#include "nets/inception2.h"
+
+#include "nets/resnet_v1.h"
+
+// ========================================================================== //
+// SSD models.
+// ========================================================================== //
+
+
+// ========================================================================== //
+// Segmentation models
+// ========================================================================== //
 #include "models/ssd_inception2_v0.h"
 #include "models/seg_inception2_v0.h"
 #include "models/seg_inception2_2x2.h"
@@ -22,5 +38,12 @@
 #include "models/seg_inception2_v1_5x5.h"
 #include "models/seg_inception2_logits_v1.h"
 // #include "inception2.h"
+
+namespace tfrt
+{
+/** Neural Nets factory. */
+std::unique_ptr<tfrt::network>&& nets_factory(const std::string& name);
+
+}
 
 #endif

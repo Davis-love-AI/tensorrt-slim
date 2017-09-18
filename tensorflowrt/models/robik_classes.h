@@ -16,13 +16,14 @@
 #define TFRT_ROBIK_CLASSES_H
 
 #include <string>
+#include <vector>
 #include <array>
 
 namespace robik
 {
 /** List of segmentation descriptions used on the Robik!
  */
-const std::vector<std::string>& seg_descriptions()
+inline const std::vector<std::string>& seg_descriptions()
 {
     static std::vector<std::string> desc = {
         "Nothing",
@@ -50,7 +51,7 @@ const std::vector<std::string>& seg_descriptions()
 /** List of segmentation colors, used for visualization.
  * Returns of vector of RGBA colors.
  */
-const std::vector<std::array<uint8_t,4>>& seg_colors()
+inline const std::vector<std::array<uint8_t,4>>& seg_colors()
 {
     static std::vector<std::array<uint8_t,4>> colors = {
         {0, 0, 0, 0},

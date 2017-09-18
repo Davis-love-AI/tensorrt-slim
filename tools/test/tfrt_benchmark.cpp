@@ -42,8 +42,7 @@ using namespace nvinfer1;
 
 // FLAGS...
 DEFINE_string(network, "ssd_inception2_v0", "SSD network network to test.");
-DEFINE_string(network_pb, "../data/networks/ssd_inception2_v0_orig.tfrt32",
-    "Network protobuf parameter file.");
+DEFINE_string(network_pb, "", "Network protobuf parameter file.");
 DEFINE_int32(batch_size, 2, "Batch size.");
 DEFINE_int32(workspace, 16, "Workspace size in MB.");
 DEFINE_int32(height, 224, "Input height.");
@@ -99,21 +98,21 @@ struct Profiler : public IProfiler
 /* ============================================================================
  * Static collection of nets.
  * ========================================================================== */
-std::unique_ptr<tfrt::network>&& networks_map(const std::string& key)
-{
-    static std::map<std::string, std::unique_ptr<tfrt::network> > nets;
-    // Fill the map at first call!
-    if(nets.empty()) {
-        nets["inception1"] = std::make_unique<inception1::net>();
-        nets["inception2"] = std::make_unique<inception2::net>();
-        nets["ssd_inception2_v0"] = std::make_unique<ssd_inception2_v0::net>();
-        nets["seg_inception2_v1"] = std::make_unique<seg_inception2_v1::net>();
-        nets["seg_inception2_v1_5x5"] = std::make_unique<seg_inception2_v1_5x5::net>();
-        nets["seg_inception2_logits_v1"] = std::make_unique<seg_inception2_logits_v1::net>();
-        nets["seg_inception2_2x2"] = std::make_unique<seg_inception2_2x2::net>();
-    }
-    return std::move(nets.at(key));
-}
+// std::unique_ptr<tfrt::network>&& networks_map(const std::string& key)
+// {
+//     static std::map<std::string, std::unique_ptr<tfrt::network> > nets;
+//     // Fill the map at first call!
+//     if(nets.empty()) {
+//         nets["inception1"] = std::make_unique<inception1::net>();
+//         nets["inception2"] = std::make_unique<inception2::net>();
+//         nets["ssd_inception2_v0"] = std::make_unique<ssd_inception2_v0::net>();
+//         nets["seg_inception2_v1"] = std::make_unique<seg_inception2_v1::net>();
+//         nets["seg_inception2_v1_5x5"] = std::make_unique<seg_inception2_v1_5x5::net>();
+//         nets["seg_inception2_logits_v1"] = std::make_unique<seg_inception2_logits_v1::net>();
+//         nets["seg_inception2_2x2"] = std::make_unique<seg_inception2_2x2::net>();
+//     }
+//     return std::move(nets.at(key));
+// }
 
 /* ============================================================================
  * Build + inference.
@@ -125,7 +124,7 @@ ICudaEngine* tfrt_to_gie_model()
     INetworkDefinition* network = builder->createNetwork();
 
     // Build TF-RT network.
-    auto tf_network = networks_map(FLAGS_network);
+    auto tf_network = tfrt::nets_factory(FLAGS_network);
     tf_network->create_missing_tensors(true);
     tf_network->load_weights(FLAGS_network_pb);
     tf_network->input_shape({3, FLAGS_height, FLAGS_width});
@@ -162,10 +161,10 @@ void model_serialized(IHostMemory*& gieModelStream)
     auto engine = tfrt_to_gie_model();
     // serialize the engine.
     // TensorRT 1
-    #ifndef NV_TENSORRT_MAJOR   
+    #ifndef NV_TENSORRT_MAJOR
     engine->serialize(*gieModelStream);
     // TensorRT 2
-    #else   
+    #else
     gieModelStream = engine->serialize();
     #endif
     engine->destroy();
@@ -189,12 +188,12 @@ void timeInference(ICudaEngine* engine, int batchSize)
     size_t inputSize = batchSize * inputDims.c() * inputDims.h() * inputDims.w() * sizeof(float);
     size_t outputSize = batchSize * outputDims.c() * outputDims.h() * outputDims.w() * sizeof(float);
 
-    std::cout << "Input index: " << inputIndex 
-        << " of size: " << inputSize 
+    std::cout << "Input index: " << inputIndex
+        << " of size: " << inputSize
         << " and shape: " << tfrt::dims_str(inputDims)
         << std::endl;
-    std::cout << "Output index: " << outputIndex 
-        << " of size: " << outputSize 
+    std::cout << "Output index: " << outputIndex
+        << " of size: " << outputSize
         << " and shape: " << tfrt::dims_str(outputDims)
         << std::endl;
     CHECK_CUDA(cudaMalloc(&buffers[inputIndex], inputSize));
@@ -225,7 +224,7 @@ int main(int argc, char** argv)
     std::cout << "Building and running a GPU inference engine N=2..." << std::endl;
 
     // Parse the model file.
-    #ifndef NV_TENSORRT_MAJOR   
+    #ifndef NV_TENSORRT_MAJOR
     nvinfer1::IHostMemory  gieModelStream;
     gieModelStream.seekg(0, gieModelStream.beg);
     auto pgieModelStream = &gieModelStream;
@@ -237,7 +236,7 @@ int main(int argc, char** argv)
 
     // Create an engine
     IRuntime* infer = createInferRuntime(gLogger);
-    #ifndef NV_TENSORRT_MAJOR   
+    #ifndef NV_TENSORRT_MAJOR
     nvinfer1::ICudaEngine* engine = infer->deserializeCudaEngine(gieModelStream);
     #else
     ICudaEngine* engine = infer->deserializeCudaEngine(gieModelStream->data(),
