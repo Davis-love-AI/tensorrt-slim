@@ -56,6 +56,7 @@ public:
     void process(vx_image newFrame);
     vx_image get_frame_stabilized() const;
     vx_image get_frame_original() const;
+    vx_matrix get_matrix_stabilization() const;
 
     void print_performances() const;
 
@@ -108,8 +109,9 @@ private:
     vx_delay matrices_delay_;
     vx_delay frames_RGBX_delay_;
 
+    /** Stabilization matrix (excluding scaling).  */
     vx_matrix smoothed_;
-
+    /** Stabilized frame. */
     vx_image stabilized_RGBX_frame_;
 
     vx_scalar s_lk_epsilon_;
@@ -241,6 +243,10 @@ vx_image ImageBasedVideoStabilizer::get_frame_original() const
     // Last frame in ring buffer.
     return (vx_image)vxGetReferenceFromDelay(
         frames_RGBX_delay_, 1 - static_cast<vx_int32>(frames_delay_size_));
+}
+vx_matrix ImageBasedVideoStabilizer::get_matrix_stabilization() const
+{
+    return smoothed_;
 }
 void ImageBasedVideoStabilizer::print_performances() const
 {

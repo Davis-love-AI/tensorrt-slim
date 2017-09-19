@@ -58,10 +58,13 @@ virtual void init(vx_uint32 width, vx_uint32 height) = 0;
 
 /** Process a frame. */
 virtual void process(vx_image newFrame) = 0;
+
 /** Get the stabilized frame. */
 virtual vx_image get_frame_stabilized() const = 0;
 /** Get the original frame corresponding. */
 virtual vx_image get_frame_original() const = 0;
+/** Get the stabilization matrix. */
+virtual vx_matrix get_matrix_stabilization() const = 0;
 
 /** Performance? */
 virtual void print_performances() const = 0;
