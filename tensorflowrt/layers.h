@@ -675,6 +675,7 @@ protected:
     int  m_depth_multiplier;
 };
 
+
 /** TensorFlow output formula. Do you floor the output dimensions or not?
  */
 class tf_conv2d_transpose_formula : public nvinfer1::IOutputDimensionsFormula
@@ -840,8 +841,29 @@ private:
     ceil_formula  m_ceil_formula;
 };
 
-/** Activation layer.
- */
+/** Simple batch norm layer. Nothing else! */
+class batch_norm : public operation2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>
+{
+public:
+    /** Constructor: declare the layer. */
+    batch_norm(const tfrt::scope& sc, const std::string& lname="batch_norm") :
+         operation2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>(sc, lname) {
+    }
+    /** Add the layer to network graph, using operator(root). */
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        LOG(INFO) << "LAYER 2D contrib batch norm '" << this->m_scope.name() << "'. "
+            << "Input shape: " << dims_str(net->getDimensions());
+        net = this->operation2d<ActivationType::NONE, PaddingType::SAME, true>::batch_norm(net);
+        return this->mark_output(net);
+    }
+private:
+    // Deactivate a few methods.
+    using operation2d<ActivationType::NONE, PaddingType::SAME, true>::noutputs;
+    using operation2d<ActivationType::NONE, PaddingType::SAME, true>::ksize;
+    using operation2d<ActivationType::NONE, PaddingType::SAME, true>::stride;
+    using operation2d<ActivationType::NONE, PaddingType::SAME, true>::padding;
+};
+/** Simple activation layer. Nothing else! */
 template <ActivationType ACT>
 class activation : public operation2d<ACT, PaddingType::SAME, false>
 {
@@ -1035,7 +1057,6 @@ private:
         return w;
     }
 };
-
 
 /** Bilinear 2d interpolation. Input is supposed to be "checkerboard" tensor,
  * with zero entries between known values. Using a 3x3 filter by default.
