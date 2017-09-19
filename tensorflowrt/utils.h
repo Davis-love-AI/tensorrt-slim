@@ -166,6 +166,12 @@ public:
     {
         free();
     }
+    /** Reshape the tensor. Release memory if necessary.  */
+    void reshape(const nvinfer1::DimsNCHW& _shape) 
+    {
+        this->free();
+        this->shape = _shape;
+    }
     /** Allocate shared memory between CPU and GPU/CUDA. */
     bool allocate()
     {
