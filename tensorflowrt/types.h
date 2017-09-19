@@ -19,6 +19,9 @@
 
 namespace tfrt
 {
+// ========================================================================== //
+// EIGEN tensors.
+// ========================================================================== //
 /** C type of tensors. */
 template <typename T, typename IndexType=Eigen::DenseIndex>
 struct c {
@@ -89,9 +92,24 @@ struct nachw {
 };
 
 
-/** EIGEN typedefs
- * TODO: naming convention + column major. 
- */
+// ========================================================================== //
+// EIGEN matrices.
+// ========================================================================== //
+typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor>  matrix_33f_rm;
+typedef Eigen::Matrix<float, 4, 4, Eigen::RowMajor>  matrix_44f_rm;
+typedef Eigen::Matrix<float, 3, 4, Eigen::RowMajor>  matrix_34f_rm;
+typedef Eigen::Matrix<float, 4, 3, Eigen::RowMajor>  matrix_43f_rm;
+
+typedef Eigen::Matrix<float, 3, 3, Eigen::ColMajor>  matrix_33f;
+typedef Eigen::Matrix<float, 4, 4, Eigen::ColMajor>  matrix_44f;
+typedef Eigen::Matrix<float, 3, 4, Eigen::ColMajor>  matrix_34f;
+typedef Eigen::Matrix<float, 4, 3, Eigen::ColMajor>  matrix_43f;
+
+typedef Eigen::Matrix<float, 3, 1>  vector_3f;
+typedef Eigen::Matrix<float, 4, 1>  vector_4f;
+
+
+/** Old stuff, to remove.  */
 typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor>  Matrix3f;
 typedef Eigen::Matrix<float, 4, 4, Eigen::RowMajor>  Matrix4f;
 
