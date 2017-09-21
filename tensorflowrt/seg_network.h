@@ -24,7 +24,9 @@
 
 namespace tfrt
 {
-
+// ========================================================================== //
+// Segmentation Network.
+// ========================================================================== //
 class seg_network : public tfrt::network
 {
 public:
@@ -98,6 +100,53 @@ protected:
     // Segmentation classes descriptions
     std::vector<std::string>  m_desc_classes;
 
+    // Cached result tensors.
+    tfrt::cuda_tensor_u8  m_rclasses_cached;
+    tfrt::cuda_tensor  m_rscores_cached;
+};
+
+// ========================================================================== //
+// Post-processing of segmentation.
+// ========================================================================== //
+/** Post-processing of segmentation raw output. 
+* For now, only batch of 1 supported.
+*/
+class seg_network_post
+{
+public:
+    /** Empty constructor, nothing allocated. */
+    seg_network_post();
+    /** Build, with all parameters. */
+    seg_network_post(nvinfer1::DimsCHW _seg_outshape, 
+        bool _empty_class, float _detection_threshold);
+
+    /** Apply the post-processing algorithm. */
+    void apply(const tfrt::cuda_tensor& seg_output_raw, size_t batch_idx);
+
+public:
+    /** Empty class? */
+    bool empty_class() {
+        return m_empty_class;
+    }
+    void empty_class(bool v) {
+        m_empty_class = v;
+    }
+    /** Detection threshold. */
+    float detection_threshold() {
+        return m_detection_threshold;
+    }
+    void detection_threshold(float v) {
+        m_detection_threshold = v;
+    }
+
+private:
+    /** Segmentation output shape. */
+    nvinfer1::DimsCHW  m_seg_outshape;
+    /** Empty class in the first coordinate? */
+    bool  m_empty_class;
+    /** Detection threshold. */
+    float  m_detection_threshold;
+    
     // Cached result tensors.
     tfrt::cuda_tensor_u8  m_rclasses_cached;
     tfrt::cuda_tensor  m_rscores_cached;
