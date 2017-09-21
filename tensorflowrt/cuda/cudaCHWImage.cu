@@ -15,6 +15,9 @@
 
 #include "cudaUtility.h"
 
+// ========================================================================== //
+// RGBX <=> CHW.
+// ========================================================================== //
 __global__ void kernel_rgbx_to_chw(uint8_t* input, float* output, 
     int width, int height, uint32_t stride_x, uint32_t stride_y)
 {
@@ -47,6 +50,7 @@ cudaError_t cuda_rgba_to_chw(uint8_t* d_input, float* d_output,
     kernel_rgbx_to_chw<<<gridDim, blockDim>>>(d_input, d_output, width, height, stride_x, stride_y);
     return CUDA(cudaGetLastError());
 }
+
 
 __global__ void kernel_chw_to_rgbx(float* input, uint8_t* output, 
     int width, int height, uint32_t stride_x, uint32_t stride_y)
@@ -82,5 +86,47 @@ cudaError_t cuda_chw_to_rgba(float* d_input, uint8_t* d_output,
     const dim3 blockDim(8, 8);
     const dim3 gridDim(iDivUp(width, blockDim.x), iDivUp(height, blockDim.y));
     kernel_chw_to_rgbx<<<gridDim, blockDim>>>(d_input, d_output, width, height, stride_x, stride_y);
+    return CUDA(cudaGetLastError());
+}
+
+// ========================================================================== //
+// RGBX <=> CHW resize.
+// ========================================================================== //
+__global__ void kernel_rgbx_to_chw_resize(uint8_t* input, float* output, 
+    uint32_t inwidth, uint32_t inheight, uint32_t instride_x, uint32_t instride_y,
+    uint32_t outwidth, uint32_t outheight)
+{
+    const int x = blockIdx.x * blockDim.x + threadIdx.x;
+    const int y = blockIdx.y * blockDim.y + threadIdx.y;
+    const int n = outwidth * outheight;
+    if( x >= outwidth || y >= outheight ) {
+        return;
+    }
+    // Input coordinates.
+    const int in_x = round(float(x) / float(outwidth) * float(inwidth)); 
+    const int in_y = round(float(y) / float(outheight) * float(inheight)); 
+    // Use stride to compute the index.
+    const int idx = in_y * instride_y + in_x * instride_x;
+    // Simple re-ordering. Nothing fancy!
+    const float3 rgb = make_float3(input[idx+0], input[idx+1], input[idx+2]);
+    output[n * 0 + y * outwidth + x] = rgb.x;
+    output[n * 1 + y * outwidth + x] = rgb.y;
+    output[n * 2 + y * outwidth + x] = rgb.z;
+}
+cudaError_t cuda_rgba_to_chw_resize(uint8_t* d_input, float* d_output, 
+    uint32_t inwidth, uint32_t inheight, uint32_t instride_x, uint32_t instride_y,
+    uint32_t outwidth, uint32_t outheight)
+{
+    if( !d_input || !d_output ) {
+        return cudaErrorInvalidDevicePointer;
+    }
+    if( inwidth == 0 || inheight == 0 || outwidth == 0 || outheight == 0) {
+        return cudaErrorInvalidValue;
+    }
+    // Launch convertion kernel.
+    const dim3 blockDim(8, 8);
+    const dim3 gridDim(iDivUp(outwidth, blockDim.x), iDivUp(outheight, blockDim.y));
+    kernel_rgbx_to_chw_resize<<<gridDim, blockDim>>>(d_input, d_output, 
+        inwidth, inheight, instride_x, instride_y, outwidth, outheight);
     return CUDA(cudaGetLastError());
 }

@@ -765,11 +765,21 @@ void network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& 
     const auto& img_patch2 = img2;
     const nvinfer1::DimsNCHW& inshape{m_cuda_input.shape};
     LOG(INFO) << "Converting RGBA image to CHW format.";
-    r = cuda_rgba_to_chw(img_patch1.cuda, m_cuda_input.cuda_ptr(0),
-        inshape.w(), inshape.h(), img_patch1.addr.stride_x, img_patch1.addr.stride_y);
+
+    r = cuda_rgba_to_chw_resize(img_patch1.cuda, m_cuda_input.cuda_ptr(0),
+        img_patch1.addr.dim_x, img_patch1.addr.dim_y, 
+        img_patch1.addr.stride_x, img_patch1.addr.stride_y,
+        inshape.w(), inshape.h());
+    // r = cuda_rgba_to_chw(img_patch1.cuda, m_cuda_input.cuda_ptr(0),
+    //     inshape.w(), inshape.h(), img_patch1.addr.stride_x, img_patch1.addr.stride_y);
     CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 0 to CHW format. CUDA error: " << r;
-    r = cuda_rgba_to_chw(img_patch2.cuda, m_cuda_input.cuda_ptr(1),
-        inshape.w(), inshape.h(), img_patch2.addr.stride_x, img_patch2.addr.stride_y);
+
+    r = cuda_rgba_to_chw_resize(img_patch2.cuda, m_cuda_input.cuda_ptr(1),
+        img_patch2.addr.dim_x, img_patch2.addr.dim_y, 
+        img_patch2.addr.stride_x, img_patch2.addr.stride_y,
+        inshape.w(), inshape.h());
+    // r = cuda_rgba_to_chw(img_patch2.cuda, m_cuda_input.cuda_ptr(1),
+    //     inshape.w(), inshape.h(), img_patch2.addr.stride_x, img_patch2.addr.stride_y);
     CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 1 to CHW format. CUDA error: " << r;
 
     // CUDA(cudaDeviceSynchronize());
