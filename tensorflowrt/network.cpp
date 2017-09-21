@@ -346,6 +346,7 @@ network& network::input(std::string name, nvinfer1::DimsCHW shape)
 {
     // Only change shape if positive.
     if(shape.c() && shape.h() && shape.w()) {
+        // LOG(INFO) << "NET | Set input shape: " << tfrt::dims_str(shape);
         auto input = m_pb_network->mutable_input();
         input->set_name(name);
         input->set_c(shape.c());
