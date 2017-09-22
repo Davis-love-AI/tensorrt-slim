@@ -102,9 +102,9 @@ __global__ void kernel_rgbx_to_chw_resize(uint8_t* input, float* output,
     if( x >= outwidth || y >= outheight ) {
         return;
     }
-    // Input coordinates.
-    const int in_x = round(float(x) / float(outwidth) * float(inwidth)); 
-    const int in_y = round(float(y) / float(outheight) * float(inheight)); 
+    // Nearest-neighbour interpolation.
+    const int in_x = floor((float(x) + 0.5) / float(outwidth) * float(inwidth) - 0.5); 
+    const int in_y = floor((float(y) + 0.5) / float(outheight) * float(inheight) - 0.5); 
     // Use stride to compute the index.
     const int idx = in_y * instride_y + in_x * instride_x;
     // Simple re-ordering. Nothing fancy!

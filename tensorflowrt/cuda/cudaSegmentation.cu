@@ -153,7 +153,7 @@ __global__ void kernel_seg_post_process(
         return;
     }
     // Find the highest probabilty...
-    const int drift = empty_class;
+    const int drift = !empty_class;
     uint8_t max_idx = 0;
     float max_score = 0.0f;
     float p;
@@ -168,7 +168,7 @@ __global__ void kernel_seg_post_process(
         }
     }
     // Assign values.
-    idx = ty*seg_width + tx;
+    idx = y * seg_width + x;
     if (max_score > threshold) {
         d_classes[idx] = max_idx + drift;
         d_scores[idx] = max_score;

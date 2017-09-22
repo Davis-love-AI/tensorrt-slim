@@ -131,6 +131,7 @@ seg_network_post::seg_network_post(nvinfer1::DimsCHW _seg_outshape,
 
     // Default transformation matrix.
     m_transformation_matrix = tfrt::cuda_tensor("tr_matrix", {1, 1, 3, 3});
+    m_transformation_matrix.allocate();
     this->transformation_matrix(tfrt::matrix_33f_rm::Identity());
 }
 void seg_network_post::apply(const tfrt::cuda_tensor& seg_output_raw, size_t batch_idx)

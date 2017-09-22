@@ -15,6 +15,7 @@
 #ifndef TFRT_TYPES_H
 #define TFRT_TYPES_H
 
+#include <Eigen/Dense>
 #include <unsupported/Eigen/CXX11/Tensor>
 
 namespace tfrt
