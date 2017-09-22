@@ -137,7 +137,7 @@ void seg_network_post::apply(const tfrt::cuda_tensor& seg_output_raw, size_t bat
     // For God sake, used a fucking CUDA kernel for that!
     const auto& rtensor = seg_output_raw.tensor();
     const auto& oshape = seg_output_raw.shape;
-    LOG(INFO) << "SEGNET: post-processing of output with shape: "
+    DLOG(INFO) << "SEGNET: post-processing of output with shape: "
         << dims_str(seg_output_raw.shape);
     // CUDA(cudaDeviceSynchronize());
     int n = batch_idx;
@@ -166,7 +166,7 @@ void seg_network_post::apply(const tfrt::cuda_tensor& seg_output_raw, size_t bat
         }
     }
     // CUDA(cudaDeviceSynchronize());
-    LOG(INFO) << "SEGNET: done with post-processing of output";
+    DLOG(INFO) << "SEGNET: done with post-processing of output";
 }
 
 }
