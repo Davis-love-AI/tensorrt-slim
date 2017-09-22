@@ -138,13 +138,16 @@ public:
     void detection_threshold(float v) {
         m_detection_threshold = v;
     }
-
+    /** Classes and scores. */
     const tfrt::cuda_tensor_u8& classes() const {
         return m_rclasses_cached;
     }
     const tfrt::cuda_tensor& scores() const {
         return m_rscores_cached;
     }
+    /** Transformation matrix. */
+    void transformation_matrix(const tfrt::matrix_33f_rm& m);
+    tfrt::matrix_33f_rm transformation_matrix() const;
 
 private:
     /** Segmentation output shape. */
@@ -153,6 +156,9 @@ private:
     bool  m_empty_class;
     /** Detection threshold. */
     float  m_detection_threshold;
+    /** Cached Transformation matrix... */
+    tfrt::cuda_tensor  m_transformation_matrix;
+    // tfrt::matrix_33f  m_transformation_matrix;
     
     // Cached result tensors.
     tfrt::cuda_tensor_u8  m_rclasses_cached;

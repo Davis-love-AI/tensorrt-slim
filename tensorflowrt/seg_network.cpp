@@ -121,16 +121,16 @@ seg_network_post::seg_network_post(nvinfer1::DimsCHW _seg_outshape,
     m_detection_threshold{_detection_threshold}
 {
     // Allocate temporary buffers.
-    if (!m_rclasses_cached.is_allocated() ) {
-        m_rclasses_cached = tfrt::cuda_tensor_u8(
-            "classes", {1, 1, m_seg_outshape.h(), m_seg_outshape.w()});
-        m_rclasses_cached.allocate();
-    }
-    if (!m_rscores_cached.is_allocated() ) {
-        m_rscores_cached = tfrt::cuda_tensor(
-            "scores", {1, 1, m_seg_outshape.h(), m_seg_outshape.w()});
-        m_rscores_cached.allocate();
-    }
+    m_rclasses_cached = tfrt::cuda_tensor_u8(
+        "classes", {1, 1, m_seg_outshape.h(), m_seg_outshape.w()});
+    m_rclasses_cached.allocate();
+    m_rscores_cached = tfrt::cuda_tensor(
+        "scores", {1, 1, m_seg_outshape.h(), m_seg_outshape.w()});
+    m_rscores_cached.allocate();
+
+    // Default transformation matrix.
+    m_transformation_matrix = tfrt::cuda_tensor("tr_matrix", {1, 1, 3, 3});
+    this->transformation_matrix(tfrt::matrix_33f_rm::Identity());
 }
 void seg_network_post::apply(const tfrt::cuda_tensor& seg_output_raw, size_t batch_idx)
 {
@@ -167,6 +167,19 @@ void seg_network_post::apply(const tfrt::cuda_tensor& seg_output_raw, size_t bat
     }
     // CUDA(cudaDeviceSynchronize());
     DLOG(INFO) << "SEGNET: done with post-processing of output";
+}
+
+void seg_network_post::transformation_matrix(const tfrt::matrix_33f_rm& m)
+{
+    // Just copy the memory!
+    memcpy(m_transformation_matrix.cpu, m.data(), m_transformation_matrix.size);
+}
+tfrt::matrix_33f_rm seg_network_post::transformation_matrix() const
+{
+    // Just copy the memory!
+    tfrt::matrix_33f_rm m;
+    memcpy(m.data(), m_transformation_matrix.cpu, m_transformation_matrix.size);
+    return m;
 }
 
 }
