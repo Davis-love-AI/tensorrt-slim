@@ -15,6 +15,7 @@
 #include <glog/logging.h>
 
 #include "seg_network.h"
+#include "cuda/cudaSegmentation.h"
 
 namespace tfrt
 {
@@ -134,39 +135,43 @@ seg_network_post::seg_network_post(nvinfer1::DimsCHW _seg_outshape,
 }
 void seg_network_post::apply(const tfrt::cuda_tensor& seg_output_raw, size_t batch_idx)
 {
-    // For God sake, used a fucking CUDA kernel for that!
-    const auto& rtensor = seg_output_raw.tensor();
-    const auto& oshape = seg_output_raw.shape;
-    DLOG(INFO) << "SEGNET: post-processing of output with shape: "
-        << dims_str(seg_output_raw.shape);
-    // CUDA(cudaDeviceSynchronize());
-    int n = batch_idx;
-    for (long i = 0 ; i < rtensor.dimension(2) ; ++i) {
-        for (long j = 0 ; j < rtensor.dimension(3) ; ++j) {
-            uint8_t max_idx = 0;
-            float max_score = 0.0f;
-            // Channel loop.
-            for (long k = 0 ; k < rtensor.dimension(1) ; ++k) {
-                float score = rtensor(n, k, i, j);
-                if (score > max_score) {
-                    max_idx = uint8_t(k);
-                    max_score = score;
-                }
-                // Save to cached tensors.
-                long idx = n * oshape.h() * oshape.w() + i * oshape.w() + j;
-                if (max_score > m_detection_threshold) {
-                    m_rclasses_cached.cpu[idx] = max_idx + int(!m_empty_class);
-                    m_rscores_cached.cpu[idx] = max_score;
-                }
-                else {
-                    m_rclasses_cached.cpu[idx] = 0;
-                    m_rscores_cached.cpu[idx] = max_score;
-                }
-            }
-        }
-    }
-    // CUDA(cudaDeviceSynchronize());
-    DLOG(INFO) << "SEGNET: done with post-processing of output";
+    // CUDA optimized implementation! Finally!
+    cuda_seg_post_process(
+        seg_output_raw.cuda_ptr(batch_idx), m_rclasses_cached.cuda, m_rscores_cached.cuda, 
+        m_transformation_matrix.cuda,
+        m_seg_outshape.w(), m_seg_outshape.h(), seg_output_raw.shape.c(),
+        m_empty_class, m_detection_threshold);
+
+    // DLOG(INFO) << "SEGNET: post-processing of output with shape: "
+    //     << dims_str(seg_output_raw.shape);
+    // // CUDA(cudaDeviceSynchronize());
+    // int n = batch_idx;
+    // for (long i = 0 ; i < rtensor.dimension(2) ; ++i) {
+    //     for (long j = 0 ; j < rtensor.dimension(3) ; ++j) {
+    //         uint8_t max_idx = 0;
+    //         float max_score = 0.0f;
+    //         // Channel loop.
+    //         for (long k = 0 ; k < rtensor.dimension(1) ; ++k) {
+    //             float score = rtensor(n, k, i, j);
+    //             if (score > max_score) {
+    //                 max_idx = uint8_t(k);
+    //                 max_score = score;
+    //             }
+    //             // Save to cached tensors.
+    //             long idx = n * oshape.h() * oshape.w() + i * oshape.w() + j;
+    //             if (max_score > m_detection_threshold) {
+    //                 m_rclasses_cached.cpu[idx] = max_idx + int(!m_empty_class);
+    //                 m_rscores_cached.cpu[idx] = max_score;
+    //             }
+    //             else {
+    //                 m_rclasses_cached.cpu[idx] = 0;
+    //                 m_rscores_cached.cpu[idx] = max_score;
+    //             }
+    //         }
+    //     }
+    // }
+    // // CUDA(cudaDeviceSynchronize());
+    // DLOG(INFO) << "SEGNET: done with post-processing of output";
 }
 
 void seg_network_post::transformation_matrix(const tfrt::matrix_33f_rm& m)

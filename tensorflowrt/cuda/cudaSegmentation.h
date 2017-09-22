@@ -29,10 +29,12 @@ cudaError_t cuda_seg_overlay(
     uint32_t mask_width, uint32_t mask_height,
     uint32_t mask_stride_x, uint32_t mask_stride_y);
 
-/** Convert a RGBX image to CHW format. Both are supposed to be stored on
- * device/CUDA space and have same size. The input image is uint8 RGBA format.
+/** Post-processing of RAW segmentation probabilities: find classes
+ * and scores. If necessary, also apply transformation (for instance, stabilization).
  */
-// cudaError_t cuda_rgba_to_chw(uint8_t* d_input, float* d_output, 
-//     uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y);
+cudaError_t cuda_seg_post_process(
+    float* d_raw_prob, uint8_t* d_classes, float* d_scores, float* d_tr_matrix,
+    uint32_t seg_width, uint32_t seg_height, uint32_t num_classes,
+    bool empty_class, float threshold);
 
 #endif

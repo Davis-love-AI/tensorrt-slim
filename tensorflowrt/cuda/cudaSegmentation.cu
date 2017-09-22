@@ -18,6 +18,9 @@
 
 #define ALPHA_COLOR 128
 
+// ========================================================================== //
+// Segmentation overlay.
+// ========================================================================== //
 __global__ void kernel_seg_overlay(
     uint8_t* d_img, uint8_t* d_mask, float2 scale,
     uint32_t img_width, uint32_t img_height,
@@ -124,5 +127,74 @@ cudaError_t cuda_seg_overlay(
     kernel_seg_overlay<<<gridDim, blockDim>>>(d_img, d_mask, scale,
         img_width, img_height, img_stride_x, img_stride_y,
         mask_width, mask_height, mask_stride_x, mask_stride_y);
+    return cudaGetLastError();
+}
+
+// ========================================================================== //
+// Segmentation post-processing.
+// ========================================================================== //
+__global__ void kernel_seg_post_process(
+    float* d_raw_prob, uint8_t* d_classes, float* d_scores, 
+    float* d_tr_matrix, uint32_t seg_width, uint32_t seg_height, uint32_t num_classes,
+    bool empty_class, float threshold)
+{
+    // Image coordinates.
+    const int x = blockIdx.x * blockDim.x + threadIdx.x;
+    const int y = blockIdx.y * blockDim.y + threadIdx.y;
+    if( x >= seg_width || y >= seg_height ) {
+        return;
+    }
+    // New coordinates after transformation!
+    const float tx_f = x * d_tr_matrix[0] + y * d_tr_matrix[1] + d_tr_matrix[2];
+    const float ty_f = x * d_tr_matrix[3] + y * d_tr_matrix[4] + d_tr_matrix[5];
+    const int tx = round(tx_f);
+    const int ty = round(ty_f);
+    if( tx >= seg_width || tx < 0 || ty >= seg_height || ty < 0 ) {
+        return;
+    }
+    // Find the highest probabilty...
+    const int drift = empty_class;
+    uint8_t max_idx = 0;
+    float max_score = 0.0f;
+    float p;
+    int idx;
+    for (int k = 0 ; k < num_classes ; ++k) {
+        // CHW tensor format.
+        idx = k*seg_width*seg_height + ty*seg_width + tx;
+        p = d_raw_prob[idx];
+        if (p > max_score) {
+            max_idx = uint8_t(k);
+            max_score = p;
+        }
+    }
+    // Assign values.
+    idx = ty*seg_width + tx;
+    if (max_score > threshold) {
+        d_classes[idx] = max_idx + drift;
+        d_scores[idx] = max_score;
+    }
+    else {
+        d_classes[idx] = 0;
+        d_scores[idx] = max_score;
+    }
+}
+cudaError_t cuda_seg_post_process(
+    float* d_raw_prob, uint8_t* d_classes, float* d_scores, 
+    float* d_tr_matrix, uint32_t seg_width, uint32_t seg_height, uint32_t num_classes,
+    bool empty_class, float threshold)
+{
+    if( !d_raw_prob || !d_classes || !d_scores ) {
+        return cudaErrorInvalidDevicePointer;
+    }
+    if( seg_width == 0 || seg_height == 0 || num_classes == 0 ) {
+        return cudaErrorInvalidValue;
+    }
+    // Launch kernel!
+    const dim3 blockDim(8, 8);
+    const dim3 gridDim(iDivUp(seg_width,blockDim.x), iDivUp(seg_height,blockDim.y));
+    kernel_seg_post_process<<<gridDim, blockDim>>>(
+        d_raw_prob, d_classes, d_scores, 
+        d_tr_matrix, seg_width, seg_height, num_classes,
+        empty_class, threshold);
     return cudaGetLastError();
 }
