@@ -139,6 +139,13 @@ public:
         m_detection_threshold = v;
     }
 
+    const tfrt::cuda_tensor_u8& classes() const {
+        return m_rclasses_cached;
+    }
+    const tfrt::cuda_tensor& scores() const {
+        return m_rscores_cached;
+    }
+
 private:
     /** Segmentation output shape. */
     nvinfer1::DimsCHW  m_seg_outshape;
