@@ -144,12 +144,18 @@ __global__ void kernel_seg_post_process(
     if( x >= seg_width || y >= seg_height ) {
         return;
     }
+    const int d_idx = y * seg_width + x;
+    
     // New coordinates after transformation!
-    const float tx_f = x * d_tr_matrix[0] + y * d_tr_matrix[1] + d_tr_matrix[2];
-    const float ty_f = x * d_tr_matrix[3] + y * d_tr_matrix[4] + d_tr_matrix[5];
-    const int tx = round(tx_f);
-    const int ty = round(ty_f);
+    const float tx_f = (x+0.) * d_tr_matrix[0] + (y+0.) * d_tr_matrix[1] + d_tr_matrix[2];
+    const float ty_f = (x+0.) * d_tr_matrix[3] + (y+0.) * d_tr_matrix[4] + d_tr_matrix[5];
+    const float tz_f = (x+0.) * d_tr_matrix[6] + (y+0.) * d_tr_matrix[7] + d_tr_matrix[8];
+    const int tx = round(tx_f / tz_f);
+    const int ty = round(ty_f / tz_f);
+
     if( tx >= seg_width || tx < 0 || ty >= seg_height || ty < 0 ) {
+        d_classes[d_idx] = 0;
+        d_scores[d_idx] = 1.0;
         return;
     }
     // Find the highest probabilty...
@@ -168,15 +174,16 @@ __global__ void kernel_seg_post_process(
         }
     }
     // Assign values.
-    idx = y * seg_width + x;
     if (max_score > threshold) {
-        d_classes[idx] = max_idx + drift;
-        d_scores[idx] = max_score;
+        d_classes[d_idx] = max_idx + drift;
+        d_scores[d_idx] = max_score;
     }
     else {
-        d_classes[idx] = 0;
-        d_scores[idx] = max_score;
+        d_classes[d_idx] = 0;
+        d_scores[d_idx] = max_score;
     }
+    d_classes[d_idx] = 2;
+    d_scores[d_idx] = max_score;
 }
 cudaError_t cuda_seg_post_process(
     float* d_raw_prob, uint8_t* d_classes, float* d_scores, 
