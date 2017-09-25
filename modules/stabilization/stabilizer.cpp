@@ -226,7 +226,6 @@ void ImageBasedVideoStabilizer::process(vx_image newFrame)
     NVXIO_SAFE_CALL( vxAgeDelay(pts_delay_) );
     NVXIO_SAFE_CALL( vxAgeDelay(matrices_delay_) );
     NVXIO_SAFE_CALL( vxAgeDelay(frames_RGBX_delay_) );
-
     // Process graph
     NVXIO_SAFE_CALL( vxSetParameterByIndex(convert_to_gray_node_, 0, (vx_reference)newFrame) );
     NVXIO_SAFE_CALL( vxSetParameterByIndex(copy_node_, 0, (vx_reference)newFrame) );

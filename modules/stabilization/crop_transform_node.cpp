@@ -13,6 +13,8 @@
 # from Robik AI Ltd.
 # =========================================================================== */
 #include "vstab_nodes.hpp"
+#include <iostream>
+
 #define KERNEL_NUM_PARAMS 7
 
 static const char KERNEL_CROP_STAB_TRANSFORM_NAME[VX_MAX_KERNEL_NAME] = "example.nvx.crop_stab_transform";
@@ -52,13 +54,13 @@ static vx_status VX_CALLBACK cropStabTransform_kernel(
     status |= vxQueryImage(image, VX_IMAGE_ATTRIBUTE_HEIGHT, &height, sizeof(height));
     // Compute affine transformation matrix (scaling + translation).
     Matrix3x3f_rm resizeMat = Matrix3x3f_rm::Identity();
-    float scale_x = 1.0f / (1.0f - crop_x);
-    float scale_y = 1.0f / (1.0f - crop_y);
+    // float scale_x = 1.0f / (1.0f - crop_x);
+    // float scale_y = 1.0f / (1.0f - crop_y);
     resizeMat(0, 0) = crop_scale_x;
     resizeMat(1, 1) = crop_scale_y;
     resizeMat(0, 2) = -crop_scale_x * width * crop_x;
     resizeMat(1, 2) = -crop_scale_y * height * crop_y;
-
+    
     // Transpose to the standart form like resizeMat and combine.
     stabTransform.transposeInPlace();
     stabTransform = resizeMat * stabTransform;
