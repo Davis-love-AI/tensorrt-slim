@@ -147,11 +147,16 @@ __global__ void kernel_seg_post_process(
     const int d_idx = y * seg_width + x;
     
     // New coordinates after transformation!
-    const float tx_f = (x+0.) * d_tr_matrix[0] + (y+0.) * d_tr_matrix[1] + d_tr_matrix[2];
-    const float ty_f = (x+0.) * d_tr_matrix[3] + (y+0.) * d_tr_matrix[4] + d_tr_matrix[5];
-    const float tz_f = (x+0.) * d_tr_matrix[6] + (y+0.) * d_tr_matrix[7] + d_tr_matrix[8];
-    const int tx = round(tx_f / tz_f);
-    const int ty = round(ty_f / tz_f);
+    // const float tx_f = (x+0.) * d_tr_matrix[0] + (y+0.) * d_tr_matrix[1] + d_tr_matrix[2];
+    // const float ty_f = (x+0.) * d_tr_matrix[3] + (y+0.) * d_tr_matrix[4] + d_tr_matrix[5];
+    // const float tz_f = (x+0.) * d_tr_matrix[6] + (y+0.) * d_tr_matrix[7] + d_tr_matrix[8];
+    
+    // FUCKING COLUMN MAJOR in OpenVX!!! Bullshit documentation!
+    const float tx_f = (x+0.5) * d_tr_matrix[0] + (y+0.5) * d_tr_matrix[3] + d_tr_matrix[6];
+    const float ty_f = (x+0.5) * d_tr_matrix[1] + (y+0.5) * d_tr_matrix[4] + d_tr_matrix[7];
+    const float tz_f = (x+0.5) * d_tr_matrix[2] + (y+0.5) * d_tr_matrix[5] + d_tr_matrix[8];
+    const int tx = floor(tx_f / tz_f);
+    const int ty = floor(ty_f / tz_f);
 
     if( tx >= seg_width || tx < 0 || ty >= seg_height || ty < 0 ) {
         d_classes[d_idx] = 0;
@@ -182,8 +187,9 @@ __global__ void kernel_seg_post_process(
         d_classes[d_idx] = 0;
         d_scores[d_idx] = max_score;
     }
-    d_classes[d_idx] = 2;
-    d_scores[d_idx] = max_score;
+    // Testing only.
+    // d_classes[d_idx] = 2;
+    // d_scores[d_idx] = max_score;
 }
 cudaError_t cuda_seg_post_process(
     float* d_raw_prob, uint8_t* d_classes, float* d_scores, 
