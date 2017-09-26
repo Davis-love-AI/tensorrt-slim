@@ -21,17 +21,19 @@
  * device/CUDA space and have same size. The input image is uint8 RGBA format.
  */
 cudaError_t cuda_rgba_to_chw(uint8_t* d_input, float* d_output, 
-    uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y);
+    uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y, 
+    cudaStream_t stream=0);
 
 /** Convert a CHW float image into unit8 RGBX format.  */
 cudaError_t cuda_chw_to_rgba(float* d_input, uint8_t* d_output, 
-    uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y);
+    uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y, 
+    cudaStream_t stream=0);
 
 /** Convert a RGBX image to CHW format. The input image is resized with nearest
  * neighbourhood to output shape. The input image is uint8 RGBA format.
  */
 cudaError_t cuda_rgba_to_chw_resize(uint8_t* d_input, float* d_output, 
     uint32_t inwidth, uint32_t inheight, uint32_t instride_x, uint32_t instride_y,
-    uint32_t outwidth, uint32_t outheight);
+    uint32_t outwidth, uint32_t outheight, cudaStream_t stream=0);
 
 #endif

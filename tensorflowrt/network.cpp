@@ -790,5 +790,32 @@ void network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& 
     m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
 }
 
+/* ============================================================================
+ * Asynchronous inference.
+ * ========================================================================== */
+void network::inference_stream(const nvx_image_inpatch& img1, 
+    const nvx_image_inpatch& img2, cudaStream_t stream)
+{
+    cudaError_t r;
+    const auto& img_patch1 = img1;
+    const auto& img_patch2 = img2;
+    const nvinfer1::DimsNCHW& inshape{m_cuda_input.shape};
+    LOG(INFO) << "Enqueue CUDA RGBA to CHW.";
+    
+    r = cuda_rgba_to_chw_resize(img_patch1.cuda, m_cuda_input.cuda_ptr(0),
+        img_patch1.addr.dim_x, img_patch1.addr.dim_y, 
+        img_patch1.addr.stride_x, img_patch1.addr.stride_y,
+        inshape.w(), inshape.h(), stream);
+    CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 0 to CHW format. CUDA error: " << r;
+    r = cuda_rgba_to_chw_resize(img_patch2.cuda, m_cuda_input.cuda_ptr(1),
+        img_patch2.addr.dim_x, img_patch2.addr.dim_y, 
+        img_patch2.addr.stride_x, img_patch2.addr.stride_y,
+        inshape.w(), inshape.h(), stream);
+    CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 1 to CHW format. CUDA error: " << r;
+    // Enqueue Network inference.
+    size_t num_batches = 2;
+    LOG(INFO) << "Enqueue neural network.";
+    m_nv_context->enqueue(num_batches, (void**)m_cached_bindings.data(), stream, nullptr);
+}
 
 }

@@ -36,7 +36,8 @@ __global__ void kernel_rgbx_to_chw(uint8_t* input, float* output,
     output[n * 2 + y * width + x] = rgb.z;
 }
 cudaError_t cuda_rgba_to_chw(uint8_t* d_input, float* d_output, 
-    uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y)
+    uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y,
+    cudaStream_t stream)
 {
     if( !d_input || !d_output ) {
         return cudaErrorInvalidDevicePointer;
@@ -74,7 +75,8 @@ __global__ void kernel_chw_to_rgbx(float* input, uint8_t* output,
     output[idx_out+3] = rgb.w;
 }
 cudaError_t cuda_chw_to_rgba(float* d_input, uint8_t* d_output, 
-    uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y)
+    uint32_t width, uint32_t height, uint32_t stride_x, uint32_t stride_y,
+    cudaStream_t stream)
 {
     if( !d_input || !d_output ) {
         return cudaErrorInvalidDevicePointer;
@@ -115,7 +117,8 @@ __global__ void kernel_rgbx_to_chw_resize(uint8_t* input, float* output,
 }
 cudaError_t cuda_rgba_to_chw_resize(uint8_t* d_input, float* d_output, 
     uint32_t inwidth, uint32_t inheight, uint32_t instride_x, uint32_t instride_y,
-    uint32_t outwidth, uint32_t outheight)
+    uint32_t outwidth, uint32_t outheight,
+    cudaStream_t stream)
 {
     if( !d_input || !d_output ) {
         return cudaErrorInvalidDevicePointer;

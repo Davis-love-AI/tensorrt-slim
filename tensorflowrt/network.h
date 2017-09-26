@@ -187,6 +187,10 @@ protected:
     void inference(vx_image img1, vx_image img2);
     void inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2);
 
+    /** Asynchronous inference, using CUDA streams. */
+    void inference_stream(
+        const nvx_image_inpatch& img1, const nvx_image_inpatch& img2, cudaStream_t stream);
+    
 protected:
     /** Find a output CUDA tensor from the all collection! Return first partial match.
      */
