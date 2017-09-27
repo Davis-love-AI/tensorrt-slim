@@ -76,35 +76,35 @@ void seg_network::post_processing()
     LOG(INFO) << "SEGNET: done with post-processing of output";
 }
 
-void seg_network::inference(vx_image image)
-{
-    LOG(INFO) << "SEGNET: inference with single input.";
-    network::inference(image);
-    // Post-processing of the output: computing classes and scores.
-    this->post_processing();
-}
-void seg_network::inference(const nvx_image_inpatch& image)
-{
-    LOG(INFO) << "SEGNET: inference with single input.";
-    network::inference(image);
-    // Post-processing of the output: computing classes and scores.
-    this->post_processing();
-}
+// void seg_network::inference(vx_image image)
+// {
+//     LOG(INFO) << "SEGNET: inference with single input.";
+//     network::inference(image);
+//     // Post-processing of the output: computing classes and scores.
+//     this->post_processing();
+// }
+// void seg_network::inference(const nvx_image_inpatch& image)
+// {
+//     LOG(INFO) << "SEGNET: inference with single input.";
+//     network::inference(image);
+//     // Post-processing of the output: computing classes and scores.
+//     this->post_processing();
+// }
 
-void seg_network::inference(vx_image img1, vx_image img2)
-{
-    LOG(INFO) << "SEGNET: inference with two inputs.";
-    network::inference(img1, img2);
-    // CUDA(cudaDeviceSynchronize());
-    // this->post_processing();
-}
-void seg_network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2)
-{
-    LOG(INFO) << "SEGNET: inference with two inputs.";
-    network::inference(img1, img2);
-    // CUDA(cudaDeviceSynchronize());
-    // this->post_processing();
-}
+// void seg_network::inference(vx_image img1, vx_image img2)
+// {
+//     LOG(INFO) << "SEGNET: inference with two inputs.";
+//     network::inference(img1, img2);
+//     // CUDA(cudaDeviceSynchronize());
+//     // this->post_processing();
+// }
+// void seg_network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2)
+// {
+//     LOG(INFO) << "SEGNET: inference with two inputs.";
+//     network::inference(img1, img2);
+//     // CUDA(cudaDeviceSynchronize());
+//     // this->post_processing();
+// }
 
 // ========================================================================== //
 // Post-segmentation network.

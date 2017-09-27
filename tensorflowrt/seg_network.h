@@ -67,11 +67,13 @@ public:
 
 public:
     /** Inference on a single VX image. */
-    void inference(vx_image image);
-    void inference(const nvx_image_inpatch& image);
-    /** Inference on two VX images. */
-    void inference(vx_image img1, vx_image img2);
-    void inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2);
+    // void inference(vx_image image);
+    // void inference(const nvx_image_inpatch& image);
+    // /** Inference on two VX images. */
+    // void inference(vx_image img1, vx_image img2);
+    // void inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2);
+    // using network::inference;
+    
 
     // Getting raw results.
     const tfrt::cuda_tensor_u8& raw_classes() const {

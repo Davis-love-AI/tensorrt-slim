@@ -168,7 +168,7 @@ public:
     /** Build and profile a model. */
     bool profile_model(nvinfer1::IHostMemory** model_stream);
 
-protected:
+public:
     // Basic inference methods: single image, nvx images, ...
     /** Inference on a NCHW tensor (host memory).
      * Note: easy to use, but not optimized as performing a copy + cuda sync at every call.
