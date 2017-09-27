@@ -755,8 +755,8 @@ void network::inference(vx_image img1, vx_image img2)
     LOG(INFO) << "Inference (batch 2) on the neural network:"  << this->name();
     // Set CUDA patches and convert to CHW format.
     LOG(INFO) << "Creating patches from VX images.";
-    nvx_image_inpatch img_patch1{img1};
-    nvx_image_inpatch img_patch2{img2};
+    nvx_image_inpatch img_patch1{img1, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
+    nvx_image_inpatch img_patch2{img2, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
     this->inference(img_patch1, img_patch2);
 }
 void network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2)
@@ -785,6 +785,7 @@ void network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& 
 
     // CUDA(cudaDeviceSynchronize());
     // Execute TensorRT network (batch size = 1).
+    // Note: execute use the default CUDA stream, hence should force synchronisation.
     size_t num_batches = 2;
     LOG(INFO) << "Executing neural network.";
     m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
@@ -793,29 +794,64 @@ void network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& 
 /* ============================================================================
  * Asynchronous inference.
  * ========================================================================== */
-void network::inference_stream(const nvx_image_inpatch& img1, 
+void network::inference_async(const nvx_image_inpatch& img1, 
     const nvx_image_inpatch& img2, cudaStream_t stream)
 {
     cudaError_t r;
     const auto& img_patch1 = img1;
     const auto& img_patch2 = img2;
     const nvinfer1::DimsNCHW& inshape{m_cuda_input.shape};
-    LOG(INFO) << "Enqueue CUDA RGBA to CHW.";
+    LOG(INFO) << "Enqueue CUDA convertion RGBA to CHW.";
     
     r = cuda_rgba_to_chw_resize(img_patch1.cuda, m_cuda_input.cuda_ptr(0),
         img_patch1.addr.dim_x, img_patch1.addr.dim_y, 
         img_patch1.addr.stride_x, img_patch1.addr.stride_y,
         inshape.w(), inshape.h(), stream);
-    CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 0 to CHW format. CUDA error: " << r;
+    CHECK_EQ(r, cudaSuccess) << "FAILED to convert VX img 0 to CHW format. CUDA error: " << r;
     r = cuda_rgba_to_chw_resize(img_patch2.cuda, m_cuda_input.cuda_ptr(1),
         img_patch2.addr.dim_x, img_patch2.addr.dim_y, 
         img_patch2.addr.stride_x, img_patch2.addr.stride_y,
         inshape.w(), inshape.h(), stream);
-    CHECK_EQ(r, cudaSuccess) << "Failed to convert VX image 1 to CHW format. CUDA error: " << r;
+    CHECK_EQ(r, cudaSuccess) << "FAILED to convert VX img 1 to CHW format. CUDA error: " << r;
     // Enqueue Network inference.
     size_t num_batches = 2;
     LOG(INFO) << "Enqueue neural network.";
     m_nv_context->enqueue(num_batches, (void**)m_cached_bindings.data(), stream, nullptr);
+}
+void network::inference_async(vx_image img1, vx_image img2, cudaStream_t stream)
+{
+    cudaError_t r;
+    const nvinfer1::DimsNCHW& inshape{m_cuda_input.shape};
+    // Async patch creation???
+    LOG(INFO) << "Enqueue CUDA convertion RGBA to CHW.";
+    
+    // Try to speed up a bit by enqueuing directly the convertion.
+    nvx_image_inpatch img_patch1{img1, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
+    r = cuda_rgba_to_chw_resize(img_patch1.cuda, m_cuda_input.cuda_ptr(0),
+        img_patch1.addr.dim_x, img_patch1.addr.dim_y, 
+        img_patch1.addr.stride_x, img_patch1.addr.stride_y,
+        inshape.w(), inshape.h(), stream);
+    CHECK_EQ(r, cudaSuccess) << "FAILED to convert VX img 0 to CHW format. CUDA error: " << r;
+
+    nvx_image_inpatch img_patch2{img2, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
+    r = cuda_rgba_to_chw_resize(img_patch2.cuda, m_cuda_input.cuda_ptr(1),
+        img_patch2.addr.dim_x, img_patch2.addr.dim_y, 
+        img_patch2.addr.stride_x, img_patch2.addr.stride_y,
+        inshape.w(), inshape.h(), stream);
+    CHECK_EQ(r, cudaSuccess) << "FAILED to convert VX img 1 to CHW format. CUDA error: " << r;
+    
+    // Event used to ensure the convertion has been properly done.
+    cudaEvent_t net_input_copy;
+    cudaEventCreateWithFlags(&net_input_copy, cudaEventDisableTiming);
+    cudaEventRecord(net_input_copy, stream);
+    
+    // Enqueue Network inference.
+    size_t num_batches = 2;
+    LOG(INFO) << "Enqueue neural network.";
+    m_nv_context->enqueue(num_batches, (void**)m_cached_bindings.data(), stream, nullptr);
+    // Block until successful copy of inputs.
+    cudaEventSynchronize(net_input_copy);
+    cudaEventDestroy(net_input_copy); 
 }
 
 }
