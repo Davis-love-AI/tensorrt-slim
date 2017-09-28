@@ -129,7 +129,7 @@ cudaError_t cuda_rgba_to_chw_resize(uint8_t* d_input, float* d_output,
     // Launch convertion kernel.
     const dim3 blockDim(8, 8);
     const dim3 gridDim(iDivUp(outwidth, blockDim.x), iDivUp(outheight, blockDim.y));
-    kernel_rgbx_to_chw_resize<<<gridDim, blockDim>>>(d_input, d_output, 
+    kernel_rgbx_to_chw_resize<<<gridDim, blockDim, 0, stream>>>(d_input, d_output, 
         inwidth, inheight, instride_x, instride_y, outwidth, outheight);
     return CUDA(cudaGetLastError());
 }

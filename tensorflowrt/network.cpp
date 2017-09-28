@@ -827,13 +827,12 @@ void network::inference_async(vx_image img1, vx_image img2, cudaStream_t stream)
     
     // Try to speed up a bit by enqueuing directly the convertion.
     nvx_image_inpatch img_patch1{img1, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
+    nvx_image_inpatch img_patch2{img2, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
     r = cuda_rgba_to_chw_resize(img_patch1.cuda, m_cuda_input.cuda_ptr(0),
         img_patch1.addr.dim_x, img_patch1.addr.dim_y, 
         img_patch1.addr.stride_x, img_patch1.addr.stride_y,
         inshape.w(), inshape.h(), stream);
     CHECK_EQ(r, cudaSuccess) << "FAILED to convert VX img 0 to CHW format. CUDA error: " << r;
-
-    nvx_image_inpatch img_patch2{img2, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
     r = cuda_rgba_to_chw_resize(img_patch2.cuda, m_cuda_input.cuda_ptr(1),
         img_patch2.addr.dim_x, img_patch2.addr.dim_y, 
         img_patch2.addr.stride_x, img_patch2.addr.stride_y,
@@ -844,7 +843,8 @@ void network::inference_async(vx_image img1, vx_image img2, cudaStream_t stream)
     cudaEvent_t net_input_copy;
     cudaEventCreateWithFlags(&net_input_copy, cudaEventDisableTiming);
     cudaEventRecord(net_input_copy, stream);
-    
+    // cudaStreamSynchronize(stream);
+
     // Enqueue Network inference.
     size_t num_batches = 2;
     LOG(INFO) << "Enqueue neural network.";
