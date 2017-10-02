@@ -823,7 +823,7 @@ void network::inference_async(vx_image img1, vx_image img2, cudaStream_t stream)
     cudaError_t r;
     const nvinfer1::DimsNCHW& inshape{m_cuda_input.shape};
     // Async patch creation???
-    LOG(INFO) << "Enqueue CUDA convertion RGBA to CHW.";
+    DLOG(INFO) << "Enqueue CUDA convertion RGBA to CHW.";
     
     // Try to speed up a bit by enqueuing directly the convertion.
     nvx_image_inpatch img_patch1{img1, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
@@ -847,7 +847,7 @@ void network::inference_async(vx_image img1, vx_image img2, cudaStream_t stream)
 
     // Enqueue Network inference.
     size_t num_batches = 2;
-    LOG(INFO) << "Enqueue neural network.";
+    DLOG(INFO) << "Enqueue neural network.";
     m_nv_context->enqueue(num_batches, (void**)m_cached_bindings.data(), stream, nullptr);
     // Block until successful copy of inputs.
     cudaEventSynchronize(net_input_copy);
