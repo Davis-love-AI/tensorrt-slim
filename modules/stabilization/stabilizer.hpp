@@ -58,7 +58,11 @@ public:
 
     /** Process a frame. */
     virtual void process(vx_image newFrame) = 0;
-
+    /** Schedule graph for async. execution. */
+    virtual void schedule(vx_image newFrame) = 0;
+    /** Wait for graph execution. */
+    virtual void wait() = 0;
+    
     /** Get the stabilized frame. */
     virtual vx_image get_frame_stabilized() const = 0;
     /** Get the original frame corresponding. */

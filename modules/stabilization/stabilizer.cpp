@@ -54,6 +54,9 @@ public:
     void init(vx_uint32 width, vx_uint32 height);
 
     void process(vx_image newFrame);
+    void schedule(vx_image newFrame);
+    void wait();
+
     vx_image get_frame_stabilized() const;
     vx_image get_frame_original() const;
     vx_matrix get_matrix_stabilization() const;
@@ -228,10 +231,25 @@ void ImageBasedVideoStabilizer::process(vx_image newFrame)
     NVXIO_SAFE_CALL( vxAgeDelay(matrices_delay_) );
     NVXIO_SAFE_CALL( vxAgeDelay(frames_RGBX_delay_) );
     // Process graph
-    NVXIO_SAFE_CALL( vxSetParameterByIndex(convert_to_gray_node_, 0, (vx_reference)newFrame) );
+    NVXIO_SAFE_CALL( vxSetParameterByIndex(convert_to_gray_node_, 0, (vx_reference)newFrame));
     NVXIO_SAFE_CALL( vxSetParameterByIndex(copy_node_, 0, (vx_reference)newFrame) );
-
     NVXIO_SAFE_CALL( vxProcessGraph(graph_) );
+}
+void ImageBasedVideoStabilizer::schedule(vx_image newFrame)
+{    
+    // Update frame queue
+    NVXIO_SAFE_CALL( vxAgeDelay(pyr_delay_) );
+    NVXIO_SAFE_CALL( vxAgeDelay(pts_delay_) );
+    NVXIO_SAFE_CALL( vxAgeDelay(matrices_delay_) );
+    NVXIO_SAFE_CALL( vxAgeDelay(frames_RGBX_delay_) );
+    // Schedule graph
+    NVXIO_SAFE_CALL( vxSetParameterByIndex(convert_to_gray_node_, 0, (vx_reference)newFrame));
+    NVXIO_SAFE_CALL( vxSetParameterByIndex(copy_node_, 0, (vx_reference)newFrame) );
+    NVXIO_SAFE_CALL( vxScheduleGraph(graph_) );
+}
+void ImageBasedVideoStabilizer::wait()
+{
+    NVXIO_SAFE_CALL( vxWaitGraph(graph_) );
 }
 
 vx_image ImageBasedVideoStabilizer::get_frame_stabilized() const
