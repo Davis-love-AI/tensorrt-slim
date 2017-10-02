@@ -59,7 +59,8 @@ public:
     vx_matrix get_matrix_stabilization() const;
 
     void print_performances() const;
-
+    void log_performances() const;
+    
 private:
 
     struct HarrisPyrLKParams
@@ -273,6 +274,33 @@ void ImageBasedVideoStabilizer::print_performances() const
     std::cout << "\t Warp Perspective time: " << perf.avg / 1000000.0 << " ms" << std::endl;
     NVXIO_SAFE_CALL( vxQueryNode(feature_track_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
     std::cout << "\t Feature Track time : " << perf.avg / 1000000.0 << " ms" << std::endl;
+}
+void ImageBasedVideoStabilizer::log_performances() const
+{
+    vx_perf_t perf;
+
+    NVXIO_SAFE_CALL( vxQueryGraph(graph_, VX_GRAPH_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    LOG(INFO) << "Graph Time : " << perf.avg / 1000000.0 << " ms";
+    NVXIO_SAFE_CALL( vxQueryNode(convert_to_gray_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    LOG(INFO) << "\t RGB to gray time : " << perf.avg / 1000000.0 << " ms";
+    NVXIO_SAFE_CALL( vxQueryNode(copy_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    LOG(INFO) << "\t Copy time : " << perf.avg / 1000000.0 << " ms";
+    NVXIO_SAFE_CALL( vxQueryNode(pyr_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    LOG(INFO) << "\t Pyramid time : " << perf.avg / 1000000.0 << " ms";
+    NVXIO_SAFE_CALL( vxQueryNode(opt_flow_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    LOG(INFO) << "\t Optical Flow time : " << perf.avg / 1000000.0 << " ms";
+    NVXIO_SAFE_CALL( vxQueryNode(find_homography_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    LOG(INFO) << "\t Find Homography time : " << perf.avg / 1000000.0 << " ms";
+    NVXIO_SAFE_CALL( vxQueryNode(homography_filter_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    LOG(INFO) << "\t Homography Filter time : " << perf.avg / 1000000.0 << " ms";
+    NVXIO_SAFE_CALL( vxQueryNode(matrix_smoother_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    LOG(INFO) << "\t Matrices Smoothing time : " << perf.avg / 1000000.0 << " ms";
+    NVXIO_SAFE_CALL( vxQueryNode(crop_stab_transform_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    LOG(INFO) << "\t Crop Stab Transform time : " << perf.avg / 1000000.0 << " ms";
+    NVXIO_SAFE_CALL( vxQueryNode(warp_perspective_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    LOG(INFO) << "\t Warp Perspective time: " << perf.avg / 1000000.0 << " ms";
+    NVXIO_SAFE_CALL( vxQueryNode(feature_track_node_, VX_NODE_ATTRIBUTE_PERFORMANCE, &perf, sizeof(perf)) );
+    LOG(INFO) << "\t Feature Track time : " << perf.avg / 1000000.0 << " ms";
 }
 
 /* ============================================================================

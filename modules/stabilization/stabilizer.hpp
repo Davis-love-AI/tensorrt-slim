@@ -25,49 +25,51 @@ namespace nvx
 class VideoStabilizer
 {
 public:
-/** Common stabilization parameters.
+    /** Common stabilization parameters.
     */
-struct VideoStabilizerParams
-{
-    /** Number of smoothing frames. Taken from the interval [-numOfSmoothingFrames_; numOfSmoothingFrames_] in the current frame's vicinity */
-    vx_size  num_smoothing_frames;
-    /** Output height after cropping and warp transform. */
-    vx_uint32  output_height;
-    /** Output width after cropping and warp transform. */
-    vx_uint32  output_width;
-    /** Crop margin. TODO: not be removed... */
-    vx_float32  crop_margin;
-    /* Percentage to crop after stabilization, on every side of image. */
-    vx_float32  crop_y;
-    vx_float32  crop_x;
-    vx_float32  crop_scale_y;
-    vx_float32  crop_scale_x;
+    struct VideoStabilizerParams
+    {
+        /** Number of smoothing frames. Taken from the interval [-numOfSmoothingFrames_; numOfSmoothingFrames_] in the current frame's vicinity */
+        vx_size  num_smoothing_frames;
+        /** Output height after cropping and warp transform. */
+        vx_uint32  output_height;
+        /** Output width after cropping and warp transform. */
+        vx_uint32  output_width;
+        /** Crop margin. TODO: not be removed... */
+        vx_float32  crop_margin;
+        /* Percentage to crop after stabilization, on every side of image. */
+        vx_float32  crop_y;
+        vx_float32  crop_x;
+        vx_float32  crop_scale_y;
+        vx_float32  crop_scale_x;
 
-    /** Default constructor taking values specified in app FLAGS. */
-    VideoStabilizerParams();
-};
+        /** Default constructor taking values specified in app FLAGS. */
+        VideoStabilizerParams();
+    };
 
-static std::unique_ptr<nvx::VideoStabilizer> createImageBasedVStab(
-    vx_context context, const VideoStabilizerParams& params = VideoStabilizerParams());
+    static std::unique_ptr<nvx::VideoStabilizer> createImageBasedVStab(
+        vx_context context, const VideoStabilizerParams& params = VideoStabilizerParams());
 
-virtual ~VideoStabilizer() {}
-/** Initialize the stabilizer with a first frame.  */
-virtual void init(vx_image firstFrame) = 0;
-/** Initialize the stabilizer with a first frame dimension.  */
-virtual void init(vx_uint32 width, vx_uint32 height) = 0;
+    virtual ~VideoStabilizer() {}
+    /** Initialize the stabilizer with a first frame.  */
+    virtual void init(vx_image firstFrame) = 0;
+    /** Initialize the stabilizer with a first frame dimension.  */
+    virtual void init(vx_uint32 width, vx_uint32 height) = 0;
 
-/** Process a frame. */
-virtual void process(vx_image newFrame) = 0;
+    /** Process a frame. */
+    virtual void process(vx_image newFrame) = 0;
 
-/** Get the stabilized frame. */
-virtual vx_image get_frame_stabilized() const = 0;
-/** Get the original frame corresponding. */
-virtual vx_image get_frame_original() const = 0;
-/** Get the stabilization matrix. */
-virtual vx_matrix get_matrix_stabilization() const = 0;
+    /** Get the stabilized frame. */
+    virtual vx_image get_frame_stabilized() const = 0;
+    /** Get the original frame corresponding. */
+    virtual vx_image get_frame_original() const = 0;
+    /** Get the stabilization matrix. */
+    virtual vx_matrix get_matrix_stabilization() const = 0;
 
-/** Performance? */
-virtual void print_performances() const = 0;
+    /** Performance? */
+    virtual void print_performances() const = 0;
+    /** Performance? */
+    virtual void log_performances() const = 0;
 };
 
 /** Init a delay of matrixes with identity matrices.  */
