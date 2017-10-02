@@ -129,15 +129,17 @@ struct cuda_tensor_t
 {
 public:
     cuda_tensor_t() :
-        name{}, shape{}, size{0}, cpu{nullptr}, cuda{nullptr}, binding_index{0}  {}
+        name{}, shape{}, size{0}, cpu{nullptr}, cuda{nullptr}, binding_index{0},
+        m_own_memory{false}  {}
     /** Constructor: provide tensor shape. */
     cuda_tensor_t(const std::string& _name, const nvinfer1::DimsNCHW& _shape) :
         name{_name}, shape{_shape},
         size{_shape.n() * _shape.c() * _shape.h() * _shape.w() * sizeof(T)},
-        cpu{nullptr}, cuda{nullptr}, binding_index{0}  {}
+        cpu{nullptr}, cuda{nullptr}, binding_index{0}, m_own_memory{false} {}
     /** Move constructor and assignement. */
     cuda_tensor_t(cuda_tensor_t<T>&& t)  :
-        name{}, shape{}, size{0}, cpu{nullptr}, cuda{nullptr}, binding_index{0}  
+        name{}, shape{}, size{0}, cpu{nullptr}, cuda{nullptr}, binding_index{0}, 
+        m_own_memory{false}
     {
         this->operator=(std::move(t));
     }
@@ -152,6 +154,7 @@ public:
         cpu = t.cpu;
         cuda = t.cuda;
         binding_index = t.binding_index;
+        m_own_memory = t.m_own_memory;
         // Reset.
         t.name = "";
         t.shape = nvinfer1::DimsNCHW();
@@ -159,8 +162,30 @@ public:
         t.cpu = nullptr;
         t.cuda = nullptr;
         t.binding_index = 0;
+        t.m_own_memory = false;
         return *this;
     }
+    /** Copy constructor: copy pointers, do not own mem. anymore. */
+    cuda_tensor_t(const cuda_tensor_t<T>& t) : 
+        name{t.name}, shape{t.shape}, size{t.size}, 
+        cpu{t.cpu}, cuda{t.cuda}, binding_index{t.binding_index}, 
+        m_own_memory{false}
+    {}
+    cuda_tensor_t& operator=(const cuda_tensor_t<T>& t)
+    {
+        // Free allocated memory...
+        free();
+        // Copy.
+        name = t.name;
+        shape = t.shape;
+        size = t.size;
+        cpu = t.cpu;
+        cuda = t.cuda;
+        binding_index = t.binding_index;
+        m_own_memory = false;
+        return *this;
+    }
+         
     /** Destructor: CUDA free memory.  */
     ~cuda_tensor_t()
     {
@@ -189,15 +214,20 @@ public:
     /** Free allocated memory and reset pointers. */
     void free()
     {
-        if(cpu) {
+        if(cpu && m_own_memory) {
             CUDA(cudaFreeHost(cpu));
-            cpu = nullptr;
-            cuda = nullptr;
         }
+        cpu = nullptr;
+        cuda = nullptr;
+        m_own_memory = false;
     }
     /** Is the tensor allocated. */
     bool is_allocated() const {
         return (cpu != nullptr && cuda != nullptr);
+    }
+    /** Is the memory owned? */
+    bool is_memory_owned() const {
+        return m_own_memory;
     }
 
 public:
@@ -217,8 +247,6 @@ public:
         return (cpu + batch_idx*shape.c()*shape.h()*shape.w());
     }
 
-private:
-    cuda_tensor_t(const cuda_tensor_t<T>&) = default;
 public:
     // Tensor name, shape and size.
     std::string  name;
@@ -229,6 +257,10 @@ public:
     T*  cuda;
     // Binding index.
     int binding_index;
+
+private:
+    // Do I own the memory? Quick way of having shared reference to a tensor.
+    bool  m_own_memory;
 };
 
 // Common CUDA tensors.
