@@ -171,6 +171,18 @@ public:
         cpu{t.cpu}, cuda{t.cuda}, binding_index{t.binding_index}, 
         m_own_memory{false}
     {}
+    /** Copy constructor with batch index. 
+     * Return a view of the tensor with batch size=1.
+    */
+    cuda_tensor_t(const cuda_tensor_t<T>& t, size_t batch_idx) : 
+        name{t.name}, 
+        shape{1, t.shape.c(), t.shape.h(), t.shape.w()}, 
+        size{t.shape.c()*t.shape.h()*t.shape.w()*sizeof(T)}, 
+        cpu{t.cpu + batch_idx*shape.c()*shape.h()*shape.w()}, 
+        cuda{t.cuda + batch_idx*shape.c()*shape.h()*shape.w()}, 
+        binding_index{t.binding_index}, m_own_memory{false}
+    {}
+    /** Assignement operator=. */
     cuda_tensor_t& operator=(const cuda_tensor_t<T>& t)
     {
         // Free allocated memory...
@@ -191,7 +203,9 @@ public:
     {
         free();
     }
-    /** Reshape the tensor. Release memory if necessary.  */
+
+public:
+    /** Reshape the tensor. Release memory if necessary. */
     void reshape(const nvinfer1::DimsNCHW& _shape) 
     {
         this->free();
@@ -231,6 +245,11 @@ public:
     }
 
 public:
+    /** Get a batch view with a given index. */
+    cuda_tensor_t batch(size_t batch_idx) const 
+    {
+        return cuda_tensor_t(*this, batch_idx);
+    }
     /** Get an Eigen tensor representation of the CPU tensor.  */
     typename tfrt::nchw<T>::tensor_map tensor() const
     {
@@ -265,7 +284,10 @@ private:
 
 // Common CUDA tensors.
 typedef cuda_tensor_t<float>  cuda_tensor;
+typedef cuda_tensor_t<float>  cuda_tensor_f;
+typedef cuda_tensor_t<double>  cuda_tensor_d;
 typedef cuda_tensor_t<uint8_t>  cuda_tensor_u8;
+typedef cuda_tensor_t<uint16_t>  cuda_tensor_u16;
 
 }
 
