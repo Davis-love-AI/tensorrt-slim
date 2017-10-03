@@ -22,6 +22,10 @@ namespace tfrt
 // ========================================================================== //
 // Segmentation Network.
 // ========================================================================== //
+void seg_network::seg_cuda_output(const tfrt::cuda_tensor& t)
+{
+    this->cuda_output(t, 0);
+}
 void seg_network::init_tensors_cached()
 {
     const tfrt::cuda_tensor& cuda_output = m_cuda_outputs[0];

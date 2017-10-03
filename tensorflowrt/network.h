@@ -202,9 +202,12 @@ public:
     
     
 protected:
-    /** Find a output CUDA tensor from the all collection! Return first partial match.
+    /** Find a output CUDA tensor from the all collection! 
+     * Return first partial match. 
      */
     tfrt::cuda_tensor* find_cuda_output(const std::string& name) const;
+    /** Set a CUDA output tensor. */
+    void cuda_output(tfrt::cuda_tensor t, size_t idx);
 
 protected:
 	/** Prefix used for tagging printed log output. */

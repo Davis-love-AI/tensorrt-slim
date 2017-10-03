@@ -424,6 +424,15 @@ std::vector<std::string> network::outputs_name(bool fullname, bool suffix) const
     return v;
 }
 
+bool network::create_missing_tensors() const
+{
+    return m_missing_tensors;
+}
+void network::create_missing_tensors(bool v)
+{
+    m_missing_tensors = v;
+}
+
 tfrt::cuda_tensor* network::find_cuda_output(const std::string& name) const
 {
     DLOG(INFO) << "Finding CUDA output tensor named: \'" << name << "\'";
@@ -437,14 +446,22 @@ tfrt::cuda_tensor* network::find_cuda_output(const std::string& name) const
     LOG(WARNING) << "Could not find CUDA output tensor named: \'" << name << "\'";
     return nullptr;
 }
-bool network::create_missing_tensors() const
+void network::cuda_output(tfrt::cuda_tensor t, size_t idx)
 {
-    return m_missing_tensors;
+    DLOG(INFO) << "SET a new CUDA output tensor.";
+    if (m_cuda_outputs.size() > idx) {
+        // Update name and binding index.
+        t.name = m_cuda_outputs[idx].name;
+        t.binding_index = m_cuda_outputs[idx].binding_index;
+        // Set up the new output.
+        m_cached_bindings[t.binding_index] = t.cuda;
+        m_cuda_outputs[idx] = std::move(t);
+    }
+    else {
+        LOG(WARNING) << "CUDA output index out of range.";
+    }
 }
-void network::create_missing_tensors(bool v)
-{
-    m_missing_tensors = v;
-}
+
 
 /* ============================================================================
  * load - build - serialize. The big stuff!

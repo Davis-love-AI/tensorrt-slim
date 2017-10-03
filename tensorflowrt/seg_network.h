@@ -86,6 +86,11 @@ public:
         return m_cuda_outputs[0];
     }
 
+public:
+    /** Set the segmentation CUDA output tensor. Careful with that!!!
+     */
+    void seg_cuda_output(const tfrt::cuda_tensor& t);
+
 protected:
     /** Initialize the cached tensors. */
     void init_tensors_cached();
