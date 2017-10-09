@@ -223,7 +223,9 @@ struct ros_tensor_t
 public:
     /** Empty tensor! */
     ros_tensor_t() : name{}, shape{}
-    {}
+    {
+        this->init_layout();
+    }
     /** Construct from shape. */
     ros_tensor_t(const std::string& _name, const nvinfer1::DimsNCHW& _shape) :
         name{_name}, shape{_shape} 
