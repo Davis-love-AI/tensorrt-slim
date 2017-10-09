@@ -251,7 +251,7 @@ public:
 
     /** Size of the tensor in bytes? */
     size_t size() const {
-        return array.get_data_size() * sizeof(value_type);
+        return array.data.size() * sizeof(value_type);
     }
 
     /** Copy tensor memory from some input (CUDA tensor for e.g.). */
