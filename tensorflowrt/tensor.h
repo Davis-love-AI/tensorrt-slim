@@ -227,7 +227,8 @@ struct ros_tensor_t
 public:
     /** Value type? */
     typedef typename T::_data_type::value_type  value_type;
-
+    typedef T  array_type;
+    
     /** Empty tensor! */
     ros_tensor_t() : name{}, shape{}
     {
