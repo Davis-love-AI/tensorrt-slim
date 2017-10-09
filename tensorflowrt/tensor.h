@@ -53,6 +53,10 @@ template <typename T>
 struct cuda_tensor_t
 {
 public:
+    /** Value type? */
+    typedef T  value_type;
+    
+    /** Empty CUDA tensor. */
     cuda_tensor_t() :
         name{}, shape{}, size{0}, cpu{nullptr}, cuda{nullptr}, binding_index{0},
         m_own_memory{false}  {}
@@ -221,6 +225,9 @@ template <typename T>
 struct ros_tensor_t
 {
 public:
+    /** Value type? */
+    typedef typename T::_data_type::value_type  value_type;
+
     /** Empty tensor! */
     ros_tensor_t() : name{}, shape{}
     {
@@ -234,7 +241,7 @@ public:
         array.data.resize(shape.n()*shape.c()*shape.h()*shape.w());
     }
     /** Construct from CUDA tensor. */
-    ros_tensor_t(const cuda_tensor_t<decltype(T::_data_type::value_type)>& t) :
+    ros_tensor_t(const cuda_tensor_t<value_type>& t) :
         name{t.name}, shape{t.shape} 
     {
         this->init_layout();
@@ -243,7 +250,7 @@ public:
 
     /** Size of the tensor in bytes? */
     size_t size() const {
-        return array.get_data_size() * sizeof(decltype(T::_data_type::value_type));
+        return array.get_data_size() * sizeof(value_type);
     }
 
     /** Copy tensor memory from some input (CUDA tensor for e.g.). */
@@ -255,10 +262,10 @@ public:
         std::memcpy(output, (void*)array.data.data(), this->size());
     }
     /** EIGEN tensor map. */
-    typename tfrt::nchw<decltype(T::_data_type::value_type)>::tensor_map tensor() const
+    typename tfrt::nchw<value_type>::tensor_map tensor() const
     {
         // Tensor using existing memory.
-        return typename tfrt::nchw<decltype(T::_data_type::value_type)>::tensor_map(
+        return typename tfrt::nchw<value_type>::tensor_map(
             array.data.data(), shape.n(), shape.c(), shape.h(), shape.w());
     }
 
