@@ -435,7 +435,11 @@ void ImageBasedVideoStabilizer::createMainGraph(vx_image frame)
         VX_INTERPOLATION_TYPE_NEAREST_NEIGHBOR,
         stabilized_RGBX_frame_);
     NVXIO_CHECK_REFERENCE(warp_perspective_node_);
-    vxSetNodeTarget(warp_perspective_node_, NVX_TARGET_CPU, NULL);
+    // Border mode.
+    vx_border_mode_t mode{VX_BORDER_MODE_CONSTANT, 0};
+    vxSetNodeAttribute(warp_perspective_node_, 
+        VX_NODE_ATTRIBUTE_BORDER_MODE, &mode, sizeof(vx_border_mode_t));
+    // vxSetNodeTarget(warp_perspective_node_, NVX_TARGET_CPU, NULL);
     
 
     //nvxHarrisTrackNode
