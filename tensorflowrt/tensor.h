@@ -29,10 +29,12 @@
 #include "std_msgs/Int8MultiArray.h"
 #include "std_msgs/Int16MultiArray.h"
 #include "std_msgs/Int32MultiArray.h"
+#include "std_msgs/Int64MultiArray.h"
 
 #include "std_msgs/UInt8MultiArray.h"
 #include "std_msgs/UInt16MultiArray.h"
 #include "std_msgs/UInt32MultiArray.h"
+#include "std_msgs/UInt64MultiArray.h"
 
 #include "std_msgs/Float32MultiArray.h"
 #include "std_msgs/Float64MultiArray.h"
@@ -215,11 +217,19 @@ private:
 typedef cuda_tensor_t<float>  cuda_tensor;
 typedef cuda_tensor_t<float>  cuda_tensor_f;
 typedef cuda_tensor_t<double>  cuda_tensor_d;
+
 typedef cuda_tensor_t<uint8_t>  cuda_tensor_u8;
 typedef cuda_tensor_t<uint16_t>  cuda_tensor_u16;
+typedef cuda_tensor_t<uint32_t>  cuda_tensor_u32;
+typedef cuda_tensor_t<uint64_t>  cuda_tensor_u64;
+
+typedef cuda_tensor_t<int8_t>  cuda_tensor_i8;
+typedef cuda_tensor_t<int16_t>  cuda_tensor_i16;
+typedef cuda_tensor_t<int32_t>  cuda_tensor_i32;
+typedef cuda_tensor_t<int64_t>  cuda_tensor_i64;
 
 /* ============================================================================
- * tfrt::ros_tensor_t => ROS tensor.
+ * tfrt::ros_tensor_t => ROS multi-array msg.
  * ========================================================================== */
 template <typename T>
 struct ros_tensor_t
@@ -314,10 +324,12 @@ public:
 typedef ros_tensor_t<std_msgs::Int8MultiArray>  ros_tensor_i8;
 typedef ros_tensor_t<std_msgs::Int16MultiArray>  ros_tensor_i16;
 typedef ros_tensor_t<std_msgs::Int32MultiArray>  ros_tensor_i32;
+typedef ros_tensor_t<std_msgs::Int64MultiArray>  ros_tensor_i64;
 
 typedef ros_tensor_t<std_msgs::UInt8MultiArray>  ros_tensor_u8;
 typedef ros_tensor_t<std_msgs::UInt16MultiArray>  ros_tensor_u16;
 typedef ros_tensor_t<std_msgs::UInt32MultiArray>  ros_tensor_u32;
+typedef ros_tensor_t<std_msgs::UInt64MultiArray>  ros_tensor_u64;
 
 typedef ros_tensor_t<std_msgs::Float32MultiArray>  ros_tensor_f;
 typedef ros_tensor_t<std_msgs::Float64MultiArray>  ros_tensor_d;
