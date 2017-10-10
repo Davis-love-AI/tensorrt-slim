@@ -747,10 +747,10 @@ void network::inference(vx_image image)
     NVXIO_SAFE_CALL( vxQueryImage(image, VX_IMAGE_ATTRIBUTE_FORMAT, &format, sizeof(format)) );
     CHECK_EQ(format, VX_DF_IMAGE_RGBX) << "Wrong VX image format.";
     // Inference using CUDA patch.
-    nvx_image_inpatch img_patch{image};
+    nvx_image_patch img_patch{image};
     this->inference(img_patch);
 }
-void network::inference(const nvx_image_inpatch& image)
+void network::inference(const nvx_image_patch& image)
 {
     cudaError_t r;
     const auto& img_patch1 = image;
@@ -772,11 +772,11 @@ void network::inference(vx_image img1, vx_image img2)
     LOG(INFO) << "Inference (batch 2) on the neural network:"  << this->name();
     // Set CUDA patches and convert to CHW format.
     LOG(INFO) << "Creating patches from VX images.";
-    nvx_image_inpatch img_patch1{img1, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
-    nvx_image_inpatch img_patch2{img2, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
+    nvx_image_patch img_patch1{img1, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
+    nvx_image_patch img_patch2{img2, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
     this->inference(img_patch1, img_patch2);
 }
-void network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2)
+void network::inference(const nvx_image_patch& img1, const nvx_image_patch& img2)
 {
     cudaError_t r;
     const auto& img_patch1 = img1;
@@ -811,8 +811,8 @@ void network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& 
 /* ============================================================================
  * Asynchronous inference.
  * ========================================================================== */
-void network::inference_async(const nvx_image_inpatch& img1, 
-    const nvx_image_inpatch& img2, cudaStream_t stream)
+void network::inference_async(const nvx_image_patch& img1, 
+    const nvx_image_patch& img2, cudaStream_t stream)
 {
     cudaError_t r;
     const auto& img_patch1 = img1;
@@ -843,8 +843,8 @@ void network::inference_async(vx_image img1, vx_image img2, cudaStream_t stream)
     DLOG(INFO) << "Enqueue CUDA convertion RGBA to CHW.";
     
     // Try to speed up a bit by enqueuing directly the convertion.
-    nvx_image_inpatch img_patch1{img1, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
-    nvx_image_inpatch img_patch2{img2, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
+    nvx_image_patch img_patch1{img1, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
+    nvx_image_patch img_patch2{img2, VX_READ_ONLY, NVX_MEMORY_TYPE_CUDA};
     r = cuda_rgba_to_chw_resize(img_patch1.cuda, m_cuda_input.cuda_ptr(0),
         img_patch1.addr.dim_x, img_patch1.addr.dim_y, 
         img_patch1.addr.stride_x, img_patch1.addr.stride_y,

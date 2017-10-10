@@ -87,7 +87,7 @@ void seg_network::post_processing()
 //     // Post-processing of the output: computing classes and scores.
 //     this->post_processing();
 // }
-// void seg_network::inference(const nvx_image_inpatch& image)
+// void seg_network::inference(const nvx_image_patch& image)
 // {
 //     LOG(INFO) << "SEGNET: inference with single input.";
 //     network::inference(image);
@@ -102,7 +102,7 @@ void seg_network::post_processing()
 //     // CUDA(cudaDeviceSynchronize());
 //     // this->post_processing();
 // }
-// void seg_network::inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2)
+// void seg_network::inference(const nvx_image_patch& img1, const nvx_image_patch& img2)
 // {
 //     LOG(INFO) << "SEGNET: inference with two inputs.";
 //     network::inference(img1, img2);

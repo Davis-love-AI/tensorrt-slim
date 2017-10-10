@@ -68,10 +68,10 @@ public:
 public:
     /** Inference on a single VX image. */
     // void inference(vx_image image);
-    // void inference(const nvx_image_inpatch& image);
+    // void inference(const nvx_image_patch& image);
     // /** Inference on two VX images. */
     // void inference(vx_image img1, vx_image img2);
-    // void inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2);
+    // void inference(const nvx_image_patch& img1, const nvx_image_patch& img2);
     // using network::inference;
     
 

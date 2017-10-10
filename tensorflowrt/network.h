@@ -180,20 +180,20 @@ public:
      * Input image is supposed to be in RGBA, uint8 format.
      */
     void inference(vx_image image);
-    void inference(const tfrt::nvx_image_inpatch& image);
+    void inference(const tfrt::nvx_image_patch& image);
     /** Inference on two VX images.
      * Input images are supposed to be in RGBA, uint8 format. They are converted
      * to CHW format and resized to the correct shape. 
     */
     void inference(vx_image img1, vx_image img2);
-    void inference(const nvx_image_inpatch& img1, const nvx_image_inpatch& img2);
+    void inference(const nvx_image_patch& img1, const nvx_image_patch& img2);
 
     /** Asynchronous inference, using CUDA streams. 
      * Note: no synchronisation event waiting for input images to be copied 
      * and resized.
     */
     void inference_async(
-        const nvx_image_inpatch& img1, const nvx_image_inpatch& img2, cudaStream_t stream);
+        const nvx_image_patch& img1, const nvx_image_patch& img2, cudaStream_t stream);
     /** Asynchronous inference, using CUDA streams. 
      * Note: the method is waiting until the input images have been converted 
      * and copied before returning.

@@ -192,11 +192,17 @@ public:
     T* cuda_ptr(size_t batch_idx=0) const {
         return (cuda + batch_idx*shape.c()*shape.h()*shape.w());
     }
+    T* cuda_ptr(size_t batch_idx, size_t channel_idx) const {
+        return (cuda + batch_idx*shape.c()*shape.h()*shape.w() + channel_idx*shape.h()*shape.w());
+    }
     /** Get the cpu pointer, at a given batch index.  */
     T* cpu_ptr(size_t batch_idx=0) const {
         return (cpu + batch_idx*shape.c()*shape.h()*shape.w());
     }
-
+    T* cpu_ptr(size_t batch_idx, size_t channel_idx) const {
+        return (cpu + batch_idx*shape.c()*shape.h()*shape.w() + channel_idx*shape.h()*shape.w());
+    }
+    
 public:
     // Tensor name, shape and size.
     std::string  name;

@@ -181,7 +181,7 @@ int main(int argc, char **argv)
 
     vx_rectangle_t rect;
     vxGetValidRegionImage(frame, &rect);
-    tfrt::nvx_image_inpatch img_patch{frame};
+    tfrt::nvx_image_patch img_patch{frame};
 
 
     // Interaction with cuda tensor?
