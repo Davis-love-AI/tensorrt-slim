@@ -253,6 +253,13 @@ public:
     size_t size() const {
         return array.data.size() * sizeof(value_type);
     }
+    /** Data pointer. */
+    const value_type* data() const {
+        return array.data.data();
+    }
+    value_type* data() {
+        return array.data.data();
+    }
 
     /** Copy tensor memory from some input (CUDA tensor for e.g.). */
     void copy_from(void* input) {
