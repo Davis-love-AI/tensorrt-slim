@@ -257,6 +257,10 @@ public:
     {
         this->init_layout();
         array.data.resize(shape.n()*shape.c()*shape.h()*shape.w());
+        // Copy if allocated CPU memory.
+        if (t.cpu) {
+            this->copy_from(t.cpu);
+        }
     }
 
     /** Size of the tensor in bytes? */
