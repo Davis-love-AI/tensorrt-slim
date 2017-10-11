@@ -169,6 +169,10 @@ public:
             vxSwapImageHandle(image, nullptr, nullptr, num_planes);
         }
     }
+    /** VX image operator... */
+    operator vx_image() {
+        return this->image;
+    } 
 
 private:
     // Deactivating copy
