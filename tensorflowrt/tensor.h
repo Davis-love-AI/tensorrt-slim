@@ -223,6 +223,8 @@ private:
 typedef cuda_tensor_t<float>  cuda_tensor;
 typedef cuda_tensor_t<float>  cuda_tensor_f;
 typedef cuda_tensor_t<double>  cuda_tensor_d;
+typedef cuda_tensor_t<float>  cuda_tensor_f32;
+typedef cuda_tensor_t<double>  cuda_tensor_f64;
 
 typedef cuda_tensor_t<uint8_t>  cuda_tensor_u8;
 typedef cuda_tensor_t<uint16_t>  cuda_tensor_u16;
@@ -343,6 +345,8 @@ typedef ros_tensor_t<std_msgs::UInt64MultiArray>  ros_tensor_u64;
 
 typedef ros_tensor_t<std_msgs::Float32MultiArray>  ros_tensor_f;
 typedef ros_tensor_t<std_msgs::Float64MultiArray>  ros_tensor_d;
+typedef ros_tensor_t<std_msgs::Float32MultiArray>  ros_tensor_f32;
+typedef ros_tensor_t<std_msgs::Float64MultiArray>  ros_tensor_f64;
 
 }
 
