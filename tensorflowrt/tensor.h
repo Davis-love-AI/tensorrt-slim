@@ -20,6 +20,8 @@
 #include <VX/vx.h>
 #include <VX/vxu.h>
 #include <NVX/nvx.h>
+
+#include <NVX/nvxcu.h>
 #include <NvInfer.h>
 
 #include "ros/ros.h"
@@ -202,7 +204,19 @@ public:
     T* cpu_ptr(size_t batch_idx, size_t channel_idx) const {
         return (cpu + batch_idx*shape.c()*shape.h()*shape.w() + channel_idx*shape.h()*shape.w());
     }
-    
+    /** Convert to NVX-CUDA image plane. */
+    nvxcu_pitch_linear_image_t nvxcu_image(size_t b_idx, size_t c_idx)
+    {
+        nvxcu_pitch_linear_image_t image;
+        image.base.image_type = NVXCU_PITCH_LINEAR_IMAGE;
+        image.base.format = NVXCU_DF_IMAGE_U8;
+        image.base.width = shape.w();
+        image.base.height = shape.h();
+        image.planes[0].dev_ptr = this->cuda_ptr(b_idx, c_idx);
+        image.planes[0].pitch_in_bytes = shape.w();
+        return image;
+    }
+
 public:
     // Tensor name, shape and size.
     std::string  name;
