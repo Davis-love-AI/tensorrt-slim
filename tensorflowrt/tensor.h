@@ -312,6 +312,10 @@ public:
         return typename tfrt::nchw<value_type>::tensor_map(
             array.data.data(), shape.n(), shape.c(), shape.h(), shape.w());
     }
+    /** Back to multiarray! */
+    operator T() {
+        return this->array;
+    }
 
 private:
     /** Initialize the layout. */
