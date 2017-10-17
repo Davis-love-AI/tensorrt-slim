@@ -37,7 +37,7 @@ struct c {
                              Eigen::Aligned> const_tensor_map;
 
     static nvinfer1::DimsCHW shape(const tensor& t) {
-        return nvinfer1::DimsCHW{t.dimension(0), 1, 1};
+        return nvinfer1::DimsCHW{int(t.dimension(0)), 1, 1};
     }
 };
 /** HW type of tensors. */
@@ -52,7 +52,7 @@ struct hw {
                              Eigen::Aligned> const_tensor_map;
 
     static nvinfer1::DimsCHW shape(const tensor& t) {
-        return nvinfer1::DimsCHW{1, t.dimension(0), t.dimension(1)};
+        return nvinfer1::DimsCHW{1, int(t.dimension(0)), int(t.dimension(1))};
     }
 };
 /** CHW type of tensors. */
@@ -67,7 +67,8 @@ struct chw {
                              Eigen::Aligned> const_tensor_map;
 
     static nvinfer1::DimsCHW shape(const tensor& t) {
-        return nvinfer1::DimsCHW{t.dimension(0), t.dimension(1), t.dimension(2)};
+        return nvinfer1::DimsCHW{
+            int(t.dimension(0)), int(t.dimension(1)), int(t.dimension(2))};
     }
 };
 /** NHW type of tensors. */
@@ -82,7 +83,8 @@ struct nhw {
                              Eigen::Aligned> const_tensor_map;
 
     static nvinfer1::DimsCHW shape(const tensor& t) {
-        return nvinfer1::DimsCHW{t.dimension(0), t.dimension(1), t.dimension(2)};
+        return nvinfer1::DimsCHW{
+            int(t.dimension(0)), int(t.dimension(1)), int(t.dimension(2))};
     }
 };
 /** NCHW type of tensors. */
@@ -97,7 +99,8 @@ struct nchw {
                              Eigen::Aligned> const_tensor_map;
     
     static nvinfer1::DimsNCHW shape(const tensor& t) {
-        return nvinfer1::DimsNCHW{t.dimension(0), t.dimension(1), t.dimension(2), t.dimension(3)};
+        return nvinfer1::DimsNCHW{
+            int(t.dimension(0)), int(t.dimension(1)), int(t.dimension(2)), int(t.dimension(3))};
     }
 };
 /** NACHW type of tensors.
