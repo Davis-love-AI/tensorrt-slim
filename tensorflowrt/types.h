@@ -18,6 +18,8 @@
 #include <Eigen/Dense>
 #include <unsupported/Eigen/CXX11/Tensor>
 
+#include <NvInfer.h>
+
 namespace tfrt
 {
 // ========================================================================== //
@@ -33,6 +35,10 @@ struct c {
                              Eigen::Aligned> tensor_map;
     typedef Eigen::TensorMap<Eigen::Tensor<const T, 1, Eigen::RowMajor, IndexType>,
                              Eigen::Aligned> const_tensor_map;
+
+    static nvinfer1::DimsCHW shape(const tensor& t) {
+        return nvinfer1::DimsCHW{t.dimension(0), 1, 1};
+    }
 };
 /** HW type of tensors. */
 template <typename T, typename IndexType=Eigen::DenseIndex>
@@ -44,6 +50,10 @@ struct hw {
                              Eigen::Aligned> tensor_map;
     typedef Eigen::TensorMap<Eigen::Tensor<const T, 2, Eigen::RowMajor, IndexType>,
                              Eigen::Aligned> const_tensor_map;
+
+    static nvinfer1::DimsCHW shape(const tensor& t) {
+        return nvinfer1::DimsCHW{1, t.dimension(0), t.dimension(1)};
+    }
 };
 /** CHW type of tensors. */
 template <typename T, typename IndexType=Eigen::DenseIndex>
@@ -55,6 +65,10 @@ struct chw {
                              Eigen::Aligned> tensor_map;
     typedef Eigen::TensorMap<Eigen::Tensor<const T, 3, Eigen::RowMajor, IndexType>,
                              Eigen::Aligned> const_tensor_map;
+
+    static nvinfer1::DimsCHW shape(const tensor& t) {
+        return nvinfer1::DimsCHW{t.dimension(0), t.dimension(1), t.dimension(2)};
+    }
 };
 /** NHW type of tensors. */
 template <typename T, typename IndexType=Eigen::DenseIndex>
@@ -66,6 +80,10 @@ struct nhw {
                              Eigen::Aligned> tensor_map;
     typedef Eigen::TensorMap<Eigen::Tensor<const T, 3, Eigen::RowMajor, IndexType>,
                              Eigen::Aligned> const_tensor_map;
+
+    static nvinfer1::DimsCHW shape(const tensor& t) {
+        return nvinfer1::DimsCHW{t.dimension(0), t.dimension(1), t.dimension(2)};
+    }
 };
 /** NCHW type of tensors. */
 template <typename T=float, typename IndexType=Eigen::DenseIndex>
@@ -77,6 +95,10 @@ struct nchw {
                              Eigen::Aligned> tensor_map;
     typedef Eigen::TensorMap<Eigen::Tensor<const T, 4, Eigen::RowMajor, IndexType>,
                              Eigen::Aligned> const_tensor_map;
+    
+    static nvinfer1::DimsNCHW shape(const tensor& t) {
+        return nvinfer1::DimsNCHW{t.dimension(0), t.dimension(1), t.dimension(2), t.dimension(3)};
+    }
 };
 /** NACHW type of tensors.
  * A stands for the anchors dimension.

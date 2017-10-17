@@ -18,6 +18,28 @@
 
 #define ALPHA_COLOR 128
 
+// selected_categories = {
+//     Categories.ignore: 0,
+//     Categories.car: 1,
+//     Categories.van: 2,
+//     Categories.truck: 3,
+//     Categories.bus: 4,
+//     Categories.bicycle: 5,
+//     Categories.motorcycle: 6,
+//     Categories.person: 7,
+//     Categories.road: 8,
+//     Categories.sidewalk: 9,
+//     Categories.terrain: 10,
+//     Categories.traffic_sign: 11,
+//     Categories.traffic_light: 12,
+//     Categories.vegetation: 13,
+//     Categories.building: 14,
+//     Categories.sky: 15,
+//     Categories.fence: 16,
+//     Categories.pole: 17,
+//     Categories.parking: 18,
+// }
+
 // ========================================================================== //
 // Segmentation overlay.
 // ========================================================================== //
