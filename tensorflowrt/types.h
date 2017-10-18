@@ -15,8 +15,11 @@
 #ifndef TFRT_TYPES_H
 #define TFRT_TYPES_H
 
+// Eigen and OpenCV headers
 #include <Eigen/Dense>
 #include <unsupported/Eigen/CXX11/Tensor>
+
+#include <opencv2/core/core.hpp>
 
 #include <NvInfer.h>
 
@@ -145,6 +148,19 @@ typedef Eigen::Matrix<float, 4, 3, Eigen::RowMajor>  Matrix43f;
 typedef Eigen::Matrix<float, 3, 1>  Vector3f;
 typedef Eigen::Matrix<float, 4, 1>  Vector4f;
 
+// ========================================================================== //
+// EIGEN tensor/matrix => OpenCV mat.
+// ========================================================================== //
+inline cv::Mat tensor_to_cvmat(tfrt::nchw<uint8_t>::tensor& t)
+{
+    auto shape = tfrt::nchw<uint8_t>::shape(t);
+    return cv::Mat(shape.h(), shape.w(), CV_8UC1, t.data());
+}
+inline cv::Mat tensor_to_cvmat(tfrt::chw<uint8_t>::tensor& t)
+{
+    auto shape = tfrt::chw<uint8_t>::shape(t);
+    return cv::Mat(shape.h(), shape.w(), CV_8UC1, (void*)t.data());
+}
 
 }
 
