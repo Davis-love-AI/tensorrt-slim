@@ -151,15 +151,17 @@ typedef Eigen::Matrix<float, 4, 1>  Vector4f;
 // ========================================================================== //
 // EIGEN tensor/matrix => OpenCV mat.
 // ========================================================================== //
-inline cv::Mat tensor_to_cvmat(tfrt::nchw<uint8_t>::tensor& t)
+inline cv::Mat tensor_to_cvmat(tfrt::nchw<uint8_t>::tensor& t, size_t n=0)
 {
     auto shape = tfrt::nchw<uint8_t>::shape(t);
-    return cv::Mat(shape.h(), shape.w(), CV_8UC1, t.data());
+    uint8_t* ptr = t.data() + n*shape.h() * shape.w() * shape.c();
+    return cv::Mat(shape.h(), shape.w(), CV_8UC1, ptr);
 }
 inline cv::Mat tensor_to_cvmat(tfrt::chw<uint8_t>::tensor& t)
 {
     auto shape = tfrt::chw<uint8_t>::shape(t);
-    return cv::Mat(shape.h(), shape.w(), CV_8UC1, (void*)t.data());
+    uint8_t* ptr = t.data();
+    return cv::Mat(shape.h(), shape.w(), CV_8UC1, ptr);
 }
 
 }
