@@ -151,10 +151,10 @@ typedef Eigen::Matrix<float, 4, 1>  Vector4f;
 // ========================================================================== //
 // EIGEN tensor/matrix => OpenCV mat.
 // ========================================================================== //
-inline cv::Mat tensor_to_cvmat(tfrt::nchw<uint8_t>::tensor& t, size_t n=0)
+inline cv::Mat tensor_to_cvmat(tfrt::nchw<uint8_t>::tensor& t, size_t n=0, size_t c=0)
 {
     auto shape = tfrt::nchw<uint8_t>::shape(t);
-    uint8_t* ptr = t.data() + n*shape.h() * shape.w() * shape.c();
+    uint8_t* ptr = t.data() + n*shape.h()*shape.w()*shape.c() + c*shape.h()*shape.w();
     return cv::Mat(shape.h(), shape.w(), CV_8UC1, ptr);
 }
 inline cv::Mat tensor_to_cvmat(tfrt::chw<uint8_t>::tensor& t)
@@ -164,10 +164,10 @@ inline cv::Mat tensor_to_cvmat(tfrt::chw<uint8_t>::tensor& t)
     return cv::Mat(shape.h(), shape.w(), CV_8UC1, ptr);
 }
 
-inline cv::Mat tensor_to_cvmat(tfrt::nchw<float>::tensor& t, size_t n=0)
+inline cv::Mat tensor_to_cvmat(tfrt::nchw<float>::tensor& t, size_t n=0, size_t c=0)
 {
     auto shape = tfrt::nchw<float>::shape(t);
-    float* ptr = t.data() + n*shape.h() * shape.w() * shape.c();
+    float* ptr = t.data() + n*shape.h()*shape.w()*shape.c() + c*shape.h()*shape.w();
     return cv::Mat(shape.h(), shape.w(), CV_32FC1, ptr);
 }
 inline cv::Mat tensor_to_cvmat(tfrt::chw<float>::tensor& t)
