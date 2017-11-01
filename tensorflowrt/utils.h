@@ -167,6 +167,7 @@ public:
     {
         if (image) {
             vxSwapImageHandle(image, nullptr, nullptr, num_planes);
+            vxReleaseImage(&image);
         }
     }
     /** VX image operator... */
