@@ -146,9 +146,11 @@ typedef Eigen::Matrix<float, 2, 1>  vector_2f;
 typedef Eigen::Matrix<float, 3, 1>  vector_3f;
 typedef Eigen::Matrix<float, 4, 1>  vector_4f;
 
-// typedef Eigen::Matrix<float, Eigen::Dynamic, 2>  matrix_d2f;
-// typedef Eigen::Matrix<float, Eigen::Dynamic, 3>  matrix_d3f;
-// typedef Eigen::Matrix<float, Eigen::Dynamic, 4>  matrix_d4f;
+typedef Eigen::Matrix<float, Eigen::Dynamic, 1>  vector_df;
+
+typedef Eigen::Matrix<float, Eigen::Dynamic, 2>  matrix_d2f;
+typedef Eigen::Matrix<float, Eigen::Dynamic, 3>  matrix_d3f;
+typedef Eigen::Matrix<float, Eigen::Dynamic, 4>  matrix_d4f;
 
 /** Old stuff, to remove.  */
 typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor>  Matrix3f;
