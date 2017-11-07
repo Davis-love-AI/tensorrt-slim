@@ -124,6 +124,10 @@ struct nachw {
 // ========================================================================== //
 // EIGEN matrices.
 // ========================================================================== //
+typedef Eigen::Matrix<float, 2, 2, Eigen::RowMajor>  matrix_22f_rm;
+typedef Eigen::Matrix<float, 2, 3, Eigen::RowMajor>  matrix_23f_rm;
+typedef Eigen::Matrix<float, 3, 2, Eigen::RowMajor>  matrix_32f_rm;
+
 typedef Eigen::Matrix<float, 3, 3, Eigen::RowMajor>  matrix_33f_rm;
 typedef Eigen::Matrix<float, 4, 4, Eigen::RowMajor>  matrix_44f_rm;
 typedef Eigen::Matrix<float, 3, 4, Eigen::RowMajor>  matrix_34f_rm;
@@ -134,6 +138,7 @@ typedef Eigen::Matrix<float, 4, 4, Eigen::ColMajor>  matrix_44f;
 typedef Eigen::Matrix<float, 3, 4, Eigen::ColMajor>  matrix_34f;
 typedef Eigen::Matrix<float, 4, 3, Eigen::ColMajor>  matrix_43f;
 
+typedef Eigen::Matrix<float, 2, 1>  vector_2f;
 typedef Eigen::Matrix<float, 3, 1>  vector_3f;
 typedef Eigen::Matrix<float, 4, 1>  vector_4f;
 
