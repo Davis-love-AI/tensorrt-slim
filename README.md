@@ -1,23 +1,47 @@
-# SSD - TensorRT
+# TensorFlowRT
 
-Implementation of the SSD network using TensorRT. Hopefully, should be very fast and optimized for inference. In addition, the overhead of porting new TensorFlow models is minimal.
+This library is wrapper on top of TensorRt, easing the port of TensorFlow Neural Nets to the efficient TensorRT inference engine. It includes in particular:
+* TF layers-like API, for quickly defining a network in C++;
+* Import / export weights of TF models into protobuf binary files;
+* Segmentation and SSD models implemented;
+* CUDA tensor-like API
+* Additional modules built on top of Visionworks: stabilization, ...
 
-## Building from source - Ubuntu 16.04
 
-Check the following packages are installed, in addition to CUDA and TensorRT 1.0.
+# Building from source - Ubuntu 16.04
+
+## Dependencies
+
+Check the following packages are installed on Ubuntu:
 ```bash
 sudo apt-get install -y cmake libqt4-dev qt4-dev-tools libglew-dev glew-utils libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libglib2.0-dev libgflags-dev libgoogle-glog-dev protobuf-compiler libprotobuf-dev libfreetype6-dev
 ```
 
+In addition, one needs to install a few (!) NVIDIA libraries for developping on the Jetson platform. More specifically, install the latest [JetPack 3.1](https://developer.nvidia.com/embedded/jetpack), which includes:
+* CUDA (version 8)
+* VisionWorks 1.6
+* TensorRT 2.1 (can be downloaded directly here: https://developer.nvidia.com/tensorrt)
+
+Finally, there are a few additional manual tasks:
+* In the directory `ssd-tensorrt/3rdparty/glfw3/lib`, rename/copy `libglfw3_x64.a` into `libglfw3.a`
+* Download the latest stable release of [EIGEN](http://eigen.tuxfamily.org/) and extract it in the directory `3rdparty/eigen`.
+
+Hopefully, you should be done with dependencies after that.!
+
+## Building
+
 Then, use `cmake` & `make` to build the binaries.
 ```bash
+export ROBIK_INSTALL=$HOME/local
+mkdir $ROBIK_INSTALL
 mkdir build
 cd build
-cmake ../
-make
+cmake -DCMAKE_INSTALL_PREFIX:PATH=$ROBIK_INSTALL ../
+make -j2
+make install
 ```
 
-In order to optimize the binaries and set the install directory, you can use:
+In order to optimize the binaries, you can use:
 ```bash
 export ROBIK_INSTALL=/home/ubuntu/local
 cmake -DCMAKE_INSTALL_PREFIX:PATH=$ROBIK_INSTALL -DCMAKE_BUILD_TYPE=Release ../
@@ -36,7 +60,7 @@ sudo ln -s /usr/lib/aarch64-linux-gnu/tegra/libGL.so /usr/lib/aarch64-linux-gnu/
 ```
 Trick coming from the `jetson-inference` examples.
 
-## Python converting script TF -> TF-RT protobufs
+# Python converting script TF -> TF-RT protobufs
 
 One may first need to generate the protobuf python sources:
 ```bash
@@ -70,7 +94,7 @@ python export_tfrt_ssd_inception2_v0.py \
     --fp16=0
 ```
 
-## Running some basic tests
+# Running some basic tests
 
 ### Benchmark a network
 
