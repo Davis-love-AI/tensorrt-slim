@@ -43,7 +43,7 @@ make install
 
 In order to optimize the binaries, you can use:
 ```bash
-export ROBIK_INSTALL=/home/ubuntu/local
+export ROBIK_INSTALL=$HOME/local
 cmake -DCMAKE_INSTALL_PREFIX:PATH=$ROBIK_INSTALL -DCMAKE_BUILD_TYPE=Release ../
 ```
 
@@ -53,16 +53,17 @@ export CPLUS_INCLUDE_PATH=/usr/lib/x86_64-linux-gnu/glib-2.0/include:$CPLUS_INCL
 export CPLUS_INCLUDE_PATH=/usr/lib/x86_64-linux-gnu/gstreamer-1.0/include:$CPLUS_INCLUDE_PATH
 ```
 
-Fix a weird OpenGL linking problem:
+Finally, on the Jetson TX2, you may face a weird OpenGL linking problem which can be solved this way:
 ```bash
 sudo rm /usr/lib/aarch64-linux-gnu/libGL.so
 sudo ln -s /usr/lib/aarch64-linux-gnu/tegra/libGL.so /usr/lib/aarch64-linux-gnu/libGL.so
 ```
-Trick coming from the `jetson-inference` examples.
+Note, this trick is coming from the `jetson-inference` Github examples.
 
-# Python converting script TF -> TF-RT protobufs
+# Python converting script TF => TF-RT protobufs
 
-One may first need to generate the protobuf python sources:
+In order to use a TensorFlow model in TF-RT, you first need to export the weights in some protobuf binary file.
+To start with, generate the protobuf python sources:
 ```bash
 protoc  --python_out=../python network.proto
 ```
@@ -98,8 +99,8 @@ python export_tfrt_ssd_inception2_v0.py \
 
 ### Benchmark a network
 
-We can benchmark quite precisely a network using TensorRt, getting profiling time
-for every layer. It gives a good overview on the bottlenecks and which part to improve.
+We can benchmark quite precisely a network using TensorRT, getting profiling time
+for every layer. It gives a good overview on the bottlenecks in the network and which parts to improve.
 ```bask
 GLOG_logtostderr=1 ./tfrt_giexec \
     --modelName=inception2 \
