@@ -107,3 +107,6 @@ add_subdirectory(util)
 # Build tools and demos...
 add_subdirectory(tools)
 add_subdirectory(demos)
+
+# 3rd party libraries rules (install, ...)
+add_subdirectory(3rdparty)
