@@ -1,0 +1,17 @@
+message("-- Install 3rd party libraries to ${CMAKE_INSTALL_PREFIX}")
+
+# Eigen install.
+INSTALL(
+    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/eigen/Eigen 
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+INSTALL(
+    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/eigen/unsupported 
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+
+# GLFW
+INSTALL(
+    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/glfw3/include/GLFW 
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+INSTALL(
+    FILES ${CMAKE_CURRENT_LIST_DIR}/glfw3/lib/libglfw3.a
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
