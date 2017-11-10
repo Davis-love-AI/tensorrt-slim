@@ -133,6 +133,11 @@ typedef Eigen::Matrix<float, 4, 4, Eigen::RowMajor>  matrix_44f_rm;
 typedef Eigen::Matrix<float, 3, 4, Eigen::RowMajor>  matrix_34f_rm;
 typedef Eigen::Matrix<float, 4, 3, Eigen::RowMajor>  matrix_43f_rm;
 
+typedef Eigen::Matrix<float, 5, 5, Eigen::RowMajor>  matrix_55f_rm;
+typedef Eigen::Matrix<float, 6, 6, Eigen::RowMajor>  matrix_66f_rm;
+typedef Eigen::Matrix<float, 7, 7, Eigen::RowMajor>  matrix_77f_rm;
+typedef Eigen::Matrix<float, 8, 8, Eigen::RowMajor>  matrix_88f_rm;
+
 typedef Eigen::Matrix<float, Eigen::Dynamic, 2, Eigen::RowMajor>  matrix_d2f_rm;
 typedef Eigen::Matrix<float, Eigen::Dynamic, 3, Eigen::RowMajor>  matrix_d3f_rm;
 typedef Eigen::Matrix<float, Eigen::Dynamic, 4, Eigen::RowMajor>  matrix_d4f_rm;
@@ -142,9 +147,19 @@ typedef Eigen::Matrix<float, 4, 4, Eigen::ColMajor>  matrix_44f;
 typedef Eigen::Matrix<float, 3, 4, Eigen::ColMajor>  matrix_34f;
 typedef Eigen::Matrix<float, 4, 3, Eigen::ColMajor>  matrix_43f;
 
+typedef Eigen::Matrix<float, 5, 5, Eigen::ColMajor>  matrix_55f;
+typedef Eigen::Matrix<float, 6, 6, Eigen::ColMajor>  matrix_66f;
+typedef Eigen::Matrix<float, 7, 7, Eigen::ColMajor>  matrix_77f;
+typedef Eigen::Matrix<float, 8, 8, Eigen::ColMajor>  matrix_88f;
+
+
 typedef Eigen::Matrix<float, 2, 1>  vector_2f;
 typedef Eigen::Matrix<float, 3, 1>  vector_3f;
 typedef Eigen::Matrix<float, 4, 1>  vector_4f;
+typedef Eigen::Matrix<float, 5, 1>  vector_5f;
+typedef Eigen::Matrix<float, 6, 1>  vector_6f;
+typedef Eigen::Matrix<float, 7, 1>  vector_7f;
+typedef Eigen::Matrix<float, 8, 1>  vector_8f;
 
 typedef Eigen::Matrix<float, Eigen::Dynamic, 1>  vector_df;
 
