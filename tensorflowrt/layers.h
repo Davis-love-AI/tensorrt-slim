@@ -320,7 +320,8 @@ class tf_conv2d_formula : public nvinfer1::IOutputDimensionsFormula
 public:
     virtual nvinfer1::DimsHW compute(
         nvinfer1::DimsHW inshape, nvinfer1::DimsHW ksize,
-        nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, const char* layerName)
+        nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, 
+        nvinfer1::DimsHW dilation, const char* layerName)
     {
         // if (padding.h() == 0 && padding.w() == 0) {
         //     // Zero padding, assume it is VALID TF padding.
@@ -685,7 +686,8 @@ public:
     tf_conv2d_transpose_formula(nvinfer1::DimsHW cutshape) : m_cutshape(cutshape) {}
     virtual nvinfer1::DimsHW compute(
         nvinfer1::DimsHW inshape, nvinfer1::DimsHW ksize,
-        nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, const char* layerName)
+        nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, 
+        nvinfer1::DimsHW dilation, const char* layerName)
     {
         // Change a bit the formula...
         nvinfer1::DimsHW odims{
@@ -750,8 +752,10 @@ public:
     class ceil_formula : public nvinfer1::IOutputDimensionsFormula
     {
     public:
-        virtual nvinfer1::DimsHW compute(nvinfer1::DimsHW inputDims, nvinfer1::DimsHW ksize,
-            nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, const char* layerName)
+        virtual nvinfer1::DimsHW compute(
+            nvinfer1::DimsHW inputDims, nvinfer1::DimsHW ksize,
+            nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, 
+            nvinfer1::DimsHW dilation, const char* layerName)
         {
             // Change a bit the formula...
             nvinfer1::DimsHW odims{
