@@ -46,6 +46,10 @@ In order to optimize the binaries, you can use:
 export ROBIK_INSTALL=$HOME/local
 cmake -DCMAKE_INSTALL_PREFIX:PATH=$ROBIK_INSTALL -DCMAKE_BUILD_TYPE=Release ../
 ```
+And if you need to specify the CUDA install directory:
+```bash
+cmake -DCMAKE_INSTALL_PREFIX:PATH=$ROBIK_INSTALL -DCMAKE_BUILD_TYPE=Release -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-9.0 ../
+```
 
 Note, some libraries such as Glib and Gstreamer sometimes install development headers in some weird locations. You may need to modify the `CPLUS_INCLUDE_PATH` global variable to help the compiler finding them. For instance, on `x86-64`:
 ```bash
