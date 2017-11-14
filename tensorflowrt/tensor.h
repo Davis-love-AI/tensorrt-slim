@@ -16,6 +16,7 @@
 #define TFRT_TENSOR_H
 
 #include <glog/logging.h>
+#include <Eigen/Dense>
 
 #include <VX/vx.h>
 #include <VX/vxu.h>
@@ -284,6 +285,15 @@ public:
             this->copy_from(t.cpu);
         }
     }
+    /** Construct from EIGEN matrix. */
+    template <int R, int C, int M>
+    ros_tensor_t(const Eigen::Matrix<value_type, R, C, M>& m) :
+        name{"matrix"}, shape{int(m.rows()), int(m.cols()), 1, 1}
+    {
+        this->init_layout();
+        array.data.resize(shape.n()*shape.c()*shape.h()*shape.w());
+        this->copy_from(m.data());
+    }
 
     /** Size of the tensor in bytes? */
     size_t size() const {
@@ -298,7 +308,7 @@ public:
     }
 
     /** Copy tensor memory from some input (CUDA tensor for e.g.). */
-    void copy_from(void* input) {
+    void copy_from(const void* input) {
         std::memcpy((void*)array.data.data(), input, this->size());
     }
     /** Copy tensor memory to some output (CUDA tensor for e.g.). */
