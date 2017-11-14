@@ -306,6 +306,10 @@ public:
     value_type* data() {
         return array.data.data();
     }
+    /** Fill with a value. */
+    void fill(value_type val) {
+        std::fill(array.data.begin(), array.data.end(), val);
+    }
 
     /** Copy tensor memory from some input (CUDA tensor for e.g.). */
     void copy_from(const void* input) {
