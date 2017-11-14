@@ -69,6 +69,32 @@ inline nvinfer1::DimsHW dims_pb(tfrt_pb::dimsHW dims)
 {
     return {dims.h(), dims.w()};
 }
+/** Get the tensor dimensions. 
+ */
+inline nvinfer1::DimsHW dims_hw(nvinfer1::ITensor* input)
+{
+    nvinfer1::DimsHW shape;
+    if (input) {
+        shape = static_cast<nvinfer1::DimsHW&&>(input->getDimensions());
+    }
+    return shape;
+}
+inline nvinfer1::DimsCHW dims_chw(nvinfer1::ITensor* input)
+{
+    nvinfer1::DimsCHW shape;
+    if (input) {
+        shape = static_cast<nvinfer1::DimsCHW&&>(input->getDimensions());
+    }
+    return shape;
+}
+inline nvinfer1::DimsNCHW dims_nchw(nvinfer1::ITensor* input)
+{
+    nvinfer1::DimsNCHW shape;
+    if (input) {
+        shape = static_cast<nvinfer1::DimsNCHW&&>(input->getDimensions());
+    }
+    return shape;
+}
 
 /* ============================================================================
  * NVX compatibility utils.

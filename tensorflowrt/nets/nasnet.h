@@ -35,7 +35,17 @@ typedef tfrt::concat_channels                           concat_channels;
  * ========================================================================== */
 class nasnet_abstract_cell
 {
+public:
+    nasnet_abstract_cell(size_t num_filters, size_t filter_scaling) :
+        m_num_conv_filters{num_filters}, m_filter_scaling{filter_scaling}
+    {
+    }
 
+private:
+    /** Number of convolution filters, normalized. */
+    size_t  m_num_conv_filters;
+    /** Filter scaling, used to compute the final number of filters. */
+    size_t  m_filter_scaling;
 };
 
 /* ============================================================================
