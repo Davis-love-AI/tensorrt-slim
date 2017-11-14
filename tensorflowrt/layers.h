@@ -321,7 +321,10 @@ public:
     virtual nvinfer1::DimsHW compute(
         nvinfer1::DimsHW inshape, nvinfer1::DimsHW ksize,
         nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, 
-        nvinfer1::DimsHW dilation, const char* layerName)
+        #if NV_TENSORRT_MAJOR == 3
+        nvinfer1::DimsHW dilation,
+        #endif 
+        const char* layerName)
     {
         // if (padding.h() == 0 && padding.w() == 0) {
         //     // Zero padding, assume it is VALID TF padding.
@@ -687,7 +690,10 @@ public:
     virtual nvinfer1::DimsHW compute(
         nvinfer1::DimsHW inshape, nvinfer1::DimsHW ksize,
         nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, 
-        nvinfer1::DimsHW dilation, const char* layerName)
+        #if NV_TENSORRT_MAJOR == 3
+        nvinfer1::DimsHW dilation, 
+        #endif
+        const char* layerName)
     {
         // Change a bit the formula...
         nvinfer1::DimsHW odims{
@@ -755,7 +761,10 @@ public:
         virtual nvinfer1::DimsHW compute(
             nvinfer1::DimsHW inputDims, nvinfer1::DimsHW ksize,
             nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, 
-            nvinfer1::DimsHW dilation, const char* layerName)
+            #if NV_TENSORRT_MAJOR == 3
+            nvinfer1::DimsHW dilation, 
+            #endif
+            const char* layerName)
         {
             // Change a bit the formula...
             nvinfer1::DimsHW odims{
