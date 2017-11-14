@@ -23,7 +23,7 @@ cuda_add_library(tensorflowrt STATIC ${TFRT_SRCS} ${PROTO_SRCS})
 target_link_libraries(tensorflowrt nvinfer visionworks ${PROTOBUF_LIBRARY} glog gflags)
 
 # Copy TF-RT headers
-set(HEADERS_DIRS . nets cuda misc models boxes2d boxes3d)
+set(HEADERS_DIRS . nets cuda layers misc models boxes2d boxes3d)
 BUILD_COPY_HEADERS(HEADERS_DIRS)
 
 # Installation targets...
