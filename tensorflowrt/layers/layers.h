@@ -16,6 +16,7 @@
 #define TFRT_LAYERS_H
 
 #include "abstract.h"
+
 #include "convolutional.h"
 #include "operations.h"
 #include "pooling.h"

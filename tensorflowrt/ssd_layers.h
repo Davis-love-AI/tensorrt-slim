@@ -16,7 +16,7 @@
 #define TFRT_SSD_LAYERS_H
 
 #include <tuple>
-#include "layers.h"
+#include "layers/layers.h"
 
 namespace tfrt
 {
