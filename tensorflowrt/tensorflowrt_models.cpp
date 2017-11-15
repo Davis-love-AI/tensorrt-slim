@@ -37,6 +37,8 @@ std::unique_ptr<tfrt::network>&& nets_factory(const std::string& name)
 
         nets["resnext_50"] = std::make_unique<resnext_50::net>();
 
+        nets["mobilenets"] = std::make_unique<mobilenets::net>();
+
         nets["nasnet_mobile"] = std::make_unique<nasnet_mobile::net>();
         nets["nasnet_large"] = std::make_unique<nasnet_large::net>();
 

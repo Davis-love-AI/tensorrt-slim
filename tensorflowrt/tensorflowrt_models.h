@@ -24,6 +24,7 @@
 
 #include "nets/resnet_v1.h"
 #include "nets/resnext.h"
+#include "nets/mobilenets.h"
 
 // ========================================================================== //
 // SSD models.

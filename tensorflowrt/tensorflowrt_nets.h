@@ -19,5 +19,6 @@
 #include "nets/inception2.h"
 #include "nets/resnet_v1.h"
 #include "nets/nasnet.h"
+#include "nets/mobilenets.h"
 
 #endif

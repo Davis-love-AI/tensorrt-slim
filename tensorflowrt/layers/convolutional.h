@@ -267,7 +267,7 @@ public:
         net = dw_conv2d.convolution(net, ngroups, "depthwise_weights", "depthwise_biases", "_dw");
         // Pointwise convolution.
         separable_convolution2d_test pw_conv2d(*this);
-        // pw_conv2d.ksize({1, 1}).stride({1, 1});
+        pw_conv2d.ksize({1, 1}).stride({1, 1});
         net = pw_conv2d.convolution(net, 1, "pointwise_weights", "biases", "_pw");
         net = pw_conv2d.batch_norm(net);
         net = pw_conv2d.activation(net);
