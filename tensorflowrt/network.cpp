@@ -657,10 +657,10 @@ bool network::profile_model(nvinfer1::IHostMemory** nv_model_stream)
     nvinfer1::INetworkDefinition* network = builder->createNetwork();
 
     builder->setDebugSync(m_enable_debug);
-    builder->setMinFindIterations(5);	    // allow time for TX1/2 GPU to spin up.
-    builder->setAverageFindIterations(5);
-    builder->setMinFindIterations(1);	    // allow time for TX1/2 GPU to spin up.
-    builder->setAverageFindIterations(1);
+    builder->setMinFindIterations(10);	    // allow time for TX1/2 GPU to spin up.
+    builder->setAverageFindIterations(10);
+    // builder->setMinFindIterations(1);	    // allow time for TX1/2 GPU to spin up.
+    // builder->setAverageFindIterations(1);
 
     // Build the network.
     LOG(INFO) << LOG_GIE << "Building network from scratch!";
