@@ -24,8 +24,8 @@ namespace nasnet
 {
 /** Arg scope for NASNet: SAME padding + batch normalization. ReLU before.
  */
-typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
-typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false>  conv2d;
+typedef tfrt::separable_convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true> separable_conv2d;
+typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
 typedef tfrt::max_pooling2d<tfrt::PaddingType::SAME>    max_pool2d;
 typedef tfrt::avg_pooling2d<tfrt::PaddingType::SAME>    avg_pool2d;
 typedef tfrt::concat_channels                           concat_channels;
@@ -33,25 +33,71 @@ typedef tfrt::concat_channels                           concat_channels;
 /* ============================================================================
  * NASNet Abstract cell
  * ========================================================================== */
-class nasnet_abstract_cell
+class nasnet_base_cell
 {
 public:
-    nasnet_abstract_cell(size_t num_filters, size_t filter_scaling) :
+    nasnet_base_cell(size_t num_filters, float filter_scaling) :
         m_num_conv_filters{num_filters}, m_filter_scaling{filter_scaling}
     {
+    }
+    
+public:
+    /** Base of every cell: 1x1 convolution. */
+    nvinfer1::ITensor* base_cell(nvinfer1::ITensor* net, tfrt::scope sc) const
+    {
+        size_t fsize = this->filter_size();
+        // ReLU + conv.
+        net = tfrt::relu(sc)(net);
+        net = conv2d(sc, "1x1").noutputs(fsize).ksize(1)(net);
+        return net;
+    }
+    /** Reduce n-1 layer to correct shape. */
+    nvinfer1::ITensor* reduce_prev_layer(
+        nvinfer1::ITensor* net_n, nvinfer1::ITensor* net_n_1, tfrt::scope sc) const
+    {
+        // No previous layer?
+        if (net_n_1 == nullptr) {
+            return net_n;
+        }
+        size_t fsize = this->filter_size();
+        auto shape_n = tfrt::dims_nchw(net_n);
+        auto shape_n_1 = tfrt::dims_nchw(net_n_1);
+        
+
+        return nullptr;
+    }
+    /** Stack of separable convolutions. */
+    nvinfer1::ITensor* sep_conv2d_stacked(nvinfer1::ITensor* net, tfrt::scope sc,
+        size_t ksize, size_t stride, size_t num_outputs, size_t num_layers) const
+    {
+        std::ostringstream ostr;
+        for (size_t i = 0 ; i < num_layers ; ++i) {
+            // Scope...
+            ostr.str("separable_");
+            ostr << ksize << "x" << ksize << "_" << (i+1);
+            // ReLU + Separable conv.
+            net = tfrt::relu(sc)(net);
+            net = separable_conv2d(sc, ostr.str()).noutputs(num_outputs).ksize(ksize)(net);
+        }
+        return net;
+    }
+
+public:
+    size_t filter_size() const {
+        return size_t(m_num_conv_filters * m_filter_scaling);
     }
 
 private:
     /** Number of convolution filters, normalized. */
     size_t  m_num_conv_filters;
     /** Filter scaling, used to compute the final number of filters. */
-    size_t  m_filter_scaling;
+    float  m_filter_scaling;
 };
 
 /* ============================================================================
  * NASNet Normal cell
  * ========================================================================== */
-class nasnet_normal_cell : public nasnet_abstract_cell
+class nasnet_normal_cell : public nasnet_base_cell
 {
 
 };
@@ -59,7 +105,7 @@ class nasnet_normal_cell : public nasnet_abstract_cell
 /* ============================================================================
  * NASNet Reduction cell
  * ========================================================================== */
-class nasnet_reduction_cell : public nasnet_abstract_cell
+class nasnet_reduction_cell : public nasnet_base_cell
 {
 
 };
