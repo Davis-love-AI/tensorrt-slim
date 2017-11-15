@@ -263,7 +263,7 @@ public:
         separable_convolution2d_test dw_conv2d(*this);
         dw_conv2d.noutputs(ngroups * m_depth_multiplier);
         // TODO: TensorRT bug. Replace group conv. by classic convolution.
-        ngroups = 1;
+        // ngroups = 1;
         net = dw_conv2d.convolution(net, ngroups, "depthwise_weights", "depthwise_biases", "_dw");
         // Pointwise convolution.
         separable_convolution2d_test pw_conv2d(*this);

@@ -26,7 +26,7 @@ namespace mobilenets
 {
 /** Arg scope for Inception v2: SAME padding + batch normalization + ReLU.
  */
-typedef tfrt::separable_convolution2d<
+typedef tfrt::separable_convolution2d_test<
     tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
 
 typedef tfrt::convolution2d<
