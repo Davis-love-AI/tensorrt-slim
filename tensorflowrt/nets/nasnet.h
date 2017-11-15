@@ -48,7 +48,7 @@ public:
     {
         size_t fsize = this->filter_size();
         // ReLU + conv.
-        net = tfrt::relu(sc)(net);
+        net = tfrt::relu(sc, "relu")(net);
         net = conv2d(sc, "1x1").noutputs(fsize).ksize(1)(net);
         return net;
     }
@@ -62,11 +62,12 @@ public:
             return net_n;
         }
         size_t fsize = this->filter_size();
-        auto shape_n = tfrt::dims_nchw(net_n);
-        auto shape_n_1 = tfrt::dims_nchw(net_n_1);
+        auto shape_n = tfrt::dims_chw(net_n);
+        auto shape_n_1 = tfrt::dims_chw(net_n_1);
+        
         // Approximation of the original implementation. TODO: FIX stride=2
         // First case: different HW shape.
-        if (shape_n.h() != shape_n_1.w() || shape_n.h() != shape_n_1.w()) {
+        if (shape_n.h() != shape_n_1.h() || shape_n.w() != shape_n_1.w()) {
             net = avg_pool2d(sc).ksize(3).stride(2)(net);
         }
         // Number of channels different?
@@ -79,12 +80,13 @@ public:
     nvinfer1::ITensor* identity(nvinfer1::ITensor* net, tfrt::scope sc,
         size_t stride, size_t num_outputs, bool relu=false) const
     {
-        auto shape = tfrt::dims_nchw(net);
+        auto ssc = sc.sub("identity");
+        auto shape = tfrt::dims_chw(net);
         if (stride > 1 || shape.c() != int(num_outputs)) {
             if (relu) {
-                net = tfrt::relu(sc)(net);
+                net = tfrt::relu(ssc, "relu")(net);
             }
-            net = conv2d(sc, "1x1").noutputs(num_outputs).ksize(1).stride(1)(net);
+            net = conv2d(ssc, "1x1").noutputs(num_outputs).ksize(1).stride(1)(net);
         }
         return net;
     }
@@ -92,12 +94,15 @@ public:
     nvinfer1::ITensor* sep_conv2d_stacked(nvinfer1::ITensor* net, tfrt::scope sc,
         size_t ksize, size_t stride, size_t num_outputs, size_t num_layers) const
     {
+        auto ssc = sc.sub("stack");
+        std::string name;
         for (size_t i = 0 ; i < num_layers ; ++i) {
-            // Scope...
-            std::string name = fmt::format("separable_{0}x{0}_{1}", ksize, i+1);
             // ReLU + Separable conv.
-            net = tfrt::relu(sc)(net);
-            net = separable_conv2d(sc, name).noutputs(num_outputs).ksize(ksize)(net);
+            name = fmt::format("relu_{}", i+1);
+            net = tfrt::relu(ssc, name)(net);
+            name = fmt::format("separable_{0}x{0}_{1}", ksize, i+1);
+            net = separable_conv2d(ssc, name).noutputs(num_outputs).stride(stride).ksize(ksize)(net);
+            stride = 1;
         }
         return net;
     }
@@ -138,35 +143,35 @@ public:
 
         // Block 1: sep. 5x5 + sep 3x3 (n / n-1).
         sc = m_scope.sub("comb_iter_1");
-        net_l = this->sep_conv2d_stacked(net_n, sc, 5, 1, fsize, 2);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc, 3, 1, fsize, 2);
+        net_l = this->sep_conv2d_stacked(net_n, sc.sub("left"), 5, 1, fsize, 2);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 3, 1, fsize, 2);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
 
         // Block 2: sep. 5x5 + sep 3x3 (n-1 / n-1).
         sc = m_scope.sub("comb_iter_2");
-        net_l = this->sep_conv2d_stacked(net_n_1, sc, 5, 1, fsize, 2);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc, 3, 1, fsize, 2);
+        net_l = this->sep_conv2d_stacked(net_n_1, sc.sub("left"), 5, 1, fsize, 2);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 3, 1, fsize, 2);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
         
         // Block 3: avg_pool_3x3 + id (n / n-1).
         sc = m_scope.sub("comb_iter_3");
-        net_l = avg_pool2d(sc).ksize(3)(net_n);
-        net_l = this->identity(net_l, sc, 1, fsize, false);
-        net_r = this->identity(net_n_1, sc, 1, fsize, true);  
+        net_l = avg_pool2d(sc.sub("left")).ksize(3)(net_n);
+        net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
+        net_r = this->identity(net_n_1, sc.sub("right"), 1, fsize, true);  
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
         
         // Block 4: avg_pool_3x3 + avg_pool_3x3 (n-1 / n-1).
         sc = m_scope.sub("comb_iter_4");
-        net_l = avg_pool2d(sc).ksize(3)(net_n_1);
-        net_l = this->identity(net_l, sc, 1, fsize, false);
-        net_r = avg_pool2d(sc).ksize(3)(net_n_1);
-        net_r = this->identity(net_r, sc, 1, fsize, false);  
+        net_l = avg_pool2d(sc.sub("left")).ksize(3)(net_n_1);
+        net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
+        net_r = avg_pool2d(sc.sub("right")).ksize(3)(net_n_1);
+        net_r = this->identity(net_r, sc.sub("right"), 1, fsize, false);  
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
 
         // Block 5: separable_3x3_2 + id (n / n).
         sc = m_scope.sub("comb_iter_5");
-        net_l = this->sep_conv2d_stacked(net_n, sc, 3, 1, fsize, 2);
-        net_r = this->identity(net_n, sc, 1, fsize, true);
+        net_l = this->sep_conv2d_stacked(net_n, sc.sub("left"), 3, 1, fsize, 2);
+        net_r = this->identity(net_n, sc.sub("right"), 1, fsize, true);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
 
         // Concat this big mess!
@@ -198,35 +203,35 @@ public:
 
         // Block 1: sep. 5x5 + sep 7x7 (n / n-1).
         sc = m_scope.sub("comb_iter_1");
-        net_l = this->sep_conv2d_stacked(net_n, sc, 5, 2, fsize, 2);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc, 7, 2, fsize, 2);
+        net_l = this->sep_conv2d_stacked(net_n, sc.sub("left"), 5, 2, fsize, 2);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 7, 2, fsize, 2);
         blocks_tmp.push_back( tfrt::add(sc)(net_l, net_r) );
 
         // Block 2: max_pool_3x3 + separable_7x7_2 (n / n-1).
         sc = m_scope.sub("comb_iter_2");
-        net_l = max_pool2d(sc).ksize(3).stride(2)(net_n);
-        net_l = this->identity(net_l, sc, 1, fsize, false);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc, 7, 2, fsize, 2);
+        net_l = max_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
+        net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 7, 2, fsize, 2);
         blocks_tmp.push_back( tfrt::add(sc)(net_l, net_r) );
         
         // Block 3: avg_pool_3x3 + separable_5x5_2 (n / n-1).
         sc = m_scope.sub("comb_iter_3");
-        net_l = avg_pool2d(sc).ksize(3).stride(2)(net_n);
-        net_l = this->identity(net_l, sc, 1, fsize, false);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc, 5, 2, fsize, 2);
+        net_l = avg_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
+        net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 5, 2, fsize, 2);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
         
         // Block 4: id + avg_pool_3x3 (tmp / tmp).
         sc = m_scope.sub("comb_iter_4");
-        net_l = this->identity(blocks_tmp[1], sc, 1, fsize, false);
-        net_r = avg_pool2d(sc).ksize(3)(blocks_tmp[0]);
-        net_r = this->identity(net_r, sc, 1, fsize, false);  
+        net_l = this->identity(blocks_tmp[1], sc.sub("left"), 1, fsize, false);
+        net_r = avg_pool2d(sc.sub("right")).ksize(3)(blocks_tmp[0]);
+        net_r = this->identity(net_r, sc.sub("right"), 1, fsize, false);  
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
 
         // Block 5: separable_3x3_2 + max_pool_3x3 (tmp / n).
         sc = m_scope.sub("comb_iter_5");
-        net_l = this->sep_conv2d_stacked(blocks_tmp[0], sc, 3, 1, fsize, 2);
-        net_r = max_pool2d(sc).ksize(3).stride(2)(net_n);
+        net_l = this->sep_conv2d_stacked(blocks_tmp[0], sc.sub("left"), 3, 1, fsize, 2);
+        net_r = max_pool2d(sc.sub("right")).ksize(3).stride(2)(net_n);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
 
         // Concat this big mess!
@@ -272,18 +277,22 @@ public:
         nvinfer1::ITensor *net, *net_n_1{nullptr};
         // ImageNet stem cells.
         auto cell_outputs = imagenet_stem(input, sc);
+        net = cell_outputs[cell_outputs.size()-1];
+        LOG(INFO) << "ImageNet stem done!";
 
         // Core of the network.
         auto reduction_cells = this->reduction_layers();
         double filter_scaling = 1.0;
         size_t true_cell_num = 2;
         for (size_t i = 0 ; i < m_num_cells ; ++i) {
+            LOG(INFO) << "CELL building: " << (i+1);
             // Skip reduction cell input?
             if (m_skip_reduction_layer_input) {
                 net_n_1 = cell_outputs[cell_outputs.size()-2];
             }
             // Reduction cell?
             if (reduction_cells[i]) {
+                LOG(INFO) << "REDUCTION CELL building: " << (i+1);
                 filter_scaling *= m_filter_scaling_rate;
                 // Scope name + cell construction...
                 auto ssc = sc.sub( fmt::format("reduction_cell_{}", i) );
@@ -299,6 +308,7 @@ public:
                 net_n_1 = cell_outputs[cell_outputs.size()-2];
             }
 
+            LOG(INFO) << "NORMAL CELL building: " << (i+1);
             // Scope name + normal cell construction...
             auto ssc = sc.sub( fmt::format("cell_{}", i) );
             auto cell = normal_cell(ssc, m_num_conv_filters, filter_scaling);

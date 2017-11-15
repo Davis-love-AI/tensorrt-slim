@@ -96,7 +96,7 @@ tfrt::scope network::scope(nvinfer1::INetworkDefinition* nv_network) const
 const tfrt_pb::tensor& network::create_tensor(
     std::string name, nvinfer1::Dims shape, float val, nvinfer1::DataType dt) const
 {
-    LOG(INFO) << "CREATE tfrt_pb::tensor '" << name << "'. SHAPE: " << dims_str(shape);
+    // LOG(INFO) << "CREATE tfrt_pb::tensor '" << name << "'. SHAPE: " << dims_str(shape);
     // Create new tensor in the weights collection.
     auto pb_tensor = m_pb_network->add_weights();
     pb_tensor->set_name(name);
