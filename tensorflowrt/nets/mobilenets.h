@@ -26,11 +26,16 @@ namespace mobilenets
 {
 /** Arg scope for Inception v2: SAME padding + batch normalization + ReLU.
  */
-typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
+typedef tfrt::separable_convolution2d<
+    tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
 
-typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
-typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d_none;
+typedef tfrt::convolution2d<
+tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
+typedef tfrt::convolution2d<
+    tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d_none;
 // typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
+typedef tfrt::convolution2d<
+    tfrt::ActivationType::NONE, tfrt::PaddingType::VALID, true>  conv2d_valid;
 
 typedef tfrt::max_pooling2d<tfrt::PaddingType::SAME>    max_pool2d;
 typedef tfrt::avg_pooling2d<tfrt::PaddingType::SAME>    avg_pool2d;
@@ -50,7 +55,7 @@ inline nvinfer1::ITensor* base(nvinfer1::ITensor* input, tfrt::scope sc)
 {
     nvinfer1::ITensor* net{input};
     // First convolution.
-    net = conv2d(sc, "conv1").noutputs(32).ksize(3).stride(2)(net);
+    net = conv2d_valid(sc, "conv1").noutputs(32).ksize(3).stride(2)(net);
 
     // First series of blocks.
     net = block(net, sc.sub("block2"), 64, 1);
