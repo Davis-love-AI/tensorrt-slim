@@ -54,7 +54,7 @@ class add : public layer
 public:
     /** Standard constructor, with scope and layer sub-name.
      */
-    add(const tfrt::scope& sc, const std::string& lname) :
+    add(const tfrt::scope& sc, const std::string& lname="Add") :
         layer(sc, lname) {
     }
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
@@ -79,7 +79,7 @@ class multiply : public layer
 public:
     /** Standard constructor, with scope and layer sub-name.
      */
-    multiply(const tfrt::scope& sc, const std::string& lname) :
+    multiply(const tfrt::scope& sc, const std::string& lname="Mul") :
         layer(sc, lname) {
     }
     virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {

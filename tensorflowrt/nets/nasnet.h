@@ -36,8 +36,8 @@ typedef tfrt::concat_channels                           concat_channels;
 class nasnet_base_cell
 {
 public:
-    nasnet_base_cell(size_t num_filters, float filter_scaling) :
-        m_num_conv_filters{num_filters}, m_filter_scaling{filter_scaling}
+    nasnet_base_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) :
+        m_scope{sc}, m_num_conv_filters{num_filters}, m_filter_scaling{filter_scaling}
     {
     }
     
@@ -55,6 +55,7 @@ public:
     nvinfer1::ITensor* reduce_prev_layer(
         nvinfer1::ITensor* net_n, nvinfer1::ITensor* net_n_1, tfrt::scope sc) const
     {
+        nvinfer1::ITensor* net = net_n_1;
         // No previous layer?
         if (net_n_1 == nullptr) {
             return net_n;
@@ -62,9 +63,29 @@ public:
         size_t fsize = this->filter_size();
         auto shape_n = tfrt::dims_nchw(net_n);
         auto shape_n_1 = tfrt::dims_nchw(net_n_1);
-        
-
-        return nullptr;
+        // Approximation of the original implementation. TODO: FIX stride=2
+        // First case: different HW shape.
+        if (shape_n.h() != shape_n_1.w() || shape_n.h() != shape_n_1.w()) {
+            net = avg_pool2d(sc).ksize(3).stride(2)(net);
+        }
+        // Number of channels different?
+        if (fsize != shape_n_1.c()) {
+            net = conv2d(sc, "1x1").noutputs(fsize).ksize(1)(net);
+        }
+        return net;
+    }
+    /** Identity block: reduce to number of outputs, or stride > 1. */
+    nvinfer1::ITensor* identity(nvinfer1::ITensor* net, tfrt::scope sc,
+        size_t stride, size_t num_outputs, bool relu=false) const
+    {
+        auto shape = tfrt::dims_nchw(net);
+        if (stride > 1 || shape.c() != num_outputs) {
+            if (relu) {
+                net = tfrt::relu(sc)(net);
+            }
+            net = conv2d(sc, "1x1").noutputs(num_outputs).ksize(1).stride(1)(net);
+        }
+        return net;
     }
     /** Stack of separable convolutions. */
     nvinfer1::ITensor* sep_conv2d_stacked(nvinfer1::ITensor* net, tfrt::scope sc,
@@ -87,7 +108,9 @@ public:
         return size_t(m_num_conv_filters * m_filter_scaling);
     }
 
-private:
+protected:
+    /** General scope of the cell. */
+    tfrt::scope  m_scope;
     /** Number of convolution filters, normalized. */
     size_t  m_num_conv_filters;
     /** Filter scaling, used to compute the final number of filters. */
@@ -99,7 +122,59 @@ private:
  * ========================================================================== */
 class nasnet_normal_cell : public nasnet_base_cell
 {
+public:
+    nasnet_normal_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) : 
+        nasnet_base_cell(sc, num_filters, filter_scaling)
+    {
+    }
+    /** Operator: taking layers n and n-1. */
+    nvinfer1::ITensor* operator()(nvinfer1::ITensor* net_n, nvinfer1::ITensor* net_n_1)
+    {
+        nvinfer1::ITensor* net_l, *net_r, *net;
+        std::vector<nvinfer1::ITensor*> blocks;
+        tfrt::scope sc{m_scope};
+        // Basic cell + reduce n-1.
+        net_n = this->base_cell(net_n, m_scope.sub("base_cell"));
+        net_n_1 = this->reduce_prev_layer(net_n, net_n_1, m_scope.sub("reduce_n_1"));
+        size_t fsize = this->filter_size();
 
+        // Block 1: sep. 5x5 + sep 3x3 (n / n-1).
+        sc = m_scope.sub("comb_iter_1");
+        net_l = this->sep_conv2d_stacked(net_n, sc, 5, 1, fsize, 2);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc, 3, 1, fsize, 2);
+        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+
+        // Block 2: sep. 5x5 + sep 3x3 (n-1 / n-1).
+        sc = m_scope.sub("comb_iter_2");
+        net_l = this->sep_conv2d_stacked(net_n_1, sc, 5, 1, fsize, 2);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc, 3, 1, fsize, 2);
+        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+        
+        // Block 3: avg_pool_3x3 + id (n / n-1).
+        sc = m_scope.sub("comb_iter_3");
+        net_l = avg_pool2d(sc).ksize(3)(net_n);
+        net_l = this->identity(net_l, sc, 1, fsize, false);
+        net_r = this->identity(net_n_1, sc, 1, fsize, true);  
+        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+        
+        // Block 4: avg_pool_3x3 + avg_pool_3x3 (n-1 / n-1).
+        sc = m_scope.sub("comb_iter_4");
+        net_l = avg_pool2d(sc).ksize(3)(net_n_1);
+        net_l = this->identity(net_l, sc, 1, fsize, false);
+        net_r = avg_pool2d(sc).ksize(3)(net_n_1);
+        net_r = this->identity(net_r, sc, 1, fsize, false);  
+        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+
+        // Block 5: separable_3x3_2 + id (n / n).
+        sc = m_scope.sub("comb_iter_5");
+        net_l = this->sep_conv2d_stacked(net_n, sc, 3, 1, fsize, 2);
+        net_r = this->identity(net_n, sc, 1, fsize, true);
+        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+
+        // Concat this big mess!
+        net = tfrt::concat_channels(sc)(blocks);
+        return net;
+    }
 };
 
 /* ============================================================================
@@ -107,7 +182,59 @@ class nasnet_normal_cell : public nasnet_base_cell
  * ========================================================================== */
 class nasnet_reduction_cell : public nasnet_base_cell
 {
+public:
+    nasnet_reduction_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) : 
+        nasnet_base_cell(sc, num_filters, filter_scaling)
+    {
+    }
+    /** Operator: taking layers n and n-1. */
+    nvinfer1::ITensor* operator()(nvinfer1::ITensor* net_n, nvinfer1::ITensor* net_n_1)
+    {
+        nvinfer1::ITensor* net_l, *net_r, *net;
+        std::vector<nvinfer1::ITensor*> blocks, blocks_tmp;
+        tfrt::scope sc{m_scope};
+        // Basic cell + reduce n-1.
+        net_n = this->base_cell(net_n, m_scope.sub("base_cell"));
+        net_n_1 = this->reduce_prev_layer(net_n, net_n_1, m_scope.sub("reduce_n_1"));
+        size_t fsize = this->filter_size();
 
+        // Block 1: sep. 5x5 + sep 7x7 (n / n-1).
+        sc = m_scope.sub("comb_iter_1");
+        net_l = this->sep_conv2d_stacked(net_n, sc, 5, 2, fsize, 2);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc, 7, 2, fsize, 2);
+        blocks_tmp.push_back( tfrt::add(sc)(net_l, net_r) );
+
+        // Block 2: max_pool_3x3 + separable_7x7_2 (n / n-1).
+        sc = m_scope.sub("comb_iter_2");
+        net_l = max_pool2d(sc).ksize(3).stride(2)(net_n);
+        net_l = this->identity(net_l, sc, 1, fsize, false);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc, 7, 2, fsize, 2);
+        blocks_tmp.push_back( tfrt::add(sc)(net_l, net_r) );
+        
+        // Block 3: avg_pool_3x3 + separable_5x5_2 (n / n-1).
+        sc = m_scope.sub("comb_iter_3");
+        net_l = avg_pool2d(sc).ksize(3).stride(2)(net_n);
+        net_l = this->identity(net_l, sc, 1, fsize, false);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc, 5, 2, fsize, 2);
+        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+        
+        // Block 4: id + avg_pool_3x3 (tmp / tmp).
+        sc = m_scope.sub("comb_iter_4");
+        net_l = this->identity(blocks_tmp[1], sc, 1, fsize, false);
+        net_r = avg_pool2d(sc).ksize(3)(blocks_tmp[0]);
+        net_r = this->identity(net_r, sc, 1, fsize, false);  
+        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+
+        // Block 5: separable_3x3_2 + max_pool_3x3 (tmp / n).
+        sc = m_scope.sub("comb_iter_5");
+        net_l = this->sep_conv2d_stacked(blocks_tmp[0], sc, 3, 1, fsize, 2);
+        net_r = max_pool2d(sc).ksize(3).stride(2)(net_n);
+        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+
+        // Concat this big mess!
+        net = tfrt::concat_channels(sc)(blocks);
+        return net;
+    }
 };
 
 // /** Major mixed block used in Inception v2 (4 branches).
