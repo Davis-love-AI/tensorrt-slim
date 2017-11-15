@@ -139,7 +139,7 @@ protected:
                                    std::string bname="biases",
                                    std::string lnamesuffix="") {
         auto inshape = static_cast<nvinfer1::DimsCHW&&>(input->getDimensions());
-        auto wshape = this->weights_shape(inshape);
+        auto wshape = this->weights_shape(inshape, ngroups);
         auto bshape = this->biases_shape(inshape);
         LOG(INFO) << "OP 2D convolution. "
             << "Input shape: " << dims_str(inshape)
@@ -178,10 +178,10 @@ protected:
      * C the number of input channels, and
      * R and S are the height and width of the filter.
      */
-    nvinfer1::Dims weights_shape(const nvinfer1::DimsCHW& inshape)
+    nvinfer1::Dims weights_shape(const nvinfer1::DimsCHW& inshape, int ngroups)
     {
         auto ksize = this->ksize();
-        return nvinfer1::DimsNACHW{1, this->noutputs(), inshape.c(), ksize.h(), ksize.w()};
+        return nvinfer1::DimsNACHW{ngroups, this->noutputs() / ngroups, inshape.c() / ngroups, ksize.h(), ksize.w()};
     }
     /** Bias shape. */
     nvinfer1::Dims biases_shape(const nvinfer1::DimsCHW& inshape)
