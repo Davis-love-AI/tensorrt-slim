@@ -92,14 +92,12 @@ public:
     nvinfer1::ITensor* sep_conv2d_stacked(nvinfer1::ITensor* net, tfrt::scope sc,
         size_t ksize, size_t stride, size_t num_outputs, size_t num_layers) const
     {
-        std::ostringstream ostr;
         for (size_t i = 0 ; i < num_layers ; ++i) {
             // Scope...
-            ostr.str("separable_");
-            ostr << ksize << "x" << ksize << "_" << (i+1);
+            std::string name = fmt::format("separable_{0}x{0}_{1}", ksize, i+1);
             // ReLU + Separable conv.
             net = tfrt::relu(sc)(net);
-            net = separable_conv2d(sc, ostr.str()).noutputs(num_outputs).ksize(ksize)(net);
+            net = separable_conv2d(sc, name).noutputs(num_outputs).ksize(ksize)(net);
         }
         return net;
     }
@@ -271,7 +269,7 @@ public:
     }
     /** Core of the network. */
     nvinfer1::ITensor* core(nvinfer1::ITensor* input, tfrt::scope sc) {
-        nvinfer1::ITensor *net, *net_n, *net_n_1;
+        nvinfer1::ITensor *net, *net_n_1{nullptr};
         // ImageNet stem cells.
         auto cell_outputs = imagenet_stem(input, sc);
 
@@ -288,8 +286,7 @@ public:
             if (reduction_cells[i]) {
                 filter_scaling *= m_filter_scaling_rate;
                 // Scope name + cell construction...
-                std::ostringstream ostr("reduction_cell_");   ostr << i;
-                auto ssc = sc.sub(ostr.str());
+                auto ssc = sc.sub( fmt::format("reduction_cell_{}", i) );
                 auto cell = reduction_cell(ssc, m_num_conv_filters, filter_scaling);
                 
                 // Apply!
@@ -303,8 +300,7 @@ public:
             }
 
             // Scope name + normal cell construction...
-            std::ostringstream ostr("cell_");   ostr << i;
-            auto ssc = sc.sub(ostr.str());
+            auto ssc = sc.sub( fmt::format("cell_{}", i) );
             auto cell = normal_cell(ssc, m_num_conv_filters, filter_scaling);
             // Apply!
             net = cell(net, net_n_1);
@@ -332,8 +328,7 @@ protected:
         double filter_scaling = 1.0 / pow(double(m_filter_scaling_rate), double(num_stem_cells));
         for (size_t i = 0 ; i < num_stem_cells ; ++i) {
             // Scope name + cell construction...
-            std::ostringstream ostr("cell_stem_");   ostr << i;
-            auto ssc = sc.sub(ostr.str());
+            auto ssc = sc.sub( fmt::format("cell_stem_{}", i) );
             auto cell = reduction_cell(ssc, m_num_conv_filters, filter_scaling);
 
             // Apply!
