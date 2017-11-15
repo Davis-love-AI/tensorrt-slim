@@ -239,6 +239,55 @@ protected:
     int  m_depth_multiplier;
 };
 
+/** Separable 2D convolution layer.
+ */
+template <ActivationType ACT, PaddingType PAD, bool BN>
+class separable_convolution2d_test : public convolution2d<ACT, PAD, BN>
+{
+public:
+    /** Constructor: declare the layer.
+     */
+    separable_convolution2d_test(const tfrt::scope& sc, const std::string& lname="SeparableConv2d") :
+        convolution2d<ACT, PAD, BN>(sc, lname), m_depth_multiplier{1} {
+    }
+    /** Add the layer to network graph, using operator(root).
+     * 2D convolution + batch norm + activation.
+     */
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        auto inshape = static_cast<nvinfer1::DimsCHW&&>(net->getDimensions());
+        LOG(INFO) << "LAYER 2D contrib separable convolution '" << this->m_scope.name() << "'. "
+            << "Input shape: " << dims_str(inshape);
+        // Number of groups: input channel size.
+        int ngroups = dims_channels(inshape);
+        // Depthwise convolution, with depth multiplier.
+        separable_convolution2d_test dw_conv2d(*this);
+        dw_conv2d.noutputs(ngroups * m_depth_multiplier);
+        // TODO: TensorRT bug. Replace group conv. by classic convolution.
+        ngroups = 1;
+        net = dw_conv2d.convolution(net, ngroups, "depthwise_weights", "depthwise_biases", "_dw");
+        // Pointwise convolution.
+        separable_convolution2d_test pw_conv2d(*this);
+        // pw_conv2d.ksize({1, 1}).stride({1, 1});
+        net = pw_conv2d.convolution(net, 1, "pointwise_weights", "biases", "_pw");
+        net = pw_conv2d.batch_norm(net);
+        net = pw_conv2d.activation(net);
+        return this->mark_output(net);
+    }
+    /** Named parameter: depth multiplier.
+     */
+    separable_convolution2d_test& depthmul(int depth_multiplier) {
+        m_depth_multiplier = depth_multiplier;
+        return *this;
+    }
+    int depthmul() const {
+        return m_depth_multiplier;
+    }
+
+protected:
+    // Depth multiplier.
+    int  m_depth_multiplier;
+};
+
 
 /** Transpose 2D convolution layer.
  */

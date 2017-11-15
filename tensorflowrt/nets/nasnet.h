@@ -25,9 +25,14 @@ namespace nasnet
 {
 /** Arg scope for NASNet: SAME padding + batch normalization. ReLU before.
  */
-typedef tfrt::separable_convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true> separable_conv2d;
-typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
-typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::VALID, true>  conv2d_valid;
+// typedef tfrt::separable_convolution2d_test<
+//     tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true> separable_conv2d;
+typedef tfrt::convolution2d<
+    tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true> separable_conv2d;
+typedef tfrt::convolution2d<
+    tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
+typedef tfrt::convolution2d<
+    tfrt::ActivationType::NONE, tfrt::PaddingType::VALID, true>  conv2d_valid;
         
 typedef tfrt::max_pooling2d<tfrt::PaddingType::SAME>    max_pool2d;
 typedef tfrt::avg_pooling2d<tfrt::PaddingType::SAME>    avg_pool2d;
