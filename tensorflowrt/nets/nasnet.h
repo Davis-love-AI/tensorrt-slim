@@ -244,27 +244,45 @@ class net : public tfrt::imagenet_network
 public:
     net(std::string name, 
         float stem_multiplier, float filter_scaling_rate,
-        size_t num_cells, size_t num_reduction_layers, size_t num_conv_filters) : 
+        size_t num_cells, size_t num_reduction_layers, size_t num_conv_filters,
+        bool skip_reduction_layer_input) : 
             tfrt::imagenet_network(name, 1000, true),
             m_stem_multiplier{stem_multiplier}, 
             m_filter_scaling_rate{filter_scaling_rate},
             m_num_cells{num_cells},
             m_num_reduction_layers{num_reduction_layers},
-            m_num_conv_filters{num_conv_filters}
+            m_num_conv_filters{num_conv_filters},
+            m_skip_reduction_layer_input{skip_reduction_layer_input}
     {
     }
-    /** Build the network. Whohohoooo! */
+    /** Build the network: core + softmax. Whohohoooo! */
     virtual nvinfer1::ITensor* build(tfrt::scope sc) {
+        // Input + core.
         auto net = tfrt::input(sc)();
+        net = this->core(net, sc);
         
+        // Logits?
+        // auto ssc = sc.sub("Logits");
+        // net = avg_pool2d(ssc, "AvgPool_1a_7x7").ksize({7, 7})(net);
+        // net = conv2d(ssc, "Conv2d_1c_1x1").noutputs(num_classes).ksize({1, 1})(net);
+        net = tfrt::softmax(sc, "Softmax")(net);
+        return net;
+    }
+    /** Core of the network. */
+    nvinfer1::ITensor* core(nvinfer1::ITensor* input, tfrt::scope sc) {
+        nvinfer1::ITensor *net, *net_n, *net_n_1;
         // ImageNet stem cells.
-        auto cell_outputs = imagenet_stem(net, sc);
+        auto cell_outputs = imagenet_stem(input, sc);
 
         // Core of the network.
         auto reduction_cells = this->reduction_layers();
         double filter_scaling = 1.0;
         size_t true_cell_num = 2;
         for (size_t i = 0 ; i < m_num_cells ; ++i) {
+            // Skip reduction cell input?
+            if (m_skip_reduction_layer_input) {
+                net_n_1 = cell_outputs[cell_outputs.size()-2];
+            }
             // Reduction cell?
             if (reduction_cells[i]) {
                 filter_scaling *= m_filter_scaling_rate;
@@ -272,11 +290,15 @@ public:
                 std::ostringstream ostr("reduction_cell_");   ostr << i;
                 auto ssc = sc.sub(ostr.str());
                 auto cell = reduction_cell(ssc, m_num_conv_filters, filter_scaling);
+                
                 // Apply!
-                int n = cell_outputs.size();
-                net = cell(cell_outputs[n-1], cell_outputs[n-2]);
+                net = cell(net, cell_outputs[cell_outputs.size()-2]);
                 cell_outputs.push_back(net);
                 true_cell_num++;
+            }
+            // Skip reduction cell input?
+            if (!m_skip_reduction_layer_input) {
+                net_n_1 = cell_outputs[cell_outputs.size()-2];
             }
 
             // Scope name + normal cell construction...
@@ -284,16 +306,10 @@ public:
             auto ssc = sc.sub(ostr.str());
             auto cell = normal_cell(ssc, m_num_conv_filters, filter_scaling);
             // Apply!
-            int n = cell_outputs.size();
-            net = cell(cell_outputs[n-1], cell_outputs[n-2]);
+            net = cell(net, net_n_1);
             cell_outputs.push_back(net);
             true_cell_num++;
         }
-        // Logits?
-        // auto ssc = sc.sub("Logits");
-        // net = avg_pool2d(ssc, "AvgPool_1a_7x7").ksize({7, 7})(net);
-        // net = conv2d(ssc, "Conv2d_1c_1x1").noutputs(num_classes).ksize({1, 1})(net);
-        net = tfrt::softmax(sc, "Softmax")(net);
         return net;
     }
 
@@ -349,6 +365,8 @@ protected:
     size_t  m_num_reduction_layers;
     /** Number of convolutional filters. */
     size_t  m_num_conv_filters;
+    /** Skip reduction layer input (for n-1 layer). */
+    bool  m_skip_reduction_layer_input;
 };
 
 
@@ -364,7 +382,7 @@ class net : public nasnet::net
 {
 public:
     /** NASNet mobile definition. */
-    net() : nasnet::net("nasnet_mobile", 1.0, 2.0, 12, 2, 44)
+    net() : nasnet::net("nasnet_mobile", 1.0, 2.0, 12, 2, 44, false)
     {}
 
     // stem_multiplier=1.0,
@@ -389,7 +407,7 @@ class net : public nasnet::net
 {
 public:
     /** NASNet mobile definition. */
-    net() : nasnet::net("nasnet_large", 3.0, 2.0, 18, 2, 168)
+    net() : nasnet::net("nasnet_large", 3.0, 2.0, 18, 2, 168, true)
     {}
     // stem_multiplier=3.0,
     // dense_dropout_keep_prob=0.5,
