@@ -33,17 +33,17 @@ typedef tfrt::concat_channels                           concat_channels;
 /* ============================================================================
  * NASNet Abstract cell
  * ========================================================================== */
-class nasnet_base_cell
+class base_cell
 {
 public:
-    nasnet_base_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) :
+    base_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) :
         m_scope{sc}, m_num_conv_filters{num_filters}, m_filter_scaling{filter_scaling}
     {
     }
     
 public:
     /** Base of every cell: 1x1 convolution. */
-    nvinfer1::ITensor* base_cell(nvinfer1::ITensor* net, tfrt::scope sc) const
+    nvinfer1::ITensor* base_cell_n(nvinfer1::ITensor* net, tfrt::scope sc) const
     {
         size_t fsize = this->filter_size();
         // ReLU + conv.
@@ -52,7 +52,7 @@ public:
         return net;
     }
     /** Reduce n-1 layer to correct shape. */
-    nvinfer1::ITensor* reduce_prev_layer(
+    nvinfer1::ITensor* reduce_n_1(
         nvinfer1::ITensor* net_n, nvinfer1::ITensor* net_n_1, tfrt::scope sc) const
     {
         nvinfer1::ITensor* net = net_n_1;
@@ -120,11 +120,11 @@ protected:
 /* ============================================================================
  * NASNet Normal cell
  * ========================================================================== */
-class nasnet_normal_cell : public nasnet_base_cell
+class normal_cell : public base_cell
 {
 public:
-    nasnet_normal_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) : 
-        nasnet_base_cell(sc, num_filters, filter_scaling)
+    normal_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) : 
+        base_cell(sc, num_filters, filter_scaling)
     {
     }
     /** Operator: taking layers n and n-1. */
@@ -134,8 +134,8 @@ public:
         std::vector<nvinfer1::ITensor*> blocks;
         tfrt::scope sc{m_scope};
         // Basic cell + reduce n-1.
-        net_n = this->base_cell(net_n, m_scope.sub("base_cell"));
-        net_n_1 = this->reduce_prev_layer(net_n, net_n_1, m_scope.sub("reduce_n_1"));
+        net_n = this->base_cell_n(net_n, m_scope.sub("base_cell_n"));
+        net_n_1 = this->reduce_n_1(net_n, net_n_1, m_scope.sub("reduce_n_1"));
         size_t fsize = this->filter_size();
 
         // Block 1: sep. 5x5 + sep 3x3 (n / n-1).
@@ -180,11 +180,11 @@ public:
 /* ============================================================================
  * NASNet Reduction cell
  * ========================================================================== */
-class nasnet_reduction_cell : public nasnet_base_cell
+class reduction_cell : public base_cell
 {
 public:
-    nasnet_reduction_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) : 
-        nasnet_base_cell(sc, num_filters, filter_scaling)
+    reduction_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) : 
+        base_cell(sc, num_filters, filter_scaling)
     {
     }
     /** Operator: taking layers n and n-1. */
@@ -194,8 +194,8 @@ public:
         std::vector<nvinfer1::ITensor*> blocks, blocks_tmp;
         tfrt::scope sc{m_scope};
         // Basic cell + reduce n-1.
-        net_n = this->base_cell(net_n, m_scope.sub("base_cell"));
-        net_n_1 = this->reduce_prev_layer(net_n, net_n_1, m_scope.sub("reduce_n_1"));
+        net_n = this->base_cell_n(net_n, m_scope.sub("base_cell_n"));
+        net_n_1 = this->reduce_n_1(net_n, net_n_1, m_scope.sub("reduce_n_1"));
         size_t fsize = this->filter_size();
 
         // Block 1: sep. 5x5 + sep 7x7 (n / n-1).
@@ -236,6 +236,95 @@ public:
         return net;
     }
 };
+
+/* ============================================================================
+ * NASNet network.
+ * ========================================================================== */
+class net : public tfrt::imagenet_network
+{
+public:
+    net(std::string name, 
+        float stem_multiplier, float filter_scaling_rate,
+        size_t num_cells, size_t num_reduction_layers, size_t num_conv_filters) : 
+            tfrt::imagenet_network(name, 1000, true),
+            m_stem_multiplier{stem_multiplier}, 
+            m_filter_scaling_rate{filter_scaling_rate},
+            m_num_cells{num_cells},
+            m_num_reduction_layers{num_reduction_layers},
+            m_num_conv_filters{num_conv_filters}
+    {
+    }
+
+    virtual nvinfer1::ITensor* build(tfrt::scope sc) {
+        auto net = tfrt::input(sc)();
+        //
+        return net;
+    }
+
+protected:
+    /** ImageNet stem: 3x3 conv + reduction cells. */
+    std::vector<nvinfer1::ITensor*> imagenet_stem(nvinfer1::ITensor* net, tfrt::scope sc) const {
+        // First 3x3 convolution.
+        size_t num_stem_filters = int(32 * m_stem_multiplier);
+        // VALID padding?
+        net = conv2d(sc, "conv0").ksize(3).stride(2)(net);
+
+        // Reduction cells.
+        size_t num_stem_cells = 2;
+        std::vector<nvinfer1::ITensor*> cell_outputs;
+        cell_outputs.push_back(nullptr);
+        cell_outputs.push_back(net);
+
+        // Filter scaling?
+        float filter_scaling = 1.0f / pow(m_filter_scaling_rate, float(num_stem_cells));        
+        for (size_t i = 0 ; i < num_stem_cells ; ++i) {
+            // Scope name + cell construction...
+            std::ostringstream ostr("cell_stem_");   ostr << i;
+            auto ssc = sc.sub(ostr.str());
+            auto cell = reduction_cell(ssc, m_num_conv_filters, filter_scaling);
+            // Apply!
+            int n = cell_outputs.size();
+            net = cell(cell_outputs[n-1], cell_outputs[n-2]);
+            cell_outputs.push_back(net);
+            // Update filter scaling.
+            filter_scaling *= m_filter_scaling_rate;
+        }
+        return cell_outputs;
+    }
+    /** Reduction layers: bool vector */
+    std::vector<bool> reduction_layers() const {
+        std::vector<bool> r_layers(m_num_cells, false);
+        for (size_t i = 1 ; i <= m_num_reduction_layers ; ++i) {
+            float l_idx = (float(i) / float(m_num_reduction_layers + 1)) * m_num_cells;
+            r_layers[int(l_idx)] = true;
+        }
+        return r_layers;
+    }
+
+protected:
+    /** Stem multiplier. */
+    float  m_stem_multiplier;
+    /** Filter scaling. */
+    float  m_filter_scaling_rate;
+    /** Number of cells. */
+    size_t  m_num_cells;
+    /** Number of reduction layers. */
+    size_t  m_num_reduction_layers;
+    /** Number of convolutional filters. */
+    size_t  m_num_conv_filters;
+};
+
+//   stem_multiplier=1.0,
+//       dense_dropout_keep_prob=0.5,
+//       num_cells=12,
+//       filter_scaling_rate=2.0,
+//       drop_path_keep_prob=1.0,
+//       num_conv_filters=44,
+//       use_aux_head=1,
+//       num_reduction_layers=2,
+//       data_format='NHWC',
+//       skip_reduction_layer_input=0,
+//       total_training_steps=250000,
 
 // /** Major mixed block used in Inception v2 (4 branches).
 //  * Average pooling version.
