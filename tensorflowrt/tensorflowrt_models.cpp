@@ -37,6 +37,9 @@ std::unique_ptr<tfrt::network>&& nets_factory(const std::string& name)
 
         nets["resnext_50"] = std::make_unique<resnext_50::net>();
 
+        nets["nasnet_mobile"] = std::make_unique<nasnet_mobile::net>();
+        nets["nasnet_large"] = std::make_unique<nasnet_large::net>();
+
         // Segmentation networks.
         nets["ssd_inception2_v0"] = std::make_unique<ssd_inception2_v0::net>();
         nets["seg_inception2_v1"] = std::make_unique<seg_inception2_v1::net>();
