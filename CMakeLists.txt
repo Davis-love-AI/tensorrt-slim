@@ -69,8 +69,11 @@ include_directories(/opt/ros/kinetic/include)
 # OpenCV and freetype2 include dir
 
 # Third party libraries.
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/fmt)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/eigen)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/half/include)
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/glfw3/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/opengl)
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/glfw3/lib)
@@ -98,6 +101,8 @@ ENDMACRO(BUILD_COPY_HEADERS)
 
 # Build NVXIO dependency.
 add_subdirectory(nvxio)
+# 3rd party libraries rules (install, ...)
+add_subdirectory(3rdparty)
 
 # Build TensorFlowRT library and modules.
 add_subdirectory(tensorflowrt)
@@ -108,5 +113,3 @@ add_subdirectory(util)
 add_subdirectory(tools)
 add_subdirectory(demos)
 
-# 3rd party libraries rules (install, ...)
-add_subdirectory(3rdparty)

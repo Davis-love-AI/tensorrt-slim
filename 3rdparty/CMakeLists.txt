@@ -1,5 +1,7 @@
 message("-- Install 3rd party libraries to ${CMAKE_INSTALL_PREFIX}")
 
+add_subdirectory(fmt)
+
 # Eigen install.
 INSTALL(
     DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/eigen/Eigen 

@@ -16,6 +16,7 @@
 #define TFRT_NASNET_H
 
 #include <map>
+#include <fmt/format.h>
 
 #include <NvInfer.h>
 #include "../tensorflowrt.h"
