@@ -1,0 +1,353 @@
+============================================================================
+INPUT: 224x224 / BATCH: 1 / FP16
+CUDA 8.0 / cudnn v7.01 / TensorRT 3.0 RC
+============================================================================
+Binding 0 (InceptionV2/Input): Input.
+Binding 1 (InceptionV2/Softmax/output): Output.
+Input index: 0 of size: 602112 and shape: [3, 224, 224]
+Output index: 1 of size: 4004 and shape: [1001, 1, 1]
+InceptionV2/Input/scaling input reformatter 0                                                                                                          0.094ms
+InceptionV2/Input/scaling                                                                                                                              0.030ms
+InceptionV2/Conv2d_1a_7x7_dw                                                                                                                           0.260ms
+InceptionV2/Conv2d_1a_7x7_pw + InceptionV2/Conv2d_1a_7x7/ReLU                                                                                          0.139ms
+InceptionV2/MaxPool_2a_3x3                                                                                                                             0.086ms
+InceptionV2/Conv2d_2b_1x1 + InceptionV2/Conv2d_2b_1x1/ReLU                                                                                             0.061ms
+InceptionV2/Conv2d_2c_3x3 + InceptionV2/Conv2d_2c_3x3/ReLU                                                                                             0.584ms
+InceptionV2/MaxPool_3a_3x3                                                                                                                             0.062ms
+InceptionV2/Mixed_3b/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_3b/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_3b/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_3b/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.089ms
+InceptionV2/Mixed_3b/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_3b/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.067ms
+InceptionV2/Mixed_3b/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_3b/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.084ms
+InceptionV2/Mixed_3b/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_3b/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.111ms
+InceptionV2/Mixed_3b/Branch_3/AvgPool_0a_3x3                                                                                                           0.033ms
+InceptionV2/Mixed_3b/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_3b/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.036ms
+InceptionV2/Mixed_3b/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.008ms
+InceptionV2/Mixed_3c/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_3c/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_3c/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_3c/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.110ms
+InceptionV2/Mixed_3c/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_3c/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.092ms
+InceptionV2/Mixed_3c/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_3c/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.091ms
+InceptionV2/Mixed_3c/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_3c/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.117ms
+InceptionV2/Mixed_3c/Branch_3/AvgPool_0a_3x3                                                                                                           0.042ms
+InceptionV2/Mixed_3c/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_3c/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.050ms
+InceptionV2/Mixed_3c/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.008ms
+InceptionV2/Mixed_4a/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4a/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4a/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4a/Branch_1/Conv2d_0a_1x1/ReLU 0.130ms
+InceptionV2/Mixed_4a/Branch_0/Conv2d_1a_3x3 + InceptionV2/Mixed_4a/Branch_0/Conv2d_1a_3x3/ReLU                                                         0.127ms
+InceptionV2/Mixed_4a/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4a/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.092ms
+InceptionV2/Mixed_4a/Branch_1/Conv2d_1a_3x3 + InceptionV2/Mixed_4a/Branch_1/Conv2d_1a_3x3/ReLU                                                         0.080ms
+InceptionV2/Mixed_4a/Branch_2/MaxPool_1a_3x3                                                                                                           0.038ms
+InceptionV2/Mixed_4b/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4b/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4b/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4b/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.132ms
+InceptionV2/Mixed_4b/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4b/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.048ms
+InceptionV2/Mixed_4b/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4b/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.067ms
+InceptionV2/Mixed_4b/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4b/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.067ms
+InceptionV2/Mixed_4b/Branch_3/AvgPool_0a_3x3                                                                                                           0.050ms
+InceptionV2/Mixed_4b/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4b/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.058ms
+InceptionV2/Mixed_4b/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.007ms
+InceptionV2/Mixed_4c/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4c/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4c/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4c/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.137ms
+InceptionV2/Mixed_4c/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4c/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.077ms
+InceptionV2/Mixed_4c/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4c/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.074ms
+InceptionV2/Mixed_4c/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4c/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.063ms
+InceptionV2/Mixed_4c/Branch_3/AvgPool_0a_3x3                                                                                                           0.049ms
+InceptionV2/Mixed_4c/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4c/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.057ms
+InceptionV2/Mixed_4c/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.007ms
+InceptionV2/Mixed_4d/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4d/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4d/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4d/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.142ms
+InceptionV2/Mixed_4d/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4d/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.080ms
+InceptionV2/Mixed_4d/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4d/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.111ms
+InceptionV2/Mixed_4d/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4d/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.093ms
+InceptionV2/Mixed_4d/Branch_3/AvgPool_0a_3x3                                                                                                           0.050ms
+InceptionV2/Mixed_4d/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4d/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.057ms
+InceptionV2/Mixed_4d/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.006ms
+InceptionV2/Mixed_4e/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4e/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4e/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4e/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.136ms
+InceptionV2/Mixed_4e/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4e/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.088ms
+InceptionV2/Mixed_4e/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4e/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.102ms
+InceptionV2/Mixed_4e/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4e/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.117ms
+InceptionV2/Mixed_4e/Branch_3/AvgPool_0a_3x3                                                                                                           0.049ms
+InceptionV2/Mixed_4e/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4e/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.057ms
+InceptionV2/Mixed_4e/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.005ms
+InceptionV2/Mixed_5a/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_5a/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_5a/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_5a/Branch_1/Conv2d_0a_1x1/ReLU 0.111ms
+InceptionV2/Mixed_5a/Branch_0/Conv2d_1a_3x3 + InceptionV2/Mixed_5a/Branch_0/Conv2d_1a_3x3/ReLU                                                         0.099ms
+InceptionV2/Mixed_5a/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_5a/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.151ms
+InceptionV2/Mixed_5a/Branch_1/Conv2d_1a_3x3 + InceptionV2/Mixed_5a/Branch_1/Conv2d_1a_3x3/ReLU                                                         0.185ms
+InceptionV2/Mixed_5a/Branch_2/MaxPool_1a_3x3                                                                                                           0.029ms
+InceptionV2/Mixed_5b/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_5b/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_5b/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_5b/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.158ms
+InceptionV2/Mixed_5b/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_5b/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.101ms
+InceptionV2/Mixed_5b/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_5b/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.073ms
+InceptionV2/Mixed_5b/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_5b/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.090ms
+InceptionV2/Mixed_5b/Branch_3/AvgPool_0a_3x3                                                                                                           0.044ms
+InceptionV2/Mixed_5b/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_5b/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.037ms
+InceptionV2/Mixed_5b/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.005ms
+InceptionV2/Mixed_5c/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_5c/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_5c/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_5c/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.166ms
+InceptionV2/Mixed_5c/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_5c/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.101ms
+InceptionV2/Mixed_5c/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_5c/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.082ms
+InceptionV2/Mixed_5c/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_5c/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.092ms
+InceptionV2/Mixed_5c/Branch_3/MaxPool_0a_3x3                                                                                                           0.025ms
+InceptionV2/Mixed_5c/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_5c/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.044ms
+InceptionV2/Mixed_5c/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.004ms
+InceptionV2/Logits/AvgPool_1a_7x7                                                                                                                      0.039ms
+InceptionV2/Logits/Conv2d_1c_1x1                                                                                                                       0.082ms
+InceptionV2/Softmax/Softmax                                                                                                                            0.010ms
+InceptionV2/Softmax/Softmax output reformatter 0                                                                                                       0.004ms
+Time over all layers: 6.438
+
+============================================================================
+INPUT: 224x224 / BATCH: 2 / FP16
+CUDA 8.0 / cudnn v7.01 / TensorRT 3.0 RC
+============================================================================
+Binding 0 (InceptionV2/Input): Input.
+Binding 1 (InceptionV2/Softmax/output): Output.
+Input index: 0 of size: 1204224 and shape: [3, 224, 224]
+Output index: 1 of size: 8008 and shape: [1001, 1, 1]
+InceptionV2/Input/scaling input reformatter 0                                                                                                          0.159ms
+InceptionV2/Input/scaling                                                                                                                              0.058ms
+InceptionV2/Conv2d_1a_7x7_dw                                                                                                                           0.499ms
+InceptionV2/Conv2d_1a_7x7_pw + InceptionV2/Conv2d_1a_7x7/ReLU                                                                                          0.255ms
+InceptionV2/MaxPool_2a_3x3                                                                                                                             0.162ms
+InceptionV2/Conv2d_2b_1x1 + InceptionV2/Conv2d_2b_1x1/ReLU                                                                                             0.099ms
+InceptionV2/Conv2d_2c_3x3 + InceptionV2/Conv2d_2c_3x3/ReLU                                                                                             1.146ms
+InceptionV2/MaxPool_3a_3x3                                                                                                                             0.116ms
+InceptionV2/Mixed_3b/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_3b/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_3b/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_3b/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.151ms
+InceptionV2/Mixed_3b/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_3b/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.115ms
+InceptionV2/Mixed_3b/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_3b/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.165ms
+InceptionV2/Mixed_3b/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_3b/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.218ms
+InceptionV2/Mixed_3b/Branch_3/AvgPool_0a_3x3                                                                                                           0.060ms
+InceptionV2/Mixed_3b/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_3b/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.065ms
+InceptionV2/Mixed_3b/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.013ms
+InceptionV2/Mixed_3c/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_3c/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_3c/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_3c/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.188ms
+InceptionV2/Mixed_3c/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_3c/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.165ms
+InceptionV2/Mixed_3c/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_3c/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.166ms
+InceptionV2/Mixed_3c/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_3c/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.220ms
+InceptionV2/Mixed_3c/Branch_3/AvgPool_0a_3x3                                                                                                           0.077ms
+InceptionV2/Mixed_3c/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_3c/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.078ms
+InceptionV2/Mixed_3c/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.014ms
+InceptionV2/Mixed_4a/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4a/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4a/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4a/Branch_1/Conv2d_0a_1x1/ReLU 0.223ms
+InceptionV2/Mixed_4a/Branch_0/Conv2d_1a_3x3 + InceptionV2/Mixed_4a/Branch_0/Conv2d_1a_3x3/ReLU                                                         0.234ms
+InceptionV2/Mixed_4a/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4a/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.165ms
+InceptionV2/Mixed_4a/Branch_1/Conv2d_1a_3x3 + InceptionV2/Mixed_4a/Branch_1/Conv2d_1a_3x3/ReLU                                                         0.113ms
+InceptionV2/Mixed_4a/Branch_2/MaxPool_1a_3x3                                                                                                           0.061ms
+InceptionV2/Mixed_4b/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4b/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4b/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4b/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.219ms
+InceptionV2/Mixed_4b/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4b/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.056ms
+InceptionV2/Mixed_4b/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4b/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.078ms
+InceptionV2/Mixed_4b/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4b/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.110ms
+InceptionV2/Mixed_4b/Branch_3/AvgPool_0a_3x3                                                                                                           0.072ms
+InceptionV2/Mixed_4b/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4b/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.082ms
+InceptionV2/Mixed_4b/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.012ms
+InceptionV2/Mixed_4c/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4c/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4c/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4c/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.220ms
+InceptionV2/Mixed_4c/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4c/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.086ms
+InceptionV2/Mixed_4c/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4c/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.086ms
+InceptionV2/Mixed_4c/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4c/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.110ms
+InceptionV2/Mixed_4c/Branch_3/AvgPool_0a_3x3                                                                                                           0.072ms
+InceptionV2/Mixed_4c/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4c/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.082ms
+InceptionV2/Mixed_4c/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.011ms
+InceptionV2/Mixed_4d/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4d/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4d/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4d/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.260ms
+InceptionV2/Mixed_4d/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4d/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.135ms
+InceptionV2/Mixed_4d/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4d/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.135ms
+InceptionV2/Mixed_4d/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4d/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.159ms
+InceptionV2/Mixed_4d/Branch_3/AvgPool_0a_3x3                                                                                                           0.072ms
+InceptionV2/Mixed_4d/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4d/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.082ms
+InceptionV2/Mixed_4d/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.010ms
+InceptionV2/Mixed_4e/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4e/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4e/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4e/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.218ms
+InceptionV2/Mixed_4e/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4e/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.158ms
+InceptionV2/Mixed_4e/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4e/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.186ms
+InceptionV2/Mixed_4e/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4e/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.213ms
+InceptionV2/Mixed_4e/Branch_3/AvgPool_0a_3x3                                                                                                           0.094ms
+InceptionV2/Mixed_4e/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4e/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.082ms
+InceptionV2/Mixed_4e/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.007ms
+InceptionV2/Mixed_5a/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_5a/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_5a/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_5a/Branch_1/Conv2d_0a_1x1/ReLU 0.193ms
+InceptionV2/Mixed_5a/Branch_0/Conv2d_1a_3x3 + InceptionV2/Mixed_5a/Branch_0/Conv2d_1a_3x3/ReLU                                                         0.104ms
+InceptionV2/Mixed_5a/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_5a/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.279ms
+InceptionV2/Mixed_5a/Branch_1/Conv2d_1a_3x3 + InceptionV2/Mixed_5a/Branch_1/Conv2d_1a_3x3/ReLU                                                         0.183ms
+InceptionV2/Mixed_5a/Branch_2/MaxPool_1a_3x3                                                                                                           0.029ms
+InceptionV2/Mixed_5b/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_5b/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_5b/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_5b/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.205ms
+InceptionV2/Mixed_5b/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_5b/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.179ms
+InceptionV2/Mixed_5b/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_5b/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.114ms
+InceptionV2/Mixed_5b/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_5b/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.154ms
+InceptionV2/Mixed_5b/Branch_3/AvgPool_0a_3x3                                                                                                           0.083ms
+InceptionV2/Mixed_5b/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_5b/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.074ms
+InceptionV2/Mixed_5b/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.007ms
+InceptionV2/Mixed_5c/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_5c/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_5c/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_5c/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.213ms
+InceptionV2/Mixed_5c/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_5c/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.175ms
+InceptionV2/Mixed_5c/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_5c/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.137ms
+InceptionV2/Mixed_5c/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_5c/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.153ms
+InceptionV2/Mixed_5c/Branch_3/MaxPool_0a_3x3                                                                                                           0.028ms
+InceptionV2/Mixed_5c/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_5c/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.075ms
+InceptionV2/Mixed_5c/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.007ms
+InceptionV2/Logits/AvgPool_1a_7x7                                                                                                                      0.074ms
+InceptionV2/Logits/Conv2d_1c_1x1                                                                                                                       0.154ms
+InceptionV2/Softmax/Softmax input reformatter 0                                                                                                        0.005ms
+InceptionV2/Softmax/Softmax                                                                                                                            0.010ms
+Time over all layers: 10.726
+
+============================================================================
+INPUT: 224x224 / BATCH: 4 / FP16
+CUDA 8.0 / cudnn v7.01 / TensorRT 3.0 RC
+============================================================================
+Binding 0 (InceptionV2/Input): Input.
+Binding 1 (InceptionV2/Softmax/output): Output.
+Input index: 0 of size: 2408448 and shape: [3, 224, 224]
+Output index: 1 of size: 16016 and shape: [1001, 1, 1]
+InceptionV2/Input/scaling input reformatter 0                                                                                                          0.291ms
+InceptionV2/Input/scaling                                                                                                                              0.112ms
+InceptionV2/Conv2d_1a_7x7_dw                                                                                                                           0.975ms
+InceptionV2/Conv2d_1a_7x7_pw + InceptionV2/Conv2d_1a_7x7/ReLU                                                                                          0.500ms
+InceptionV2/MaxPool_2a_3x3                                                                                                                             0.311ms
+InceptionV2/Conv2d_2b_1x1 + InceptionV2/Conv2d_2b_1x1/ReLU                                                                                             0.177ms
+InceptionV2/Conv2d_2c_3x3 + InceptionV2/Conv2d_2c_3x3/ReLU                                                                                             2.236ms
+InceptionV2/MaxPool_3a_3x3                                                                                                                             0.224ms
+InceptionV2/Mixed_3b/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_3b/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_3b/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_3b/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.272ms
+InceptionV2/Mixed_3b/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_3b/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.248ms
+InceptionV2/Mixed_3b/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_3b/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.311ms
+InceptionV2/Mixed_3b/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_3b/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.414ms
+InceptionV2/Mixed_3b/Branch_3/AvgPool_0a_3x3                                                                                                           0.112ms
+InceptionV2/Mixed_3b/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_3b/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.093ms
+InceptionV2/Mixed_3b/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.024ms
+InceptionV2/Mixed_3c/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_3c/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_3c/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_3c/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.343ms
+InceptionV2/Mixed_3c/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_3c/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.310ms
+InceptionV2/Mixed_3c/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_3c/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.310ms
+InceptionV2/Mixed_3c/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_3c/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.416ms
+InceptionV2/Mixed_3c/Branch_3/AvgPool_0a_3x3                                                                                                           0.147ms
+InceptionV2/Mixed_3c/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_3c/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.134ms
+InceptionV2/Mixed_3c/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.024ms
+InceptionV2/Mixed_4a/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4a/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4a/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4a/Branch_1/Conv2d_0a_1x1/ReLU 0.409ms
+InceptionV2/Mixed_4a/Branch_0/Conv2d_1a_3x3 + InceptionV2/Mixed_4a/Branch_0/Conv2d_1a_3x3/ReLU                                                         0.392ms
+InceptionV2/Mixed_4a/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4a/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.309ms
+InceptionV2/Mixed_4a/Branch_1/Conv2d_1a_3x3 + InceptionV2/Mixed_4a/Branch_1/Conv2d_1a_3x3/ReLU                                                         0.207ms
+InceptionV2/Mixed_4a/Branch_2/MaxPool_1a_3x3                                                                                                           0.109ms
+InceptionV2/Mixed_4b/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4b/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4b/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4b/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.387ms
+InceptionV2/Mixed_4b/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4b/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.091ms
+InceptionV2/Mixed_4b/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4b/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.151ms
+InceptionV2/Mixed_4b/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4b/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.199ms
+InceptionV2/Mixed_4b/Branch_3/AvgPool_0a_3x3                                                                                                           0.138ms
+InceptionV2/Mixed_4b/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4b/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.159ms
+InceptionV2/Mixed_4b/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.022ms
+InceptionV2/Mixed_4c/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4c/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4c/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4c/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.390ms
+InceptionV2/Mixed_4c/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4c/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.151ms
+InceptionV2/Mixed_4c/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4c/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.150ms
+InceptionV2/Mixed_4c/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4c/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.200ms
+InceptionV2/Mixed_4c/Branch_3/AvgPool_0a_3x3                                                                                                           0.138ms
+InceptionV2/Mixed_4c/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4c/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.155ms
+InceptionV2/Mixed_4c/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.019ms
+InceptionV2/Mixed_4d/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4d/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4d/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4d/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.453ms
+InceptionV2/Mixed_4d/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4d/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.250ms
+InceptionV2/Mixed_4d/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4d/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.249ms
+InceptionV2/Mixed_4d/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4d/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.301ms
+InceptionV2/Mixed_4d/Branch_3/AvgPool_0a_3x3                                                                                                           0.139ms
+InceptionV2/Mixed_4d/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4d/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.149ms
+InceptionV2/Mixed_4d/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.016ms
+InceptionV2/Mixed_4e/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4e/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4e/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4e/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.389ms
+InceptionV2/Mixed_4e/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4e/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.299ms
+InceptionV2/Mixed_4e/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4e/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.353ms
+InceptionV2/Mixed_4e/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4e/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.406ms
+InceptionV2/Mixed_4e/Branch_3/AvgPool_0a_3x3                                                                                                           0.138ms
+InceptionV2/Mixed_4e/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4e/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.143ms
+InceptionV2/Mixed_4e/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.010ms
+InceptionV2/Mixed_5a/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_5a/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_5a/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_5a/Branch_1/Conv2d_0a_1x1/ReLU 0.333ms
+InceptionV2/Mixed_5a/Branch_0/Conv2d_1a_3x3 + InceptionV2/Mixed_5a/Branch_0/Conv2d_1a_3x3/ReLU                                                         0.127ms
+InceptionV2/Mixed_5a/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_5a/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.550ms
+InceptionV2/Mixed_5a/Branch_1/Conv2d_1a_3x3 + InceptionV2/Mixed_5a/Branch_1/Conv2d_1a_3x3/ReLU                                                         0.272ms
+InceptionV2/Mixed_5a/Branch_2/MaxPool_1a_3x3                                                                                                           0.048ms
+InceptionV2/Mixed_5b/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_5b/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_5b/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_5b/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.351ms
+InceptionV2/Mixed_5b/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_5b/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.314ms
+InceptionV2/Mixed_5b/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_5b/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.178ms
+InceptionV2/Mixed_5b/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_5b/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.239ms
+InceptionV2/Mixed_5b/Branch_3/AvgPool_0a_3x3                                                                                                           0.121ms
+InceptionV2/Mixed_5b/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_5b/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.103ms
+InceptionV2/Mixed_5b/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.010ms
+InceptionV2/Mixed_5c/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_5c/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_5c/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_5c/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.368ms
+InceptionV2/Mixed_5c/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_5c/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.325ms
+InceptionV2/Mixed_5c/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_5c/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.211ms
+InceptionV2/Mixed_5c/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_5c/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.238ms
+InceptionV2/Mixed_5c/Branch_3/MaxPool_0a_3x3                                                                                                           0.048ms
+InceptionV2/Mixed_5c/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_5c/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.096ms
+InceptionV2/Mixed_5c/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.010ms
+InceptionV2/Logits/AvgPool_1a_7x7                                                                                                                      0.115ms
+InceptionV2/Logits/Conv2d_1c_1x1                                                                                                                       0.249ms
+InceptionV2/Softmax/Softmax                                                                                                                            0.010ms
+InceptionV2/Softmax/Softmax output reformatter 0                                                                                                       0.005ms
+Time over all layers: 19.377
+
+============================================================================
+INPUT: 224x224 / BATCH: 8 / FP16
+CUDA 8.0 / cudnn v7.01 / TensorRT 3.0 RC
+============================================================================
+Binding 0 (InceptionV2/Input): Input.
+Binding 1 (InceptionV2/Softmax/output): Output.
+Input index: 0 of size: 4816896 and shape: [3, 224, 224]
+Output index: 1 of size: 32032 and shape: [1001, 1, 1]
+InceptionV2/Input/scaling input reformatter 0                                                                                                          0.555ms
+InceptionV2/Input/scaling                                                                                                                              0.218ms
+InceptionV2/Conv2d_1a_7x7_dw                                                                                                                           1.926ms
+InceptionV2/Conv2d_1a_7x7_pw + InceptionV2/Conv2d_1a_7x7/ReLU                                                                                          0.958ms
+InceptionV2/MaxPool_2a_3x3                                                                                                                             0.611ms
+InceptionV2/Conv2d_2b_1x1 + InceptionV2/Conv2d_2b_1x1/ReLU                                                                                             0.333ms
+InceptionV2/Conv2d_2c_3x3 + InceptionV2/Conv2d_2c_3x3/ReLU                                                                                             4.532ms
+InceptionV2/MaxPool_3a_3x3                                                                                                                             0.437ms
+InceptionV2/Mixed_3b/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_3b/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_3b/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_3b/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.513ms
+InceptionV2/Mixed_3b/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_3b/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.408ms
+InceptionV2/Mixed_3b/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_3b/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.601ms
+InceptionV2/Mixed_3b/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_3b/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.807ms
+InceptionV2/Mixed_3b/Branch_3/AvgPool_0a_3x3                                                                                                           0.218ms
+InceptionV2/Mixed_3b/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_3b/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.143ms
+InceptionV2/Mixed_3b/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.048ms
+InceptionV2/Mixed_3c/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_3c/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_3c/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_3c/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.647ms
+InceptionV2/Mixed_3c/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_3c/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.599ms
+InceptionV2/Mixed_3c/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_3c/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.600ms
+InceptionV2/Mixed_3c/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_3c/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.808ms
+InceptionV2/Mixed_3c/Branch_3/AvgPool_0a_3x3                                                                                                           0.288ms
+InceptionV2/Mixed_3c/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_3c/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.232ms
+InceptionV2/Mixed_3c/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.048ms
+InceptionV2/Mixed_4a/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4a/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4a/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4a/Branch_1/Conv2d_0a_1x1/ReLU 0.777ms
+InceptionV2/Mixed_4a/Branch_0/Conv2d_1a_3x3 + InceptionV2/Mixed_4a/Branch_0/Conv2d_1a_3x3/ReLU                                                         0.705ms
+InceptionV2/Mixed_4a/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4a/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.598ms
+InceptionV2/Mixed_4a/Branch_1/Conv2d_1a_3x3 + InceptionV2/Mixed_4a/Branch_1/Conv2d_1a_3x3/ReLU                                                         0.370ms
+InceptionV2/Mixed_4a/Branch_2/MaxPool_1a_3x3                                                                                                           0.209ms
+InceptionV2/Mixed_4b/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4b/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4b/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4b/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.706ms
+InceptionV2/Mixed_4b/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4b/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.163ms
+InceptionV2/Mixed_4b/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4b/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.280ms
+InceptionV2/Mixed_4b/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4b/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.382ms
+InceptionV2/Mixed_4b/Branch_3/AvgPool_0a_3x3                                                                                                           0.270ms
+InceptionV2/Mixed_4b/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4b/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.255ms
+InceptionV2/Mixed_4b/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.042ms
+InceptionV2/Mixed_4c/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4c/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4c/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4c/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.704ms
+InceptionV2/Mixed_4c/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4c/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.280ms
+InceptionV2/Mixed_4c/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4c/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.279ms
+InceptionV2/Mixed_4c/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4c/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.376ms
+InceptionV2/Mixed_4c/Branch_3/AvgPool_0a_3x3                                                                                                           0.270ms
+InceptionV2/Mixed_4c/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4c/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.254ms
+InceptionV2/Mixed_4c/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.036ms
+InceptionV2/Mixed_4d/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4d/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4d/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4d/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.823ms
+InceptionV2/Mixed_4d/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4d/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.485ms
+InceptionV2/Mixed_4d/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4d/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.484ms
+InceptionV2/Mixed_4d/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4d/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.591ms
+InceptionV2/Mixed_4d/Branch_3/AvgPool_0a_3x3                                                                                                           0.270ms
+InceptionV2/Mixed_4d/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4d/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.251ms
+InceptionV2/Mixed_4d/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.030ms
+InceptionV2/Mixed_4e/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_4e/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_4e/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_4e/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.698ms
+InceptionV2/Mixed_4e/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_4e/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.568ms
+InceptionV2/Mixed_4e/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_4e/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.680ms
+InceptionV2/Mixed_4e/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_4e/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.790ms
+InceptionV2/Mixed_4e/Branch_3/AvgPool_0a_3x3                                                                                                           0.271ms
+InceptionV2/Mixed_4e/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_4e/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.252ms
+InceptionV2/Mixed_4e/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.019ms
+InceptionV2/Mixed_5a/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_5a/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_5a/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_5a/Branch_1/Conv2d_0a_1x1/ReLU 0.596ms
+InceptionV2/Mixed_5a/Branch_0/Conv2d_1a_3x3 + InceptionV2/Mixed_5a/Branch_0/Conv2d_1a_3x3/ReLU                                                         0.237ms
+InceptionV2/Mixed_5a/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_5a/Branch_1/Conv2d_0b_3x3/ReLU                                                         1.076ms
+InceptionV2/Mixed_5a/Branch_1/Conv2d_1a_3x3 + InceptionV2/Mixed_5a/Branch_1/Conv2d_1a_3x3/ReLU                                                         0.527ms
+InceptionV2/Mixed_5a/Branch_2/MaxPool_1a_3x3                                                                                                           0.083ms
+InceptionV2/Mixed_5b/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_5b/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_5b/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_5b/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.686ms
+InceptionV2/Mixed_5b/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_5b/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.540ms
+InceptionV2/Mixed_5b/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_5b/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.339ms
+InceptionV2/Mixed_5b/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_5b/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.464ms
+InceptionV2/Mixed_5b/Branch_3/AvgPool_0a_3x3                                                                                                           0.237ms
+InceptionV2/Mixed_5b/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_5b/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.133ms
+InceptionV2/Mixed_5b/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.017ms
+InceptionV2/Mixed_5c/Branch_0/Conv2d_0a_1x1 + InceptionV2/Mixed_5c/Branch_0/Conv2d_0a_1x1/ReLU || InceptionV2/Mixed_5c/Branch_1/Conv2d_0a_1x1 + InceptionV2/Mixed_5c/Branch_1/Conv2d_0a_1x1/ReLU || Ince 0.718ms
+InceptionV2/Mixed_5c/Branch_1/Conv2d_0b_3x3 + InceptionV2/Mixed_5c/Branch_1/Conv2d_0b_3x3/ReLU                                                         0.543ms
+InceptionV2/Mixed_5c/Branch_2/Conv2d_0b_3x3 + InceptionV2/Mixed_5c/Branch_2/Conv2d_0b_3x3/ReLU                                                         0.401ms
+InceptionV2/Mixed_5c/Branch_2/Conv2d_0c_3x3 + InceptionV2/Mixed_5c/Branch_2/Conv2d_0c_3x3/ReLU                                                         0.462ms
+InceptionV2/Mixed_5c/Branch_3/MaxPool_0a_3x3                                                                                                           0.088ms
+InceptionV2/Mixed_5c/Branch_3/Conv2d_0b_1x1 + InceptionV2/Mixed_5c/Branch_3/Conv2d_0b_1x1/ReLU                                                         0.133ms
+InceptionV2/Mixed_5c/Branch_0/Conv2d_0a_1x1/output copy                                                                                                0.017ms
+InceptionV2/Logits/AvgPool_1a_7x7                                                                                                                      0.220ms
+InceptionV2/Logits/Conv2d_1c_1x1                                                                                                                       0.249ms
+InceptionV2/Softmax/Softmax                                                                                                                            0.010ms
+InceptionV2/Softmax/Softmax output reformatter 0                                                                                                       0.006ms
+Time over all layers: 36.480
+
+
