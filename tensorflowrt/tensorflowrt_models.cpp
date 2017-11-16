@@ -35,6 +35,10 @@ std::unique_ptr<tfrt::network>&& nets_factory(const std::string& name)
         nets["resnet_v1_101"] = std::make_unique<resnet_v1_101::net>();
         nets["resnet_v1_152"] = std::make_unique<resnet_v1_152::net>();
 
+        nets["resnet_v3_50"] = std::make_unique<resnet_v3_50::net>();
+        nets["resnet_v3_101"] = std::make_unique<resnet_v3_101::net>();
+        nets["resnet_v3_152"] = std::make_unique<resnet_v3_152::net>();
+
         nets["resnext_50"] = std::make_unique<resnext_50::net>();
 
         nets["mobilenets"] = std::make_unique<mobilenets::net>();
