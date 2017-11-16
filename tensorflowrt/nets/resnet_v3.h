@@ -149,7 +149,7 @@ public:
         auto net = tfrt::input(sc)();
         net = resnet_v3::root_block(net, 64, sc);
         // 4 main blocks.
-        net = resnet_v3::block(net, 3, 064*4, 064, 2, sc.sub("block1"));
+        net = resnet_v3::block(net, 3, 64*4, 64, 2, sc.sub("block1"));
         net = resnet_v3::block(net, 4, 128*4, 128, 2, sc.sub("block2"));
         net = resnet_v3::block(net, 6, 256*4, 256, 2, sc.sub("block3"));
         net = resnet_v3::block(net, 3, 512*4, 512, 1, sc.sub("block4"));
@@ -173,7 +173,7 @@ public:
         auto net = tfrt::input(sc)();
         net = resnet_v3::root_block(net, 64, sc);
         // 4 main blocks.
-        net = resnet_v3::block(net, 3, 064*4, 064, 2, sc.sub("block1"));
+        net = resnet_v3::block(net, 3, 64*4, 64, 2, sc.sub("block1"));
         net = resnet_v3::block(net, 4, 128*4, 128, 2, sc.sub("block2"));
         net = resnet_v3::block(net, 23, 256*4, 256, 2, sc.sub("block3"));
         net = resnet_v3::block(net, 3, 512*4, 512, 1, sc.sub("block4"));
@@ -197,7 +197,7 @@ public:
         auto net = tfrt::input(sc)();
         net = resnet_v3::root_block(net, 64, sc);
         // 4 main blocks.
-        net = resnet_v3::block(net, 3, 064*4, 064, 2, sc.sub("block1"));
+        net = resnet_v3::block(net, 3, 64*4, 64, 2, sc.sub("block1"));
         net = resnet_v3::block(net, 8, 128*4, 128, 2, sc.sub("block2"));
         net = resnet_v3::block(net, 36, 256*4, 256, 2, sc.sub("block3"));
         net = resnet_v3::block(net, 3, 512*4, 512, 1, sc.sub("block4"));
