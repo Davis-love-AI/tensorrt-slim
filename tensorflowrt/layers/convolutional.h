@@ -190,6 +190,47 @@ protected:
     }
 };
 
+/** Grouped 2D convolution layer.
+ */
+template <ActivationType ACT, PaddingType PAD, bool BN>
+class convolution2d_grouped : public convolution2d<ACT, PAD, BN>
+{
+public:
+    /** Constructor: declare the layer.
+     */
+    convolution2d_grouped(const tfrt::scope& sc, const std::string& lname="Conv2dGrouped") :
+        convolution2d<ACT, PAD, BN>(sc, lname), m_num_groups{1} {
+    }
+    /** Add the layer to network graph, using operator(root).
+     * 2D convolution + batch norm + activation.
+     */
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        auto inshape = static_cast<nvinfer1::DimsCHW&&>(net->getDimensions());
+        LOG(INFO) << "LAYER 2D contrib grouped convolution '" << this->m_scope.name() << "'. "
+            << "Input shape: " << dims_str(inshape);
+
+        // Number of groups in convolution.
+        net = this->convolution(net, m_num_groups);
+        net = this->batch_norm(net);
+        net = this->activation(net);
+        return this->mark_output(net);
+    }
+    /** Named parameter: depth multiplier.
+     */
+    convolution2d_grouped& ngroups(int ngroups) {
+        m_num_groups = ngroups;
+        return *this;
+    }
+    int ngroups() const {
+        return m_num_groups;
+    }
+
+protected:
+    // Number of groups
+    int  m_num_groups;
+};
+
+
 /** Separable 2D convolution layer.
  */
 template <ActivationType ACT, PaddingType PAD, bool BN>

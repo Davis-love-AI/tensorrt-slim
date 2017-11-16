@@ -24,6 +24,8 @@
 
 #include "nets/resnet_v1.h"
 #include "nets/resnext.h"
+#include "nets/resnet_v3.h"
+
 #include "nets/mobilenets.h"
 
 // ========================================================================== //
