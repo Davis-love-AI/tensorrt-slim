@@ -65,8 +65,8 @@ inline nvinfer1::ITensor* bottleneck(nvinfer1::ITensor* input, int outdepth, int
     int stride, tfrt::scope sc)
 {
     // Optimal group size?
-    int group_size = 32;
-    int ngroups = int(bndepth / group_size);
+    int group_size = 64;
+    int ngroups = std::max(1, int(bndepth / group_size));
     if (bndepth % group_size != 0) {
         ngroups = 1;
     }
