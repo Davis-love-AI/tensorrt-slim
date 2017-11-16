@@ -608,3 +608,91 @@ InceptionV2/Softmax/Softmax                                                     
 InceptionV2/Softmax/Softmax output reformatter 0                                                                                                       0.006ms
 Time over all layers: 41.592
 
+============================================================================
+ResNet50 v3 (group size=32 + 1x1 2 groups.)
+INPUT: 224x224 / BATCH: 8 / FP16
+CUDA 8.0 / cudnn v7.01 / TensorRT 3.0 RC
+============================================================================
+Input index: 0 of size: 4816896 and shape: [3, 224, 224]
+Output index: 1 of size: 32032 and shape: [1001, 1, 1]
+InceptionV2/Input/scaling input reformatter 0                                                                                                          0.553ms
+InceptionV2/Input/scaling                                                                                                                              0.217ms
+InceptionV2/conv1 + InceptionV2/conv1/ReLU                                                                                                             2.874ms
+InceptionV2/pool1                                                                                                                                      0.612ms
+InceptionV2/block1/unit_0/bottleneck_v1/shortcut/conv_1x1                                                                                              1.246ms
+InceptionV2/block1/unit_0/bottleneck_v1/conv1 + InceptionV2/block1/unit_0/bottleneck_v1/conv1/ReLU                                                     0.374ms
+InceptionV2/block1/unit_0/bottleneck_v1/conv2 + InceptionV2/block1/unit_0/bottleneck_v1/conv2/ReLU                                                     1.384ms
+InceptionV2/block1/unit_0/bottleneck_v1/conv3 + InceptionV2/block1/unit_0/bottleneck_v1/conv3/ReLU                                                     0.956ms
+InceptionV2/block1/unit_0/bottleneck_v1/add                                                                                                            0.761ms
+InceptionV2/block1/unit_1/bottleneck_v1/conv1 + InceptionV2/block1/unit_1/bottleneck_v1/conv1/ReLU                                                     0.703ms
+InceptionV2/block1/unit_1/bottleneck_v1/conv2 + InceptionV2/block1/unit_1/bottleneck_v1/conv2/ReLU                                                     1.382ms
+InceptionV2/block1/unit_1/bottleneck_v1/conv3 + InceptionV2/block1/unit_1/bottleneck_v1/conv3/ReLU                                                     0.979ms
+InceptionV2/block1/unit_1/bottleneck_v1/add                                                                                                            0.757ms
+InceptionV2/block1/unit_2/bottleneck_v1/shortcut/subsample                                                                                             0.278ms
+InceptionV2/block1/unit_2/bottleneck_v1/conv1 + InceptionV2/block1/unit_2/bottleneck_v1/conv1/ReLU                                                     0.272ms
+InceptionV2/block1/unit_2/bottleneck_v1/conv2 + InceptionV2/block1/unit_2/bottleneck_v1/conv2/ReLU                                                     0.388ms
+InceptionV2/block1/unit_2/bottleneck_v1/conv3 + InceptionV2/block1/unit_2/bottleneck_v1/conv3/ReLU                                                     0.264ms
+InceptionV2/block1/unit_2/bottleneck_v1/add                                                                                                            0.196ms
+InceptionV2/block2/unit_0/bottleneck_v1/shortcut/conv_1x1                                                                                              1.368ms
+InceptionV2/block2/unit_0/bottleneck_v1/conv1 + InceptionV2/block2/unit_0/bottleneck_v1/conv1/ReLU                                                     0.268ms
+InceptionV2/block2/unit_0/bottleneck_v1/conv2 + InceptionV2/block2/unit_0/bottleneck_v1/conv2/ReLU                                                     0.594ms
+InceptionV2/block2/unit_0/bottleneck_v1/conv3 + InceptionV2/block2/unit_0/bottleneck_v1/conv3/ReLU                                                     0.655ms
+InceptionV2/block2/unit_0/bottleneck_v1/add                                                                                                            0.467ms
+InceptionV2/block2/unit_1/bottleneck_v1/conv1 + InceptionV2/block2/unit_1/bottleneck_v1/conv1/ReLU                                                     0.463ms
+InceptionV2/block2/unit_1/bottleneck_v1/conv2 + InceptionV2/block2/unit_1/bottleneck_v1/conv2/ReLU                                                     0.593ms
+InceptionV2/block2/unit_1/bottleneck_v1/conv3 + InceptionV2/block2/unit_1/bottleneck_v1/conv3/ReLU                                                     0.650ms
+InceptionV2/block2/unit_1/bottleneck_v1/add                                                                                                            0.468ms
+InceptionV2/block2/unit_2/bottleneck_v1/conv1 + InceptionV2/block2/unit_2/bottleneck_v1/conv1/ReLU                                                     0.464ms
+InceptionV2/block2/unit_2/bottleneck_v1/conv2 + InceptionV2/block2/unit_2/bottleneck_v1/conv2/ReLU                                                     0.593ms
+InceptionV2/block2/unit_2/bottleneck_v1/conv3 + InceptionV2/block2/unit_2/bottleneck_v1/conv3/ReLU                                                     0.653ms
+InceptionV2/block2/unit_2/bottleneck_v1/add                                                                                                            0.467ms
+InceptionV2/block2/unit_3/bottleneck_v1/shortcut/subsample                                                                                             0.174ms
+InceptionV2/block2/unit_3/bottleneck_v1/conv1 + InceptionV2/block2/unit_3/bottleneck_v1/conv1/ReLU                                                     0.199ms
+InceptionV2/block2/unit_3/bottleneck_v1/conv2 + InceptionV2/block2/unit_3/bottleneck_v1/conv2/ReLU                                                     0.156ms
+InceptionV2/block2/unit_3/bottleneck_v1/conv3 + InceptionV2/block2/unit_3/bottleneck_v1/conv3/ReLU                                                     0.204ms
+InceptionV2/block2/unit_3/bottleneck_v1/add                                                                                                            0.123ms
+InceptionV2/block3/unit_0/bottleneck_v1/shortcut/conv_1x1                                                                                              1.610ms
+InceptionV2/block3/unit_0/bottleneck_v1/conv1 + InceptionV2/block3/unit_0/bottleneck_v1/conv1/ReLU                                                     0.260ms
+InceptionV2/block3/unit_0/bottleneck_v1/conv2 + InceptionV2/block3/unit_0/bottleneck_v1/conv2/ReLU                                                     0.293ms
+InceptionV2/block3/unit_0/bottleneck_v1/conv3 + InceptionV2/block3/unit_0/bottleneck_v1/conv3/ReLU                                                     0.571ms
+InceptionV2/block3/unit_0/bottleneck_v1/add                                                                                                            0.235ms
+InceptionV2/block3/unit_1/bottleneck_v1/conv1 + InceptionV2/block3/unit_1/bottleneck_v1/conv1/ReLU                                                     0.462ms
+InceptionV2/block3/unit_1/bottleneck_v1/conv2 + InceptionV2/block3/unit_1/bottleneck_v1/conv2/ReLU                                                     0.293ms
+InceptionV2/block3/unit_1/bottleneck_v1/conv3 + InceptionV2/block3/unit_1/bottleneck_v1/conv3/ReLU                                                     0.533ms
+InceptionV2/block3/unit_1/bottleneck_v1/add                                                                                                            0.236ms
+InceptionV2/block3/unit_2/bottleneck_v1/conv1 + InceptionV2/block3/unit_2/bottleneck_v1/conv1/ReLU                                                     0.466ms
+InceptionV2/block3/unit_2/bottleneck_v1/conv2 + InceptionV2/block3/unit_2/bottleneck_v1/conv2/ReLU                                                     0.293ms
+InceptionV2/block3/unit_2/bottleneck_v1/conv3 + InceptionV2/block3/unit_2/bottleneck_v1/conv3/ReLU                                                     0.533ms
+InceptionV2/block3/unit_2/bottleneck_v1/add                                                                                                            0.236ms
+InceptionV2/block3/unit_3/bottleneck_v1/conv1 + InceptionV2/block3/unit_3/bottleneck_v1/conv1/ReLU                                                     0.460ms
+InceptionV2/block3/unit_3/bottleneck_v1/conv2 + InceptionV2/block3/unit_3/bottleneck_v1/conv2/ReLU                                                     0.293ms
+InceptionV2/block3/unit_3/bottleneck_v1/conv3 + InceptionV2/block3/unit_3/bottleneck_v1/conv3/ReLU                                                     0.534ms
+InceptionV2/block3/unit_3/bottleneck_v1/add                                                                                                            0.236ms
+InceptionV2/block3/unit_4/bottleneck_v1/conv1 + InceptionV2/block3/unit_4/bottleneck_v1/conv1/ReLU                                                     0.460ms
+InceptionV2/block3/unit_4/bottleneck_v1/conv2 + InceptionV2/block3/unit_4/bottleneck_v1/conv2/ReLU                                                     0.293ms
+InceptionV2/block3/unit_4/bottleneck_v1/conv3 + InceptionV2/block3/unit_4/bottleneck_v1/conv3/ReLU                                                     0.534ms
+InceptionV2/block3/unit_4/bottleneck_v1/add                                                                                                            0.235ms
+InceptionV2/block3/unit_5/bottleneck_v1/shortcut/subsample                                                                                             0.093ms
+InceptionV2/block3/unit_5/bottleneck_v1/conv1 + InceptionV2/block3/unit_5/bottleneck_v1/conv1/ReLU                                                     0.172ms
+InceptionV2/block3/unit_5/bottleneck_v1/conv2 + InceptionV2/block3/unit_5/bottleneck_v1/conv2/ReLU                                                     0.161ms
+InceptionV2/block3/unit_5/bottleneck_v1/conv3 + InceptionV2/block3/unit_5/bottleneck_v1/conv3/ReLU                                                     0.197ms
+InceptionV2/block3/unit_5/bottleneck_v1/add                                                                                                            0.064ms
+InceptionV2/block4/unit_0/bottleneck_v1/shortcut/conv_1x1                                                                                              1.899ms
+InceptionV2/block4/unit_0/bottleneck_v1/conv1 + InceptionV2/block4/unit_0/bottleneck_v1/conv1/ReLU                                                     0.278ms
+InceptionV2/block4/unit_0/bottleneck_v1/conv2 + InceptionV2/block4/unit_0/bottleneck_v1/conv2/ReLU                                                     0.307ms
+InceptionV2/block4/unit_0/bottleneck_v1/conv3 + InceptionV2/block4/unit_0/bottleneck_v1/conv3/ReLU                                                     0.580ms
+InceptionV2/block4/unit_0/bottleneck_v1/add                                                                                                            0.120ms
+InceptionV2/block4/unit_1/bottleneck_v1/conv1 + InceptionV2/block4/unit_1/bottleneck_v1/conv1/ReLU                                                     0.501ms
+InceptionV2/block4/unit_1/bottleneck_v1/conv2 + InceptionV2/block4/unit_1/bottleneck_v1/conv2/ReLU                                                     0.309ms
+InceptionV2/block4/unit_1/bottleneck_v1/conv3 + InceptionV2/block4/unit_1/bottleneck_v1/conv3/ReLU                                                     0.579ms
+InceptionV2/block4/unit_1/bottleneck_v1/add                                                                                                            0.120ms
+InceptionV2/block4/unit_2/bottleneck_v1/conv1 + InceptionV2/block4/unit_2/bottleneck_v1/conv1/ReLU                                                     0.501ms
+InceptionV2/block4/unit_2/bottleneck_v1/conv2 + InceptionV2/block4/unit_2/bottleneck_v1/conv2/ReLU                                                     0.308ms
+InceptionV2/block4/unit_2/bottleneck_v1/conv3 + InceptionV2/block4/unit_2/bottleneck_v1/conv3/ReLU                                                     0.580ms
+InceptionV2/block4/unit_2/bottleneck_v1/add                                                                                                            0.120ms
+InceptionV2/pool5                                                                                                                                      0.445ms
+InceptionV2/logits                                                                                                                                     0.470ms
+InceptionV2/Softmax/Softmax                                                                                                                            0.010ms
+InceptionV2/Softmax/Softmax output reformatter 0                                                                                                       0.006ms
+Time over all layers: 39.637
+
