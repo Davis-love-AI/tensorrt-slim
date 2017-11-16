@@ -25,10 +25,10 @@ class tf_conv2d_formula : public nvinfer1::IOutputDimensionsFormula
 public:
     virtual nvinfer1::DimsHW compute(
         nvinfer1::DimsHW inshape, nvinfer1::DimsHW ksize,
-        nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, 
+        nvinfer1::DimsHW stride, nvinfer1::DimsHW padding,
         #if NV_TENSORRT_MAJOR == 3
         nvinfer1::DimsHW dilation,
-        #endif 
+        #endif
         const char* layerName)
     {
         // if (padding.h() == 0 && padding.w() == 0) {
@@ -72,9 +72,9 @@ public:
     tf_conv2d_transpose_formula(nvinfer1::DimsHW cutshape) : m_cutshape(cutshape) {}
     virtual nvinfer1::DimsHW compute(
         nvinfer1::DimsHW inshape, nvinfer1::DimsHW ksize,
-        nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, 
+        nvinfer1::DimsHW stride, nvinfer1::DimsHW padding,
         #if NV_TENSORRT_MAJOR == 3
-        nvinfer1::DimsHW dilation, 
+        nvinfer1::DimsHW dilation,
         #endif
         const char* layerName)
     {
@@ -263,7 +263,7 @@ public:
         separable_convolution2d_test dw_conv2d(*this);
         dw_conv2d.noutputs(ngroups * m_depth_multiplier);
         // TODO: TensorRT bug. Replace group conv. by classic convolution.
-        ngroups = 8;
+        ngroups = 1;
         net = dw_conv2d.convolution(net, ngroups, "depthwise_weights", "depthwise_biases", "_dw");
         // Pointwise convolution.
         separable_convolution2d_test pw_conv2d(*this);
@@ -330,9 +330,9 @@ public:
     public:
         virtual nvinfer1::DimsHW compute(
             nvinfer1::DimsHW inputDims, nvinfer1::DimsHW ksize,
-            nvinfer1::DimsHW stride, nvinfer1::DimsHW padding, 
+            nvinfer1::DimsHW stride, nvinfer1::DimsHW padding,
             #if NV_TENSORRT_MAJOR == 3
-            nvinfer1::DimsHW dilation, 
+            nvinfer1::DimsHW dilation,
             #endif
             const char* layerName)
         {
