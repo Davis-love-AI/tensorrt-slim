@@ -185,7 +185,7 @@ protected:
         convlayer->setName((this->m_scope.name() + lnamesuffix).c_str());
         convlayer->setPadding(DIMRT(this->padding(inshape)));
         convlayer->setStride(DIMRT(this->stride()));
-        convlayer->setStride(DIMRT(this->dilation()));
+        convlayer->setDilation(DIMRT(this->dilation()));
         convlayer->setNbGroups(ngroups);
         return convlayer->getOutput(0);
     }
