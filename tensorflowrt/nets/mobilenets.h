@@ -46,9 +46,9 @@ typedef tfrt::concat_channels                           concat_channels;
 // ========================================================================== //
 /** Mobilenets block. */
 inline nvinfer1::ITensor* block(nvinfer1::ITensor* net, tfrt::scope sc,
-    size_t noutputs, size_t stride)
+    size_t noutputs, size_t stride, size_t dilation=1)
 {
-    net = separable_conv2d(sc, "sep_conv2d").noutputs(noutputs).stride(stride).ksize(3)(net);
+    net = separable_conv2d(sc, "sep_conv2d").dilation(dilation).noutputs(noutputs).stride(stride).ksize(3)(net);
     return net;
 }
 inline nvinfer1::ITensor* base(nvinfer1::ITensor* input, tfrt::scope sc)
@@ -67,7 +67,7 @@ inline nvinfer1::ITensor* base(nvinfer1::ITensor* input, tfrt::scope sc)
     // 5 Intermediate blocks.
     for (size_t i = 0 ; i < 5 ; ++i) {
         std::string name = fmt::format("block{}", i+8);
-        net = block(net, sc.sub(name), 512, 1);
+        net = block(net, sc.sub(name), 512, 1, std::min(int(i+1), 4));
     }
     // Final parts.
     net = block(net, sc.sub("block13"), 1024, 2);

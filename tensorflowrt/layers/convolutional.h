@@ -116,8 +116,7 @@ public:
     /** Constructor: declare the layer.
      */
     convolution2d(const tfrt::scope& sc, const std::string& lname="Conv2d") :
-        operation2d<ACT, PAD, BN>(sc, lname),
-        m_dilation{1, 1}
+        operation2d<ACT, PAD, BN>(sc, lname)
     {
     }
     /** Add the layer to network graph, using operator(root).
@@ -130,19 +129,6 @@ public:
         net = this->batch_norm(net);
         net = this->activation(net);
         return this->mark_output(net);
-    }
-    /** Named parameter: dilation.
-     */
-    convolution2d& dilation(nvinfer1::DimsHW dilation) {
-        m_dilation = dilation;
-        return *this;
-    }
-    convolution2d& dilation(int dilation) {
-        m_dilation = nvinfer1::DimsHW({dilation, dilation});
-        return *this;
-    }
-    nvinfer1::DimsHW dilation() const {
-        return m_dilation;
     }
 
 protected:
@@ -205,10 +191,6 @@ protected:
     {
         return nvinfer1::DimsC{this->noutputs()};
     }
-
-protected:
-    /** Dilation? */
-    nvinfer1::DimsHW  m_dilation;
 };
 
 /** Grouped 2D convolution layer.
@@ -280,7 +262,7 @@ public:
         net = dw_conv2d.convolution(net, ngroups, "depthwise_weights", "depthwise_biases", "_dw");
         // Pointwise convolution.
         separable_convolution2d pw_conv2d(*this);
-        pw_conv2d.ksize({1, 1}).stride({1, 1});
+        pw_conv2d.dilation({1, 1}).ksize({1, 1}).stride({1, 1});
         net = pw_conv2d.convolution(net, 1, "pointwise_weights", "biases", "_pw");
         net = pw_conv2d.batch_norm(net);
         net = pw_conv2d.activation(net);

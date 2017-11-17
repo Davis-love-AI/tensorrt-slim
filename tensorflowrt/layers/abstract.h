@@ -126,7 +126,12 @@ public:
      * Initialize kernel size and stride to {1, 1} values.
      */
     operation2d(const tfrt::scope& sc, const std::string& lname) :
-        layer(sc, lname), m_noutputs{0}, m_ksize{1, 1}, m_stride{1, 1}, m_padding{0, 0} {
+        layer(sc, lname), m_noutputs{0}, 
+        m_ksize{1, 1}, 
+        m_stride{1, 1}, 
+        m_padding{0, 0},
+        m_dilation{1, 1}
+    {
     }
     // Implementation of th named-parameter idiom.
     /** Named parameter: number of outputs.
@@ -165,6 +170,16 @@ public:
         m_padding = nvinfer1::DimsHW({padding, padding});
         return *this;
     }
+    /** Named parameter: dilation.
+     */
+    operation2d& dilation(nvinfer1::DimsHW dilation) {
+        m_dilation = dilation;
+        return *this;
+    }
+    operation2d& dilation(int dilation) {
+        m_dilation = nvinfer1::DimsHW({dilation, dilation});
+        return *this;
+    }
 
 public:
     // Standard getters.
@@ -189,6 +204,9 @@ public:
     }
     nvinfer1::DimsHW stride() const {
         return m_stride;
+    }
+    nvinfer1::DimsHW dilation() const {
+        return m_dilation;
     }
 
     /** Compute real padding values depending on the padding type parameter.
@@ -215,7 +233,11 @@ public:
             // // Use the left padding as general value, and adapt the output size.
             // return nvinfer1::DimsHW{pad_along_height / 2, pad_along_width / 2};
             // Rough estimate...
-            return nvinfer1::DimsHW{m_ksize.h() / 2, m_ksize.w() / 2};
+            int ph = m_ksize.h() / 2;
+            ph *= m_dilation.h();
+            int pw = m_ksize.w() / 2;
+            pw *= m_dilation.w();
+            return nvinfer1::DimsHW{ph, pw};
         }
         else if(PAD == PaddingType::VALID) {
             // VALID: no padding required.
@@ -300,6 +322,8 @@ protected:
     nvinfer1::DimsHW    m_stride;
     // Custom padding values.
     nvinfer1::DimsHW    m_padding;
+    /** Dilation? */
+    nvinfer1::DimsHW  m_dilation;
 };
 
 /** Input layer.
