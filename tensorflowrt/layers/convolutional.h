@@ -116,7 +116,9 @@ public:
     /** Constructor: declare the layer.
      */
     convolution2d(const tfrt::scope& sc, const std::string& lname="Conv2d") :
-        operation2d<ACT, PAD, BN>(sc, lname) {
+        operation2d<ACT, PAD, BN>(sc, lname),
+        m_dilation{1, 1}
+    {
     }
     /** Add the layer to network graph, using operator(root).
      * 2D convolution + batch norm + activation.
@@ -128,6 +130,19 @@ public:
         net = this->batch_norm(net);
         net = this->activation(net);
         return this->mark_output(net);
+    }
+    /** Named parameter: dilation.
+     */
+    convolution2d& dilation(nvinfer1::DimsHW dilation) {
+        m_dilation = dilation;
+        return *this;
+    }
+    convolution2d& dilation(int dilation) {
+        m_dilation = nvinfer1::DimsHW({dilation, dilation});
+        return *this;
+    }
+    nvinfer1::DimsHW dilation() const {
+        return m_dilation;
     }
 
 protected:
@@ -148,6 +163,7 @@ protected:
             << "noutputs: " << this->noutputs() << " | "
             << "ngroups: " << ngroups << " | "
             << "stride: " << dims_str(this->stride()) << " | "
+            << "dilation: " << dims_str(this->dilation()) << " | "
             << "padding: " << dims_str(this->padding(inshape));
         nvinfer1::IConvolutionLayer* convlayer = nullptr;
         // Batch normalization: no bias.
@@ -169,6 +185,7 @@ protected:
         convlayer->setName((this->m_scope.name() + lnamesuffix).c_str());
         convlayer->setPadding(DIMRT(this->padding(inshape)));
         convlayer->setStride(DIMRT(this->stride()));
+        convlayer->setStride(DIMRT(this->dilation()));
         convlayer->setNbGroups(ngroups);
         return convlayer->getOutput(0);
     }
@@ -188,6 +205,10 @@ protected:
     {
         return nvinfer1::DimsC{this->noutputs()};
     }
+
+protected:
+    /** Dilation? */
+    nvinfer1::DimsHW  m_dilation;
 };
 
 /** Grouped 2D convolution layer.
