@@ -67,7 +67,7 @@ inline nvinfer1::ITensor* base(nvinfer1::ITensor* input, tfrt::scope sc)
     // 5 Intermediate blocks.
     for (size_t i = 0 ; i < 5 ; ++i) {
         std::string name = fmt::format("block{}", i+8);
-        net = block(net, sc.sub(name), 512, 1, std::min(int(i+1), 4));
+        net = block(net, sc.sub(name), 512, 1, std::min(int(i+1), 3));
     }
     // Final parts.
     net = block(net, sc.sub("block13"), 1024, 2);
