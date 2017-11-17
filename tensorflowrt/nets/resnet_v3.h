@@ -92,7 +92,7 @@ inline nvinfer1::ITensor* bottleneck(nvinfer1::ITensor* input, int outdepth, int
     if (ngroups > 1) {
         auto shape = tfrt::dims_chw(res);
         res = tfrt::shuffle(sc, "shuffle1")
-            .reshape(nvinfer1::DimsCHW{-1, 2, shape.h()*shape.w()})(res);
+            .reshape(nvinfer1::DimsCHW{-1, 8, shape.h()*shape.w()})(res);
         res = tfrt::shuffle(sc, "shuffle2")
             .first({1, 0, 2})
             .reshape(nvinfer1::DimsCHW{-1, shape.h(), shape.w()})(res);
