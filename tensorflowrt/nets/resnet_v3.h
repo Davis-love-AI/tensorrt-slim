@@ -166,6 +166,34 @@ public:
         net = resnet_v3::block(net, 4, 128*4, 128, 2, sc.sub("block2"));
         net = resnet_v3::block(net, 6, 256*4, 256, 2, sc.sub("block3"));
         net = resnet_v3::block(net, 3, 512*4, 512, 1, sc.sub("block4"));
+        
+        // Classification block.
+        net = resnet_v3::imagenet_block(net, 1001, sc);
+        return net;
+    }
+};
+
+}
+namespace resnet_v3_50_bis
+{
+class net : public tfrt::imagenet_network
+{
+public:
+    net() : tfrt::imagenet_network("resnet_v3_50_bis", 1000, true) {
+    }
+    virtual nvinfer1::ITensor* build(tfrt::scope sc) {
+        auto net = tfrt::input(sc)();
+        net = resnet_v3::root_block(net, 64, sc);
+        // 4 main blocks.
+        // net = resnet_v3::block(net, 3, 64*4, 64, 2, sc.sub("block1"));
+        // net = resnet_v3::block(net, 4, 128*4, 128, 2, sc.sub("block2"));
+        // net = resnet_v3::block(net, 6, 256*4, 256, 2, sc.sub("block3"));
+        // net = resnet_v3::block(net, 3, 512*4, 512, 1, sc.sub("block4"));
+        
+        net = resnet_v3::block(net, 3, 64*4, 56, 2, sc.sub("block1"));
+        net = resnet_v3::block(net, 4, 128*4, 96, 2, sc.sub("block2"));
+        net = resnet_v3::block(net, 6, 256*4, 192, 2, sc.sub("block3"));
+        net = resnet_v3::block(net, 3, 512*4, 384, 1, sc.sub("block4"));
         // Classification block.
         net = resnet_v3::imagenet_block(net, 1001, sc);
         return net;
