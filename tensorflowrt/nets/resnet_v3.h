@@ -88,6 +88,16 @@ inline nvinfer1::ITensor* bottleneck(nvinfer1::ITensor* input, int outdepth, int
     // res2 = conv2d_grouped(ssc, "conv2").ngroups(ngroups).noutputs(bndepth / 2).ksize(3).stride(1)(res2);
     // res = concat_channels(sc)({res1, res2});
 
+    // Shuffle channels
+    if (ngroups > 1) {
+        auto shape = tfrt::dims_chw(res);
+        res = tfrt::shuffle(sc, "shuffle1")
+            .reshape(nvinfer1::DimsCHW{-1, 4, shape.h()*shape.w()})(res);
+        res = tfrt::shuffle(sc, "shuffle2")
+            .first({1, 0, 2})
+            .reshape(nvinfer1::DimsCHW{-1, shape.h(), shape.w()})(res);
+    }
+
     // res = conv2d(ssc, "conv3").noutputs(outdepth).ksize(1).stride(1)(res);
     res = conv2d_grouped(ssc, "conv3").ngroups(4).noutputs(outdepth).ksize(1).stride(1)(res);
 
