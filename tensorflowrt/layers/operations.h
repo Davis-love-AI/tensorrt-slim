@@ -126,6 +126,74 @@ protected:
 };
 
 /* ============================================================================
+ * MISC operations.
+ * ========================================================================== */
+/** Shuffle layer. Similarly to TensorRT, 3 steps operations:
+ * a first transpose operation, a reshape operation and a second transpose operation.
+ */
+class shuffle : public layer
+{
+public:
+    /** Standard constructor, with scope and layer sub-name.
+     */
+    shuffle(const tfrt::scope& sc, const std::string& lname="Shuffle") :
+        layer(sc, lname),
+        m_first_perm{{0, 1, 2, 3, 4, 5, 6, 7}},
+        m_second_perm{{0, 1, 2, 3, 4, 5, 6, 7}},
+        m_reshape{nvinfer1::DimsCHW{0, 0, 0}}
+    {
+    }
+    /** Add the layer to network graph, using operator(root).
+     */
+    nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        LOG(INFO) << "LAYER shuffle '" << this->m_scope.name() << "'.";
+        auto layer = this->m_scope.network()->addShuffle(*net);
+        CHECK_NOTNULL(layer);
+        // Transpose + reshape.
+        layer->setFirstTranspose(m_first_perm);
+        layer->setReshapeDimensions(m_reshape);
+        layer->setSecondTranspose(m_second_perm);
+        // Layer options.
+        layer->setName(this->m_scope.name().c_str());
+        net = layer->getOutput(0);
+        return this->mark_output(net);
+    }
+
+public:
+    /** Named parameter: permutation and reshape.
+     */
+    shuffle& first(nvinfer1::Permutation first_perm) {
+        m_first_perm = first_perm;
+        return *this;
+    }
+    nvinfer1::Permutation first() const {
+        return m_first_perm;
+    }
+    shuffle& second(nvinfer1::Permutation second_perm) {
+        m_second_perm = second_perm;
+        return *this;
+    }
+    nvinfer1::Permutation second() const {
+        return m_second_perm;
+    }
+    shuffle& reshape(nvinfer1::Dims reshape) {
+        m_reshape = reshape;
+        return *this;
+    }
+    nvinfer1::Dims reshape() const {
+        return m_reshape;
+    }
+
+protected:
+    /** First permutation. */
+    nvinfer1::Permutation  m_first_perm;
+    /** Second permutation. */
+    nvinfer1::Permutation  m_second_perm;
+    /** Reshape. */
+    nvinfer1::Dims  m_reshape;
+};
+
+/* ============================================================================
  * DEFAULT layers name.
  * ========================================================================== */
 typedef add sum;
