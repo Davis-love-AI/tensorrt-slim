@@ -76,7 +76,7 @@ inline nvinfer1::ITensor* bottleneck(nvinfer1::ITensor* input, int outdepth, int
     // Shortcut.
     net = shortcut(input, outdepth, stride, ssc);
     // Residual part.
-    res = conv2d_grouped(ssc, "conv1").ngroups(3).noutputs(bndepth).ksize(1).stride(stride)(input);
+    res = conv2d_grouped(ssc, "conv1").ngroups(4).noutputs(bndepth).ksize(1).stride(stride)(input);
     // res = conv2d_none(ssc, "conv1").noutputs(bndepth).ksize(1).stride(stride)(input);
 
     // Grouped 3x3 convolution.
@@ -99,7 +99,7 @@ inline nvinfer1::ITensor* bottleneck(nvinfer1::ITensor* input, int outdepth, int
     // }
 
     // res = conv2d(ssc, "conv3").noutputs(outdepth).ksize(1).stride(1)(res);
-    res = conv2d_grouped(ssc, "conv3").ngroups(2).noutputs(outdepth).ksize(1).stride(1)(res);
+    res = conv2d_grouped(ssc, "conv3").ngroups(4).noutputs(outdepth).ksize(1).stride(1)(res);
 
     // Add the final result!
     net = tfrt::add(ssc, "add")(net, res);
