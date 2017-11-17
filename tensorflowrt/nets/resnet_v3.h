@@ -99,7 +99,10 @@ inline nvinfer1::ITensor* bottleneck(nvinfer1::ITensor* input, int outdepth, int
     // }
 
     // res = conv2d(ssc, "conv3").noutputs(outdepth).ksize(1).stride(1)(res);
-    res = conv2d_grouped(ssc, "conv3").ngroups(4).noutputs(outdepth).ksize(1).stride(1)(res);
+
+    res = conv2d_grouped(ssc, "conv3").ngroups(1).noutputs(bndepth).ksize(1).stride(1)(res);
+
+    res = conv2d_grouped(ssc, "conv4").ngroups(4).noutputs(outdepth).ksize(1).stride(1)(res);
 
     // Add the final result!
     net = tfrt::add(ssc, "add")(net, res);
