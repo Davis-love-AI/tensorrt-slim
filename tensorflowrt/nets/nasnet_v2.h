@@ -137,7 +137,7 @@ public:
             net = tfrt::relu(ssc, name)(net);
             name = fmt::format("conv2d_{0}x{0}_{1}_g{2}", ksize, i+1, group_size);
             net = conv2d_grouped(ssc, name).ngroups(ngroups)
-                .noutputs(num_outputs).dilation(1)
+                .noutputs(num_outputs).dilation(dilation)
                 .stride(stride).ksize(ksize)(net);
             // 1x1 convolution (except last layer).
             if (i != num_layers-1) {
