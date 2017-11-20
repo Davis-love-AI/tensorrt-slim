@@ -25,6 +25,8 @@ namespace nasnet_v2
 {
 /** Arg scope for NASNet: SAME padding + batch normalization. ReLU before.
  */
+typedef tfrt::convolution2d_grouped
+    <tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true> conv2d_grouped;
 // typedef tfrt::separable_convolution2d_test<
 //     tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true> separable_conv2d;
 typedef tfrt::convolution2d<
@@ -64,7 +66,11 @@ public:
         nvinfer1::ITensor* net = net_n_1;
         // No previous layer?
         if (net_n_1 == nullptr) {
-            return net_n;
+            size_t fsize = this->filter_size();
+            // ReLU + conv.
+            auto net = tfrt::relu(sc, "relu_n_1")(net_n);
+            net = conv2d(sc, "1x1_n_1").noutputs(fsize).ksize(1)(net);
+            return net;
         }
         size_t fsize = this->filter_size();
         auto shape_n = tfrt::dims_chw(net_n);
@@ -111,6 +117,31 @@ public:
         }
         return net;
     }
+    /** Stack of grouped convolution2d. */
+    nvinfer1::ITensor* conv2d_stacked(nvinfer1::ITensor* net, tfrt::scope sc,
+        size_t ksize, size_t stride, size_t num_outputs, size_t num_layers,
+        size_t group_size, size_t ngroups_11) const
+    {
+        auto ssc = sc.sub("stack");
+        std::string name;
+        size_t ngroups = num_outputs / group_size;
+        for (size_t i = 0 ; i < num_layers ; ++i) {
+            // ReLU + Separable conv.
+            name = fmt::format("relu_{}", i+1);
+            net = tfrt::relu(ssc, name)(net);
+            name = fmt::format("conv2d_{0}x{0}_{1}_g{2}", ksize, i+1, group_size);
+            net = conv2d_grouped(ssc, name).ngroups(ngroups).noutputs(num_outputs).
+                stride(stride).ksize(ksize)(net);
+            // 1x1 convolution (except last layer).
+            if (i != num_layers-1) {
+                name = fmt::format("conv2d_{0}x{0}_{1}_g{2}", 1, i+1, ngroups_11);
+                net = conv2d_grouped(ssc, name).ngroups(ngroups_11).noutputs(num_outputs).
+                    stride(1).ksize(1)(net);
+            }
+            stride = 1;
+        }
+        return net;
+    }
 public:
     size_t filter_size() const {
         return size_t(m_num_conv_filters * m_filter_scaling);
@@ -146,40 +177,26 @@ public:
         net_n_1 = this->reduce_n_1(net_n, net_n_1, m_scope.sub("reduce_n_1"));
         size_t fsize = this->filter_size();
 
-        // Block 1: sep. 5x5 + sep 3x3 (n / n-1).
-        sc = m_scope.sub("comb_iter_1");
-        net_l = this->sep_conv2d_stacked(net_n, sc.sub("left"), 5, 1, fsize, 2);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 3, 1, fsize, 2);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+        // Block 1: grouped conv2d 3x3 (n / n-1).
+        sc = m_scope.sub("block1");
+        net = tfrt::concat_channels(sc)({net_n, net_n_1});
+        net = conv2d_stacked(net, sc, 3, 1, fsize*2, 2, 32, 3);
+        blocks.push_back( net );
 
-        // Block 2: sep. 5x5 + sep 3x3 (n-1 / n-1).
-        sc = m_scope.sub("comb_iter_2");
-        net_l = this->sep_conv2d_stacked(net_n_1, sc.sub("left"), 5, 1, fsize, 2);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 3, 1, fsize, 2);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
-        
-        // Block 3: avg_pool_3x3 + id (n / n-1).
-        sc = m_scope.sub("comb_iter_3");
+        // Block 2: avg_pool_3x3 + id (n / n-1).
+        sc = m_scope.sub("block2");
         net_l = avg_pool2d(sc.sub("left")).ksize(3)(net_n);
-        net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
         net_r = this->identity(net_n_1, sc.sub("right"), 1, fsize, true);  
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
         
-        // Block 4: avg_pool_3x3 + avg_pool_3x3 (n-1 / n-1).
-        sc = m_scope.sub("comb_iter_4");
+        // Block 3: avg_pool_3x3 (n-1 / n-1).
+        sc = m_scope.sub("block3");
         net_l = avg_pool2d(sc.sub("left")).ksize(3)(net_n_1);
         net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
-        net_r = avg_pool2d(sc.sub("right")).ksize(3)(net_n_1);
-        net_r = this->identity(net_r, sc.sub("right"), 1, fsize, false);  
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
-
-        // Block 5: separable_3x3_2 + id (n / n).
-        sc = m_scope.sub("comb_iter_5");
-        net_l = this->sep_conv2d_stacked(net_n, sc.sub("left"), 3, 1, fsize, 2);
-        net_r = this->identity(net_n, sc.sub("right"), 1, fsize, true);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+        blocks.push_back( net_l );
 
         // Concat this big mess!
+        blocks.push_back( net_n );
         net = tfrt::concat_channels(sc)(blocks);
         return net;
     }
@@ -206,38 +223,27 @@ public:
         net_n_1 = this->reduce_n_1(net_n, net_n_1, m_scope.sub("reduce_n_1"));
         size_t fsize = this->filter_size();
 
-        // Block 1: sep. 5x5 + sep 7x7 (n / n-1).
-        sc = m_scope.sub("comb_iter_1");
-        net_l = this->sep_conv2d_stacked(net_n, sc.sub("left"), 5, 2, fsize, 2);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 7, 2, fsize, 2);
-        blocks_tmp.push_back( tfrt::add(sc)(net_l, net_r) );
+        // Block 1: grouped conv2d 3x3 (n / n-1).
+        sc = m_scope.sub("block1");
+        net = tfrt::concat_channels(sc)({net_n, net_n_1});
+        net = conv2d_stacked(net, sc, 3, 2, fsize*2, 2, 32, 3);
+        blocks.push_back( net );
 
-        // Block 2: max_pool_3x3 + separable_7x7_2 (n / n-1).
-        sc = m_scope.sub("comb_iter_2");
+        // Block 2: max_pool_3x3 + id (n / n-1).
+        sc = m_scope.sub("block2");
         net_l = max_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
-        net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 7, 2, fsize, 2);
-        blocks_tmp.push_back( tfrt::add(sc)(net_l, net_r) );
+        blocks.push_back( net_l );
         
-        // Block 3: avg_pool_3x3 + separable_5x5_2 (n / n-1).
-        sc = m_scope.sub("comb_iter_3");
-        net_l = avg_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
+        // Block 3: max_pool_3x3 (n-1 / n-1).
+        sc = m_scope.sub("block3");
+        net_l = max_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n_1);
         net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 5, 2, fsize, 2);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
-        
-        // Block 4: id + avg_pool_3x3 (tmp / tmp).
-        sc = m_scope.sub("comb_iter_4");
-        net_l = this->identity(blocks_tmp[1], sc.sub("left"), 1, fsize, false);
-        net_r = avg_pool2d(sc.sub("right")).ksize(3)(blocks_tmp[0]);
-        net_r = this->identity(net_r, sc.sub("right"), 1, fsize, false);  
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+        blocks.push_back( net_l );
 
-        // Block 5: separable_3x3_2 + max_pool_3x3 (tmp / n).
-        sc = m_scope.sub("comb_iter_5");
-        net_l = this->sep_conv2d_stacked(blocks_tmp[0], sc.sub("left"), 3, 1, fsize, 2);
-        net_r = max_pool2d(sc.sub("right")).ksize(3).stride(2)(net_n);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+        // Block 2: max_pool_3x3 + id (n / n-1).
+        sc = m_scope.sub("block4");
+        net_l = avg_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
+        blocks.push_back( net_l );
 
         // Concat this big mess!
         net = tfrt::concat_channels(sc)(blocks);
