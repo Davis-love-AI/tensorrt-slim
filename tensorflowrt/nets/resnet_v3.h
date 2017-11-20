@@ -80,8 +80,14 @@ inline nvinfer1::ITensor* bottleneck(nvinfer1::ITensor* input, int outdepth, int
     // res = conv2d_none(ssc, "conv1").noutputs(bndepth).ksize(1).stride(stride)(input);
 
     // Grouped 3x3 convolution.
-    auto res1 = conv2d_grouped(ssc, "conv2").ngroups(ngroups).noutputs(bndepth).ksize(3).stride(1)(res);
-    res = res1;
+    res = conv2d_grouped(ssc, "conv2").ngroups(ngroups).noutputs(bndepth).ksize(3).stride(1)(res);
+    
+    // TESTING a different configuration...
+    auto res1 = conv2d_grouped(ssc, "conv3_1").ngroups(ngroups / 2)
+        .noutputs(bndepth / 2).ksize(3).stride(1)(res);
+    auto res2 = conv2d_grouped(ssc, "conv3_2").ngroups(ngroups / 2)
+        .noutputs(bndepth / 2).ksize(3).stride(1)(res);
+    res = concat_channels(sc)({res1, res2});
 
     // ngroups = std::max(1, ngroups / 2);
     // auto res2 = conv2d_grouped(ssc, "conv2").ngroups(ngroups).noutputs(bndepth / 2).ksize(3).stride(1)(res);
@@ -97,10 +103,8 @@ inline nvinfer1::ITensor* bottleneck(nvinfer1::ITensor* input, int outdepth, int
     //         .first({1, 0, 2})
     //         .reshape(nvinfer1::DimsCHW{-1, shape.h(), shape.w()})(res);
     // }
-
     // res = conv2d(ssc, "conv3").noutputs(outdepth).ksize(1).stride(1)(res);
-
-    res = conv2d_grouped(ssc, "conv3").ngroups(1).noutputs(bndepth).ksize(1).stride(1)(res);
+    // res = conv2d_grouped(ssc, "conv3").ngroups(1).noutputs(bndepth).ksize(1).stride(1)(res);
 
     res = conv2d_grouped(ssc, "conv4").ngroups(4).noutputs(outdepth).ksize(1).stride(1)(res);
 
