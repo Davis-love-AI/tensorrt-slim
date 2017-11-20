@@ -125,6 +125,10 @@ public:
         auto ssc = sc.sub("stack");
         std::string name;
         size_t ngroups = num_outputs / group_size;
+        if (ngroups == 0) {
+            ngroups = 1;
+        }
+        LOG(INFO) << "Conv2d stacked: " << ngroups << " / " << num_outputs;
         for (size_t i = 0 ; i < num_layers ; ++i) {
             // ReLU + Separable conv.
             name = fmt::format("relu_{}", i+1);
@@ -182,7 +186,7 @@ public:
         net = tfrt::concat_channels(sc)({net_n, net_n_1});
         net = conv2d_stacked(net, sc, 3, 1, fsize*2, 2, 32, 3);
         blocks.push_back( net );
-
+        
         // Block 2: avg_pool_3x3 + id (n / n-1).
         sc = m_scope.sub("block2");
         net_l = avg_pool2d(sc.sub("left")).ksize(3)(net_n);
@@ -194,7 +198,7 @@ public:
         net_l = avg_pool2d(sc.sub("left")).ksize(3)(net_n_1);
         net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
         blocks.push_back( net_l );
-
+        
         // Concat this big mess!
         blocks.push_back( net_n );
         net = tfrt::concat_channels(sc)(blocks);
@@ -228,7 +232,7 @@ public:
         net = tfrt::concat_channels(sc)({net_n, net_n_1});
         net = conv2d_stacked(net, sc, 3, 2, fsize*2, 2, 32, 3);
         blocks.push_back( net );
-
+        
         // Block 2: max_pool_3x3 + id (n / n-1).
         sc = m_scope.sub("block2");
         net_l = max_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
@@ -239,12 +243,12 @@ public:
         net_l = max_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n_1);
         net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
         blocks.push_back( net_l );
-
+        
         // Block 2: max_pool_3x3 + id (n / n-1).
         sc = m_scope.sub("block4");
         net_l = avg_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
         blocks.push_back( net_l );
-
+        
         // Concat this big mess!
         net = tfrt::concat_channels(sc)(blocks);
         return net;
@@ -399,7 +403,7 @@ class net : public nasnet_v2::net
 {
 public:
     /** NASNet mobile definition. */
-    net() : nasnet_v2::net("nasnet_v2_small", 1.0, 2.0, 12, 2, 44, false)
+    net() : nasnet_v2::net("nasnet_v2_small", 1.0, 2.0, 12, 2, 48, false)
     {}
 
     // stem_multiplier=1.0,
@@ -424,7 +428,7 @@ class net : public nasnet_v2::net
 {
 public:
     /** NASNet mobile definition. */
-    net() : nasnet_v2::net("nasnet_v2_large", 3.0, 2.0, 18, 2, 168, true)
+    net() : nasnet_v2::net("nasnet_v2_large", 3.0, 2.0, 18, 2, 176, true)
     {}
     // stem_multiplier=3.0,
     // dense_dropout_keep_prob=0.5,
