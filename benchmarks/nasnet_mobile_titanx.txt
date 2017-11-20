@@ -1,0 +1,388 @@
+============================================================================
+NASNet mobile original
+INPUT: 224x224 / BATCH: 1 / FP32
+CUDA 9.0 / cudnn v7.04 / TensorRT 3.0 RC
+============================================================================
+Input index: 0 of size: 602112 and shape: [3, 224, 224]
+Output index: 1 of size: 172480 and shape: [880, 7, 7]
+InceptionV2/Input/scaling                                                                                                                              0.013ms
+InceptionV2/conv0                                                                                                                                      0.020ms
+InceptionV2/cell_stem_0/base_cell_n/relu/ReLU                                                                                                          0.012ms
+InceptionV2/cell_stem_0/base_cell_n/1x1                                                                                                                0.019ms
+InceptionV2/cell_stem_0/comb_iter_1/left/stack/relu_1/ReLU                                                                                             0.016ms
+InceptionV2/cell_stem_0/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_stem_0/comb_iter_1/left/stack/relu_2/ReLU                            0.040ms
+InceptionV2/cell_stem_0/comb_iter_1/left/stack/separable_5x5_2                                                                                         0.031ms
+InceptionV2/cell_stem_0/comb_iter_1/right/stack/relu_1/ReLU                                                                                            0.016ms
+InceptionV2/cell_stem_0/comb_iter_1/right/stack/separable_7x7_1 + InceptionV2/cell_stem_0/comb_iter_1/right/stack/relu_2/ReLU                          0.056ms
+InceptionV2/cell_stem_0/comb_iter_1/right/stack/separable_7x7_2 + InceptionV2/cell_stem_0/comb_iter_1/Add                                              0.099ms
+InceptionV2/cell_stem_0/comb_iter_2/left/MaxPool2D                                                                                                     0.008ms
+InceptionV2/cell_stem_0/comb_iter_2/right/stack/relu_1/ReLU                                                                                            0.016ms
+InceptionV2/cell_stem_0/comb_iter_2/right/stack/separable_7x7_1 + InceptionV2/cell_stem_0/comb_iter_2/right/stack/relu_2/ReLU                          0.049ms
+InceptionV2/cell_stem_0/comb_iter_2/right/stack/separable_7x7_2 + InceptionV2/cell_stem_0/comb_iter_2/Add                                              0.095ms
+InceptionV2/cell_stem_0/comb_iter_3/left/AvgPool2D                                                                                                     0.011ms
+InceptionV2/cell_stem_0/comb_iter_3/right/stack/relu_1/ReLU                                                                                            0.016ms
+InceptionV2/cell_stem_0/comb_iter_3/right/stack/separable_5x5_1 + InceptionV2/cell_stem_0/comb_iter_3/right/stack/relu_2/ReLU                          0.036ms
+InceptionV2/cell_stem_0/comb_iter_3/right/stack/separable_5x5_2 + InceptionV2/cell_stem_0/comb_iter_3/Add                                              0.052ms
+InceptionV2/cell_stem_0/comb_iter_4/right/AvgPool2D                                                                                                    0.009ms
+InceptionV2/cell_stem_0/comb_iter_4/Add                                                                                                                0.006ms
+InceptionV2/cell_stem_0/comb_iter_5/left/stack/relu_1/ReLU                                                                                             0.007ms
+InceptionV2/cell_stem_0/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_stem_0/comb_iter_5/left/stack/relu_2/ReLU                            0.024ms
+InceptionV2/cell_stem_0/comb_iter_5/left/stack/separable_3x3_2                                                                                         0.017ms
+InceptionV2/cell_stem_0/comb_iter_5/right/MaxPool2D                                                                                                    0.008ms
+InceptionV2/cell_stem_0/comb_iter_5/Add                                                                                                                0.006ms
+InceptionV2/cell_stem_1/base_cell_n/relu/ReLU                                                                                                          0.008ms
+InceptionV2/cell_stem_1/base_cell_n/1x1                                                                                                                0.017ms
+InceptionV2/cell_stem_1/reduce_n_1/AvgPool2D                                                                                                           0.016ms
+InceptionV2/cell_stem_1/reduce_n_1/1x1                                                                                                                 0.017ms
+InceptionV2/cell_stem_1/comb_iter_1/left/stack/relu_1/ReLU                                                                                             0.007ms
+InceptionV2/cell_stem_1/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_stem_1/comb_iter_1/left/stack/relu_2/ReLU                            0.056ms
+InceptionV2/cell_stem_1/comb_iter_1/left/stack/separable_5x5_2                                                                                         0.032ms
+InceptionV2/cell_stem_1/comb_iter_1/right/stack/relu_1/ReLU                                                                                            0.007ms
+InceptionV2/cell_stem_1/comb_iter_1/right/stack/separable_7x7_1 + InceptionV2/cell_stem_1/comb_iter_1/right/stack/relu_2/ReLU                          0.083ms
+InceptionV2/cell_stem_1/comb_iter_1/right/stack/separable_7x7_2 + InceptionV2/cell_stem_1/comb_iter_1/Add                                              0.150ms
+InceptionV2/cell_stem_1/comb_iter_2/left/MaxPool2D                                                                                                     0.007ms
+InceptionV2/cell_stem_1/comb_iter_2/right/stack/relu_1/ReLU                                                                                            0.007ms
+InceptionV2/cell_stem_1/comb_iter_2/right/stack/separable_7x7_1 + InceptionV2/cell_stem_1/comb_iter_2/right/stack/relu_2/ReLU                          0.075ms
+InceptionV2/cell_stem_1/comb_iter_2/right/stack/separable_7x7_2 + InceptionV2/cell_stem_1/comb_iter_2/Add                                              0.145ms
+InceptionV2/cell_stem_1/comb_iter_3/left/AvgPool2D                                                                                                     0.009ms
+InceptionV2/cell_stem_1/comb_iter_3/right/stack/relu_1/ReLU                                                                                            0.007ms
+InceptionV2/cell_stem_1/comb_iter_3/right/stack/separable_5x5_1 + InceptionV2/cell_stem_1/comb_iter_3/right/stack/relu_2/ReLU                          0.050ms
+InceptionV2/cell_stem_1/comb_iter_3/right/stack/separable_5x5_2 + InceptionV2/cell_stem_1/comb_iter_3/Add                                              0.073ms
+InceptionV2/cell_stem_1/comb_iter_4/right/AvgPool2D                                                                                                    0.009ms
+InceptionV2/cell_stem_1/comb_iter_4/Add                                                                                                                0.005ms
+InceptionV2/cell_stem_1/comb_iter_5/left/stack/relu_1/ReLU                                                                                             0.006ms
+InceptionV2/cell_stem_1/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_stem_1/comb_iter_5/left/stack/relu_2/ReLU                            0.025ms
+InceptionV2/cell_stem_1/comb_iter_5/left/stack/separable_3x3_2                                                                                         0.017ms
+InceptionV2/cell_stem_1/comb_iter_5/right/MaxPool2D                                                                                                    0.007ms
+InceptionV2/cell_stem_1/comb_iter_5/Add                                                                                                                0.005ms
+InceptionV2/cell_0/base_cell_n/relu/ReLU                                                                                                               0.007ms
+InceptionV2/cell_0/base_cell_n/1x1                                                                                                                     0.026ms
+InceptionV2/cell_0/reduce_n_1/AvgPool2D                                                                                                                0.008ms
+InceptionV2/cell_0/reduce_n_1/1x1                                                                                                                      0.023ms
+InceptionV2/cell_0/comb_iter_1/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_0/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_0/comb_iter_1/left/stack/relu_2/ReLU                                      0.043ms
+InceptionV2/cell_0/comb_iter_1/left/stack/separable_5x5_2                                                                                              0.039ms
+InceptionV2/cell_0/comb_iter_1/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_0/comb_iter_1/right/stack/separable_3x3_1 + InceptionV2/cell_0/comb_iter_1/right/stack/relu_2/ReLU                                    0.021ms
+InceptionV2/cell_0/comb_iter_1/right/stack/separable_3x3_2 + InceptionV2/cell_0/comb_iter_1/Add                                                        0.023ms
+InceptionV2/cell_0/comb_iter_2/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_0/comb_iter_2/left/stack/separable_5x5_1 + InceptionV2/cell_0/comb_iter_2/left/stack/relu_2/ReLU                                      0.039ms
+InceptionV2/cell_0/comb_iter_2/left/stack/separable_5x5_2                                                                                              0.038ms
+InceptionV2/cell_0/comb_iter_2/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_0/comb_iter_2/right/stack/separable_3x3_1 + InceptionV2/cell_0/comb_iter_2/right/stack/relu_2/ReLU                                    0.021ms
+InceptionV2/cell_0/comb_iter_2/right/stack/separable_3x3_2 + InceptionV2/cell_0/comb_iter_2/Add                                                        0.021ms
+InceptionV2/cell_0/comb_iter_3/left/AvgPool2D                                                                                                          0.009ms
+InceptionV2/cell_0/comb_iter_3/Add                                                                                                                     0.005ms
+InceptionV2/cell_0/comb_iter_4/left/AvgPool2D                                                                                                          0.007ms
+InceptionV2/cell_0/comb_iter_4/right/AvgPool2D                                                                                                         0.007ms
+InceptionV2/cell_0/comb_iter_4/Add                                                                                                                     0.005ms
+InceptionV2/cell_0/comb_iter_5/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_0/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_0/comb_iter_5/left/stack/relu_2/ReLU                                      0.021ms
+InceptionV2/cell_0/comb_iter_5/left/stack/separable_3x3_2 + InceptionV2/cell_0/comb_iter_5/Add                                                         0.022ms
+InceptionV2/cell_1/base_cell_n/relu/ReLU                                                                                                               0.008ms
+InceptionV2/cell_1/base_cell_n/1x1                                                                                                                     0.040ms
+InceptionV2/cell_1/reduce_n_1/1x1                                                                                                                      0.026ms
+InceptionV2/cell_1/comb_iter_1/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_1/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_1/comb_iter_1/left/stack/relu_2/ReLU                                      0.043ms
+InceptionV2/cell_1/comb_iter_1/left/stack/separable_5x5_2                                                                                              0.039ms
+InceptionV2/cell_1/comb_iter_1/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_1/comb_iter_1/right/stack/separable_3x3_1 + InceptionV2/cell_1/comb_iter_1/right/stack/relu_2/ReLU                                    0.029ms
+InceptionV2/cell_1/comb_iter_1/right/stack/separable_3x3_2 + InceptionV2/cell_1/comb_iter_1/Add                                                        0.022ms
+InceptionV2/cell_1/comb_iter_2/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_1/comb_iter_2/left/stack/separable_5x5_1 + InceptionV2/cell_1/comb_iter_2/left/stack/relu_2/ReLU                                      0.039ms
+InceptionV2/cell_1/comb_iter_2/left/stack/separable_5x5_2                                                                                              0.040ms
+InceptionV2/cell_1/comb_iter_2/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_1/comb_iter_2/right/stack/separable_3x3_1 + InceptionV2/cell_1/comb_iter_2/right/stack/relu_2/ReLU                                    0.025ms
+InceptionV2/cell_1/comb_iter_2/right/stack/separable_3x3_2 + InceptionV2/cell_1/comb_iter_2/Add                                                        0.022ms
+InceptionV2/cell_1/comb_iter_3/left/AvgPool2D                                                                                                          0.009ms
+InceptionV2/cell_1/comb_iter_3/Add                                                                                                                     0.006ms
+InceptionV2/cell_1/comb_iter_4/left/AvgPool2D                                                                                                          0.007ms
+InceptionV2/cell_1/comb_iter_4/right/AvgPool2D                                                                                                         0.007ms
+InceptionV2/cell_1/comb_iter_4/Add                                                                                                                     0.005ms
+InceptionV2/cell_1/comb_iter_5/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_1/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_1/comb_iter_5/left/stack/relu_2/ReLU                                      0.023ms
+InceptionV2/cell_1/comb_iter_5/left/stack/separable_3x3_2 + InceptionV2/cell_1/comb_iter_5/Add                                                         0.022ms
+InceptionV2/cell_2/base_cell_n/relu/ReLU                                                                                                               0.008ms
+InceptionV2/cell_2/base_cell_n/1x1                                                                                                                     0.039ms
+InceptionV2/cell_2/reduce_n_1/1x1                                                                                                                      0.039ms
+InceptionV2/cell_2/comb_iter_1/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_2/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_2/comb_iter_1/left/stack/relu_2/ReLU                                      0.043ms
+InceptionV2/cell_2/comb_iter_1/left/stack/separable_5x5_2                                                                                              0.039ms
+InceptionV2/cell_2/comb_iter_1/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_2/comb_iter_1/right/stack/separable_3x3_1 + InceptionV2/cell_2/comb_iter_1/right/stack/relu_2/ReLU                                    0.029ms
+InceptionV2/cell_2/comb_iter_1/right/stack/separable_3x3_2 + InceptionV2/cell_2/comb_iter_1/Add                                                        0.025ms
+InceptionV2/cell_2/comb_iter_2/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_2/comb_iter_2/left/stack/separable_5x5_1 + InceptionV2/cell_2/comb_iter_2/left/stack/relu_2/ReLU                                      0.040ms
+InceptionV2/cell_2/comb_iter_2/left/stack/separable_5x5_2                                                                                              0.038ms
+InceptionV2/cell_2/comb_iter_2/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_2/comb_iter_2/right/stack/separable_3x3_1 + InceptionV2/cell_2/comb_iter_2/right/stack/relu_2/ReLU                                    0.026ms
+InceptionV2/cell_2/comb_iter_2/right/stack/separable_3x3_2 + InceptionV2/cell_2/comb_iter_2/Add                                                        0.021ms
+InceptionV2/cell_2/comb_iter_3/left/AvgPool2D                                                                                                          0.009ms
+InceptionV2/cell_2/comb_iter_3/Add                                                                                                                     0.006ms
+InceptionV2/cell_2/comb_iter_4/left/AvgPool2D                                                                                                          0.007ms
+InceptionV2/cell_2/comb_iter_4/right/AvgPool2D                                                                                                         0.007ms
+InceptionV2/cell_2/comb_iter_4/Add                                                                                                                     0.005ms
+InceptionV2/cell_2/comb_iter_5/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_2/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_2/comb_iter_5/left/stack/relu_2/ReLU                                      0.023ms
+InceptionV2/cell_2/comb_iter_5/left/stack/separable_3x3_2 + InceptionV2/cell_2/comb_iter_5/Add                                                         0.022ms
+InceptionV2/cell_3/base_cell_n/relu/ReLU                                                                                                               0.008ms
+InceptionV2/cell_3/base_cell_n/1x1                                                                                                                     0.040ms
+InceptionV2/cell_3/reduce_n_1/1x1                                                                                                                      0.039ms
+InceptionV2/cell_3/comb_iter_1/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_3/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_3/comb_iter_1/left/stack/relu_2/ReLU                                      0.046ms
+InceptionV2/cell_3/comb_iter_1/left/stack/separable_5x5_2                                                                                              0.044ms
+InceptionV2/cell_3/comb_iter_1/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_3/comb_iter_1/right/stack/separable_3x3_1 + InceptionV2/cell_3/comb_iter_1/right/stack/relu_2/ReLU                                    0.029ms
+InceptionV2/cell_3/comb_iter_1/right/stack/separable_3x3_2 + InceptionV2/cell_3/comb_iter_1/Add                                                        0.025ms
+InceptionV2/cell_3/comb_iter_2/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_3/comb_iter_2/left/stack/separable_5x5_1 + InceptionV2/cell_3/comb_iter_2/left/stack/relu_2/ReLU                                      0.041ms
+InceptionV2/cell_3/comb_iter_2/left/stack/separable_5x5_2                                                                                              0.038ms
+InceptionV2/cell_3/comb_iter_2/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_3/comb_iter_2/right/stack/separable_3x3_1 + InceptionV2/cell_3/comb_iter_2/right/stack/relu_2/ReLU                                    0.025ms
+InceptionV2/cell_3/comb_iter_2/right/stack/separable_3x3_2 + InceptionV2/cell_3/comb_iter_2/Add                                                        0.022ms
+InceptionV2/cell_3/comb_iter_3/left/AvgPool2D                                                                                                          0.009ms
+InceptionV2/cell_3/comb_iter_3/Add                                                                                                                     0.006ms
+InceptionV2/cell_3/comb_iter_4/left/AvgPool2D                                                                                                          0.007ms
+InceptionV2/cell_3/comb_iter_4/right/AvgPool2D                                                                                                         0.007ms
+InceptionV2/cell_3/comb_iter_4/Add                                                                                                                     0.005ms
+InceptionV2/cell_3/comb_iter_5/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_3/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_3/comb_iter_5/left/stack/relu_2/ReLU                                      0.023ms
+InceptionV2/cell_3/comb_iter_5/left/stack/separable_3x3_2 + InceptionV2/cell_3/comb_iter_5/Add                                                         0.022ms
+InceptionV2/reduction_cell_4/base_cell_n/relu/ReLU                                                                                                     0.008ms
+InceptionV2/reduction_cell_4/base_cell_n/1x1                                                                                                           0.044ms
+InceptionV2/reduction_cell_4/reduce_n_1/1x1                                                                                                            0.044ms
+InceptionV2/reduction_cell_4/comb_iter_1/left/stack/relu_1/ReLU                                                                                        0.007ms
+InceptionV2/reduction_cell_4/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/reduction_cell_4/comb_iter_1/left/stack/relu_2/ReLU                  0.169ms
+InceptionV2/reduction_cell_4/comb_iter_1/left/stack/separable_5x5_2                                                                                    0.039ms
+InceptionV2/reduction_cell_4/comb_iter_1/right/stack/relu_1/ReLU                                                                                       0.007ms
+InceptionV2/reduction_cell_4/comb_iter_1/right/stack/separable_7x7_1 + InceptionV2/reduction_cell_4/comb_iter_1/right/stack/relu_2/ReLU                0.276ms
+InceptionV2/reduction_cell_4/comb_iter_1/right/stack/separable_7x7_2 + InceptionV2/reduction_cell_4/comb_iter_1/Add                                    0.364ms
+InceptionV2/reduction_cell_4/comb_iter_2/left/MaxPool2D                                                                                                0.008ms
+InceptionV2/reduction_cell_4/comb_iter_2/right/stack/relu_1/ReLU                                                                                       0.008ms
+InceptionV2/reduction_cell_4/comb_iter_2/right/stack/separable_7x7_1 + InceptionV2/reduction_cell_4/comb_iter_2/right/stack/relu_2/ReLU                0.275ms
+InceptionV2/reduction_cell_4/comb_iter_2/right/stack/separable_7x7_2 + InceptionV2/reduction_cell_4/comb_iter_2/Add                                    0.365ms
+InceptionV2/reduction_cell_4/comb_iter_3/left/AvgPool2D                                                                                                0.009ms
+InceptionV2/reduction_cell_4/comb_iter_3/right/stack/relu_1/ReLU                                                                                       0.008ms
+InceptionV2/reduction_cell_4/comb_iter_3/right/stack/separable_5x5_1 + InceptionV2/reduction_cell_4/comb_iter_3/right/stack/relu_2/ReLU                0.167ms
+InceptionV2/reduction_cell_4/comb_iter_3/right/stack/separable_5x5_2 + InceptionV2/reduction_cell_4/comb_iter_3/Add                                    0.235ms
+InceptionV2/reduction_cell_4/comb_iter_4/right/AvgPool2D                                                                                               0.009ms
+InceptionV2/reduction_cell_4/comb_iter_4/Add                                                                                                           0.006ms
+InceptionV2/reduction_cell_4/comb_iter_5/left/stack/relu_1/ReLU                                                                                        0.007ms
+InceptionV2/reduction_cell_4/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/reduction_cell_4/comb_iter_5/left/stack/relu_2/ReLU                  0.030ms
+InceptionV2/reduction_cell_4/comb_iter_5/left/stack/separable_3x3_2                                                                                    0.025ms
+InceptionV2/reduction_cell_4/comb_iter_5/right/MaxPool2D                                                                                               0.007ms
+InceptionV2/reduction_cell_4/comb_iter_5/Add                                                                                                           0.005ms
+InceptionV2/cell_4/base_cell_n/relu/ReLU                                                                                                               0.007ms
+InceptionV2/cell_4/base_cell_n/1x1                                                                                                                     0.027ms
+InceptionV2/cell_4/reduce_n_1/AvgPool2D                                                                                                                0.013ms
+InceptionV2/cell_4/reduce_n_1/1x1                                                                                                                      0.035ms
+InceptionV2/cell_4/comb_iter_1/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_4/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_4/comb_iter_1/left/stack/relu_2/ReLU                                      0.039ms
+InceptionV2/cell_4/comb_iter_1/left/stack/separable_5x5_2                                                                                              0.033ms
+InceptionV2/cell_4/comb_iter_1/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_4/comb_iter_1/right/stack/separable_3x3_1 + InceptionV2/cell_4/comb_iter_1/right/stack/relu_2/ReLU                                    0.028ms
+InceptionV2/cell_4/comb_iter_1/right/stack/separable_3x3_2 + InceptionV2/cell_4/comb_iter_1/Add                                                        0.036ms
+InceptionV2/cell_4/comb_iter_2/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_4/comb_iter_2/left/stack/separable_5x5_1 + InceptionV2/cell_4/comb_iter_2/left/stack/relu_2/ReLU                                      0.035ms
+InceptionV2/cell_4/comb_iter_2/left/stack/separable_5x5_2                                                                                              0.033ms
+InceptionV2/cell_4/comb_iter_2/right/stack/relu_1/ReLU                                                                                                 0.006ms
+InceptionV2/cell_4/comb_iter_2/right/stack/separable_3x3_1 + InceptionV2/cell_4/comb_iter_2/right/stack/relu_2/ReLU                                    0.026ms
+InceptionV2/cell_4/comb_iter_2/right/stack/separable_3x3_2 + InceptionV2/cell_4/comb_iter_2/Add                                                        0.036ms
+InceptionV2/cell_4/comb_iter_3/left/AvgPool2D                                                                                                          0.009ms
+InceptionV2/cell_4/comb_iter_3/Add                                                                                                                     0.005ms
+InceptionV2/cell_4/comb_iter_4/left/AvgPool2D                                                                                                          0.007ms
+InceptionV2/cell_4/comb_iter_4/right/AvgPool2D                                                                                                         0.007ms
+InceptionV2/cell_4/comb_iter_4/Add                                                                                                                     0.005ms
+InceptionV2/cell_4/comb_iter_5/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_4/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_4/comb_iter_5/left/stack/relu_2/ReLU                                      0.026ms
+InceptionV2/cell_4/comb_iter_5/left/stack/separable_3x3_2 + InceptionV2/cell_4/comb_iter_5/Add                                                         0.028ms
+InceptionV2/cell_5/base_cell_n/relu/ReLU                                                                                                               0.007ms
+InceptionV2/cell_5/base_cell_n/1x1                                                                                                                     0.038ms
+InceptionV2/cell_5/reduce_n_1/1x1                                                                                                                      0.028ms
+InceptionV2/cell_5/comb_iter_1/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_5/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_5/comb_iter_1/left/stack/relu_2/ReLU                                      0.038ms
+InceptionV2/cell_5/comb_iter_1/left/stack/separable_5x5_2                                                                                              0.033ms
+InceptionV2/cell_5/comb_iter_1/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_5/comb_iter_1/right/stack/separable_3x3_1 + InceptionV2/cell_5/comb_iter_1/right/stack/relu_2/ReLU                                    0.026ms
+InceptionV2/cell_5/comb_iter_1/right/stack/separable_3x3_2 + InceptionV2/cell_5/comb_iter_1/Add                                                        0.034ms
+InceptionV2/cell_5/comb_iter_2/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_5/comb_iter_2/left/stack/separable_5x5_1 + InceptionV2/cell_5/comb_iter_2/left/stack/relu_2/ReLU                                      0.035ms
+InceptionV2/cell_5/comb_iter_2/left/stack/separable_5x5_2                                                                                              0.033ms
+InceptionV2/cell_5/comb_iter_2/right/stack/relu_1/ReLU                                                                                                 0.006ms
+InceptionV2/cell_5/comb_iter_2/right/stack/separable_3x3_1 + InceptionV2/cell_5/comb_iter_2/right/stack/relu_2/ReLU                                    0.026ms
+InceptionV2/cell_5/comb_iter_2/right/stack/separable_3x3_2 + InceptionV2/cell_5/comb_iter_2/Add                                                        0.029ms
+InceptionV2/cell_5/comb_iter_3/left/AvgPool2D                                                                                                          0.009ms
+InceptionV2/cell_5/comb_iter_3/Add                                                                                                                     0.006ms
+InceptionV2/cell_5/comb_iter_4/left/AvgPool2D                                                                                                          0.007ms
+InceptionV2/cell_5/comb_iter_4/right/AvgPool2D                                                                                                         0.007ms
+InceptionV2/cell_5/comb_iter_4/Add                                                                                                                     0.005ms
+InceptionV2/cell_5/comb_iter_5/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_5/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_5/comb_iter_5/left/stack/relu_2/ReLU                                      0.026ms
+InceptionV2/cell_5/comb_iter_5/left/stack/separable_3x3_2 + InceptionV2/cell_5/comb_iter_5/Add                                                         0.028ms
+InceptionV2/cell_6/base_cell_n/relu/ReLU                                                                                                               0.007ms
+InceptionV2/cell_6/base_cell_n/1x1                                                                                                                     0.039ms
+InceptionV2/cell_6/reduce_n_1/1x1                                                                                                                      0.036ms
+InceptionV2/cell_6/comb_iter_1/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_6/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_6/comb_iter_1/left/stack/relu_2/ReLU                                      0.038ms
+InceptionV2/cell_6/comb_iter_1/left/stack/separable_5x5_2                                                                                              0.033ms
+InceptionV2/cell_6/comb_iter_1/right/stack/relu_1/ReLU                                                                                                 0.006ms
+InceptionV2/cell_6/comb_iter_1/right/stack/separable_3x3_1 + InceptionV2/cell_6/comb_iter_1/right/stack/relu_2/ReLU                                    0.030ms
+InceptionV2/cell_6/comb_iter_1/right/stack/separable_3x3_2 + InceptionV2/cell_6/comb_iter_1/Add                                                        0.036ms
+InceptionV2/cell_6/comb_iter_2/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_6/comb_iter_2/left/stack/separable_5x5_1 + InceptionV2/cell_6/comb_iter_2/left/stack/relu_2/ReLU                                      0.035ms
+InceptionV2/cell_6/comb_iter_2/left/stack/separable_5x5_2                                                                                              0.033ms
+InceptionV2/cell_6/comb_iter_2/right/stack/relu_1/ReLU                                                                                                 0.006ms
+InceptionV2/cell_6/comb_iter_2/right/stack/separable_3x3_1 + InceptionV2/cell_6/comb_iter_2/right/stack/relu_2/ReLU                                    0.026ms
+InceptionV2/cell_6/comb_iter_2/right/stack/separable_3x3_2 + InceptionV2/cell_6/comb_iter_2/Add                                                        0.030ms
+InceptionV2/cell_6/comb_iter_3/left/AvgPool2D                                                                                                          0.009ms
+InceptionV2/cell_6/comb_iter_3/Add                                                                                                                     0.005ms
+InceptionV2/cell_6/comb_iter_4/left/AvgPool2D                                                                                                          0.007ms
+InceptionV2/cell_6/comb_iter_4/right/AvgPool2D                                                                                                         0.007ms
+InceptionV2/cell_6/comb_iter_4/Add                                                                                                                     0.005ms
+InceptionV2/cell_6/comb_iter_5/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_6/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_6/comb_iter_5/left/stack/relu_2/ReLU                                      0.026ms
+InceptionV2/cell_6/comb_iter_5/left/stack/separable_3x3_2 + InceptionV2/cell_6/comb_iter_5/Add                                                         0.028ms
+InceptionV2/cell_7/base_cell_n/relu/ReLU                                                                                                               0.007ms
+InceptionV2/cell_7/base_cell_n/1x1                                                                                                                     0.039ms
+InceptionV2/cell_7/reduce_n_1/1x1                                                                                                                      0.036ms
+InceptionV2/cell_7/comb_iter_1/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_7/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_7/comb_iter_1/left/stack/relu_2/ReLU                                      0.038ms
+InceptionV2/cell_7/comb_iter_1/left/stack/separable_5x5_2                                                                                              0.033ms
+InceptionV2/cell_7/comb_iter_1/right/stack/relu_1/ReLU                                                                                                 0.006ms
+InceptionV2/cell_7/comb_iter_1/right/stack/separable_3x3_1 + InceptionV2/cell_7/comb_iter_1/right/stack/relu_2/ReLU                                    0.030ms
+InceptionV2/cell_7/comb_iter_1/right/stack/separable_3x3_2 + InceptionV2/cell_7/comb_iter_1/Add                                                        0.036ms
+InceptionV2/cell_7/comb_iter_2/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_7/comb_iter_2/left/stack/separable_5x5_1 + InceptionV2/cell_7/comb_iter_2/left/stack/relu_2/ReLU                                      0.035ms
+InceptionV2/cell_7/comb_iter_2/left/stack/separable_5x5_2                                                                                              0.033ms
+InceptionV2/cell_7/comb_iter_2/right/stack/relu_1/ReLU                                                                                                 0.006ms
+InceptionV2/cell_7/comb_iter_2/right/stack/separable_3x3_1 + InceptionV2/cell_7/comb_iter_2/right/stack/relu_2/ReLU                                    0.028ms
+InceptionV2/cell_7/comb_iter_2/right/stack/separable_3x3_2 + InceptionV2/cell_7/comb_iter_2/Add                                                        0.029ms
+InceptionV2/cell_7/comb_iter_3/left/AvgPool2D                                                                                                          0.009ms
+InceptionV2/cell_7/comb_iter_3/Add                                                                                                                     0.006ms
+InceptionV2/cell_7/comb_iter_4/left/AvgPool2D                                                                                                          0.007ms
+InceptionV2/cell_7/comb_iter_4/right/AvgPool2D                                                                                                         0.007ms
+InceptionV2/cell_7/comb_iter_4/Add                                                                                                                     0.005ms
+InceptionV2/cell_7/comb_iter_5/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_7/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_7/comb_iter_5/left/stack/relu_2/ReLU                                      0.026ms
+InceptionV2/cell_7/comb_iter_5/left/stack/separable_3x3_2 + InceptionV2/cell_7/comb_iter_5/Add                                                         0.028ms
+InceptionV2/reduction_cell_8/base_cell_n/relu/ReLU                                                                                                     0.007ms
+InceptionV2/reduction_cell_8/base_cell_n/1x1                                                                                                           0.040ms
+InceptionV2/reduction_cell_8/reduce_n_1/1x1                                                                                                            0.039ms
+InceptionV2/reduction_cell_8/comb_iter_1/left/stack/relu_1/ReLU                                                                                        0.007ms
+InceptionV2/reduction_cell_8/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/reduction_cell_8/comb_iter_1/left/stack/relu_2/ReLU                  0.318ms
+InceptionV2/reduction_cell_8/comb_iter_1/left/stack/separable_5x5_2                                                                                    0.052ms
+InceptionV2/reduction_cell_8/comb_iter_1/right/stack/relu_1/ReLU                                                                                       0.008ms
+InceptionV2/reduction_cell_8/comb_iter_1/right/stack/separable_7x7_1 + InceptionV2/reduction_cell_8/comb_iter_1/right/stack/relu_2/ReLU                0.554ms
+InceptionV2/reduction_cell_8/comb_iter_1/right/stack/separable_7x7_2 + InceptionV2/reduction_cell_8/comb_iter_1/Add                                    0.668ms
+InceptionV2/reduction_cell_8/comb_iter_2/left/MaxPool2D                                                                                                0.006ms
+InceptionV2/reduction_cell_8/comb_iter_2/right/stack/relu_1/ReLU                                                                                       0.008ms
+InceptionV2/reduction_cell_8/comb_iter_2/right/stack/separable_7x7_1 + InceptionV2/reduction_cell_8/comb_iter_2/right/stack/relu_2/ReLU                0.554ms
+InceptionV2/reduction_cell_8/comb_iter_2/right/stack/separable_7x7_2 + InceptionV2/reduction_cell_8/comb_iter_2/Add                                    0.666ms
+InceptionV2/reduction_cell_8/comb_iter_3/left/AvgPool2D                                                                                                0.009ms
+InceptionV2/reduction_cell_8/comb_iter_3/right/stack/relu_1/ReLU                                                                                       0.008ms
+InceptionV2/reduction_cell_8/comb_iter_3/right/stack/separable_5x5_1 + InceptionV2/reduction_cell_8/comb_iter_3/right/stack/relu_2/ReLU                0.317ms
+InceptionV2/reduction_cell_8/comb_iter_3/right/stack/separable_5x5_2 + InceptionV2/reduction_cell_8/comb_iter_3/Add                                    0.389ms
+InceptionV2/reduction_cell_8/comb_iter_4/right/AvgPool2D                                                                                               0.009ms
+InceptionV2/reduction_cell_8/comb_iter_4/Add                                                                                                           0.006ms
+InceptionV2/reduction_cell_8/comb_iter_5/left/stack/relu_1/ReLU                                                                                        0.007ms
+InceptionV2/reduction_cell_8/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/reduction_cell_8/comb_iter_5/left/stack/relu_2/ReLU                  0.044ms
+InceptionV2/reduction_cell_8/comb_iter_5/left/stack/separable_3x3_2                                                                                    0.039ms
+InceptionV2/reduction_cell_8/comb_iter_5/right/MaxPool2D                                                                                               0.006ms
+InceptionV2/reduction_cell_8/comb_iter_5/Add                                                                                                           0.005ms
+InceptionV2/cell_8/base_cell_n/relu/ReLU                                                                                                               0.006ms
+InceptionV2/cell_8/base_cell_n/1x1                                                                                                                     0.027ms
+InceptionV2/cell_8/reduce_n_1/AvgPool2D                                                                                                                0.012ms
+InceptionV2/cell_8/reduce_n_1/1x1                                                                                                                      0.036ms
+InceptionV2/cell_8/comb_iter_1/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_8/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_8/comb_iter_1/left/stack/relu_2/ReLU                                      0.052ms
+InceptionV2/cell_8/comb_iter_1/left/stack/separable_5x5_2                                                                                              0.045ms
+InceptionV2/cell_8/comb_iter_1/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_8/comb_iter_1/right/stack/separable_3x3_1 + InceptionV2/cell_8/comb_iter_1/right/stack/relu_2/ReLU                                    0.043ms
+InceptionV2/cell_8/comb_iter_1/right/stack/separable_3x3_2 + InceptionV2/cell_8/comb_iter_1/Add                                                        0.051ms
+InceptionV2/cell_8/comb_iter_2/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_8/comb_iter_2/left/stack/separable_5x5_1 + InceptionV2/cell_8/comb_iter_2/left/stack/relu_2/ReLU                                      0.045ms
+InceptionV2/cell_8/comb_iter_2/left/stack/separable_5x5_2                                                                                              0.046ms
+InceptionV2/cell_8/comb_iter_2/right/stack/relu_1/ReLU                                                                                                 0.008ms
+InceptionV2/cell_8/comb_iter_2/right/stack/separable_3x3_1 + InceptionV2/cell_8/comb_iter_2/right/stack/relu_2/ReLU                                    0.043ms
+InceptionV2/cell_8/comb_iter_2/right/stack/separable_3x3_2 + InceptionV2/cell_8/comb_iter_2/Add                                                        0.051ms
+InceptionV2/cell_8/comb_iter_3/left/AvgPool2D                                                                                                          0.009ms
+InceptionV2/cell_8/comb_iter_3/Add                                                                                                                     0.006ms
+InceptionV2/cell_8/comb_iter_4/left/AvgPool2D                                                                                                          0.007ms
+InceptionV2/cell_8/comb_iter_4/right/AvgPool2D                                                                                                         0.006ms
+InceptionV2/cell_8/comb_iter_4/Add                                                                                                                     0.005ms
+InceptionV2/cell_8/comb_iter_5/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_8/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_8/comb_iter_5/left/stack/relu_2/ReLU                                      0.043ms
+InceptionV2/cell_8/comb_iter_5/left/stack/separable_3x3_2 + InceptionV2/cell_8/comb_iter_5/Add                                                         0.051ms
+InceptionV2/cell_9/base_cell_n/relu/ReLU                                                                                                               0.007ms
+InceptionV2/cell_9/base_cell_n/1x1                                                                                                                     0.039ms
+InceptionV2/cell_9/reduce_n_1/1x1                                                                                                                      0.025ms
+InceptionV2/cell_9/comb_iter_1/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_9/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_9/comb_iter_1/left/stack/relu_2/ReLU                                      0.052ms
+InceptionV2/cell_9/comb_iter_1/left/stack/separable_5x5_2                                                                                              0.045ms
+InceptionV2/cell_9/comb_iter_1/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_9/comb_iter_1/right/stack/separable_3x3_1 + InceptionV2/cell_9/comb_iter_1/right/stack/relu_2/ReLU                                    0.043ms
+InceptionV2/cell_9/comb_iter_1/right/stack/separable_3x3_2 + InceptionV2/cell_9/comb_iter_1/Add                                                        0.051ms
+InceptionV2/cell_9/comb_iter_2/left/stack/relu_1/ReLU                                                                                                  0.007ms
+InceptionV2/cell_9/comb_iter_2/left/stack/separable_5x5_1 + InceptionV2/cell_9/comb_iter_2/left/stack/relu_2/ReLU                                      0.045ms
+InceptionV2/cell_9/comb_iter_2/left/stack/separable_5x5_2                                                                                              0.046ms
+InceptionV2/cell_9/comb_iter_2/right/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_9/comb_iter_2/right/stack/separable_3x3_1 + InceptionV2/cell_9/comb_iter_2/right/stack/relu_2/ReLU                                    0.043ms
+InceptionV2/cell_9/comb_iter_2/right/stack/separable_3x3_2 + InceptionV2/cell_9/comb_iter_2/Add                                                        0.051ms
+InceptionV2/cell_9/comb_iter_3/left/AvgPool2D                                                                                                          0.009ms
+InceptionV2/cell_9/comb_iter_3/Add                                                                                                                     0.006ms
+InceptionV2/cell_9/comb_iter_4/left/AvgPool2D                                                                                                          0.007ms
+InceptionV2/cell_9/comb_iter_4/right/AvgPool2D                                                                                                         0.006ms
+InceptionV2/cell_9/comb_iter_4/Add                                                                                                                     0.005ms
+InceptionV2/cell_9/comb_iter_5/left/stack/relu_1/ReLU                                                                                                  0.006ms
+InceptionV2/cell_9/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_9/comb_iter_5/left/stack/relu_2/ReLU                                      0.043ms
+InceptionV2/cell_9/comb_iter_5/left/stack/separable_3x3_2 + InceptionV2/cell_9/comb_iter_5/Add                                                         0.051ms
+InceptionV2/cell_10/base_cell_n/relu/ReLU                                                                                                              0.007ms
+InceptionV2/cell_10/base_cell_n/1x1                                                                                                                    0.039ms
+InceptionV2/cell_10/reduce_n_1/1x1                                                                                                                     0.038ms
+InceptionV2/cell_10/comb_iter_1/left/stack/relu_1/ReLU                                                                                                 0.006ms
+InceptionV2/cell_10/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_10/comb_iter_1/left/stack/relu_2/ReLU                                    0.052ms
+InceptionV2/cell_10/comb_iter_1/left/stack/separable_5x5_2                                                                                             0.045ms
+InceptionV2/cell_10/comb_iter_1/right/stack/relu_1/ReLU                                                                                                0.007ms
+InceptionV2/cell_10/comb_iter_1/right/stack/separable_3x3_1 + InceptionV2/cell_10/comb_iter_1/right/stack/relu_2/ReLU                                  0.043ms
+InceptionV2/cell_10/comb_iter_1/right/stack/separable_3x3_2 + InceptionV2/cell_10/comb_iter_1/Add                                                      0.051ms
+InceptionV2/cell_10/comb_iter_2/left/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_10/comb_iter_2/left/stack/separable_5x5_1 + InceptionV2/cell_10/comb_iter_2/left/stack/relu_2/ReLU                                    0.045ms
+InceptionV2/cell_10/comb_iter_2/left/stack/separable_5x5_2                                                                                             0.046ms
+InceptionV2/cell_10/comb_iter_2/right/stack/relu_1/ReLU                                                                                                0.008ms
+InceptionV2/cell_10/comb_iter_2/right/stack/separable_3x3_1 + InceptionV2/cell_10/comb_iter_2/right/stack/relu_2/ReLU                                  0.043ms
+InceptionV2/cell_10/comb_iter_2/right/stack/separable_3x3_2 + InceptionV2/cell_10/comb_iter_2/Add                                                      0.051ms
+InceptionV2/cell_10/comb_iter_3/left/AvgPool2D                                                                                                         0.009ms
+InceptionV2/cell_10/comb_iter_3/Add                                                                                                                    0.006ms
+InceptionV2/cell_10/comb_iter_4/left/AvgPool2D                                                                                                         0.006ms
+InceptionV2/cell_10/comb_iter_4/right/AvgPool2D                                                                                                        0.006ms
+InceptionV2/cell_10/comb_iter_4/Add                                                                                                                    0.005ms
+InceptionV2/cell_10/comb_iter_5/left/stack/relu_1/ReLU                                                                                                 0.006ms
+InceptionV2/cell_10/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_10/comb_iter_5/left/stack/relu_2/ReLU                                    0.043ms
+InceptionV2/cell_10/comb_iter_5/left/stack/separable_3x3_2 + InceptionV2/cell_10/comb_iter_5/Add                                                       0.051ms
+InceptionV2/cell_11/base_cell_n/relu/ReLU                                                                                                              0.007ms
+InceptionV2/cell_11/base_cell_n/1x1                                                                                                                    0.039ms
+InceptionV2/cell_11/reduce_n_1/1x1                                                                                                                     0.040ms
+InceptionV2/cell_11/comb_iter_1/left/stack/relu_1/ReLU                                                                                                 0.006ms
+InceptionV2/cell_11/comb_iter_1/left/stack/separable_5x5_1 + InceptionV2/cell_11/comb_iter_1/left/stack/relu_2/ReLU                                    0.052ms
+InceptionV2/cell_11/comb_iter_1/left/stack/separable_5x5_2                                                                                             0.046ms
+InceptionV2/cell_11/comb_iter_1/right/stack/relu_1/ReLU                                                                                                0.007ms
+InceptionV2/cell_11/comb_iter_1/right/stack/separable_3x3_1 + InceptionV2/cell_11/comb_iter_1/right/stack/relu_2/ReLU                                  0.043ms
+InceptionV2/cell_11/comb_iter_1/right/stack/separable_3x3_2 + InceptionV2/cell_11/comb_iter_1/Add                                                      0.051ms
+InceptionV2/cell_11/comb_iter_2/left/stack/relu_1/ReLU                                                                                                 0.007ms
+InceptionV2/cell_11/comb_iter_2/left/stack/separable_5x5_1 + InceptionV2/cell_11/comb_iter_2/left/stack/relu_2/ReLU                                    0.051ms
+InceptionV2/cell_11/comb_iter_2/left/stack/separable_5x5_2                                                                                             0.046ms
+InceptionV2/cell_11/comb_iter_2/right/stack/relu_1/ReLU                                                                                                0.007ms
+InceptionV2/cell_11/comb_iter_2/right/stack/separable_3x3_1 + InceptionV2/cell_11/comb_iter_2/right/stack/relu_2/ReLU                                  0.043ms
+InceptionV2/cell_11/comb_iter_2/right/stack/separable_3x3_2 + InceptionV2/cell_11/comb_iter_2/Add                                                      0.051ms
+InceptionV2/cell_11/comb_iter_3/left/AvgPool2D                                                                                                         0.009ms
+InceptionV2/cell_11/comb_iter_3/Add                                                                                                                    0.006ms
+InceptionV2/cell_11/comb_iter_4/left/AvgPool2D                                                                                                         0.007ms
+InceptionV2/cell_11/comb_iter_4/right/AvgPool2D                                                                                                        0.007ms
+InceptionV2/cell_11/comb_iter_4/Add                                                                                                                    0.005ms
+InceptionV2/cell_11/comb_iter_5/left/stack/relu_1/ReLU                                                                                                 0.006ms
+InceptionV2/cell_11/comb_iter_5/left/stack/separable_3x3_1 + InceptionV2/cell_11/comb_iter_5/left/stack/relu_2/ReLU                                    0.043ms
+InceptionV2/cell_11/comb_iter_5/left/stack/separable_3x3_2 + InceptionV2/cell_11/comb_iter_5/Add                                                       0.051ms
+InceptionV2/Softmax/Softmax                                                                                                                            0.517ms
+Time over all layers: 14.031
+
+
