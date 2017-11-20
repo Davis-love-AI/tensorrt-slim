@@ -20,7 +20,9 @@
 // ========================================================================== //
 #include "nets/inception1.h"
 #include "nets/inception2.h"
+
 #include "nets/nasnet.h"
+#include "nets/nasnet_v2.h"
 
 #include "nets/resnet_v1.h"
 #include "nets/resnext.h"

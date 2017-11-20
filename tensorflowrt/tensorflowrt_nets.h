@@ -22,6 +22,8 @@
 #include "nets/resnet_v3.h"
 
 #include "nets/nasnet.h"
+#include "nets/nasnet_v2.h"
+
 #include "nets/mobilenets.h"
 
 #endif
