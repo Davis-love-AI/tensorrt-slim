@@ -120,7 +120,8 @@ public:
     }
     /** Stack of grouped convolution2d. */
     nvinfer1::ITensor* conv2d_stacked(nvinfer1::ITensor* net, tfrt::scope sc,
-        size_t ksize, size_t stride, size_t num_outputs, size_t num_layers,
+        size_t ksize, size_t stride, size_t dilation,
+        size_t num_outputs, size_t num_layers,
         size_t group_size, size_t ngroups_11) const
     {
         auto ssc = sc.sub("stack");
@@ -135,13 +136,14 @@ public:
             name = fmt::format("relu_{}", i+1);
             net = tfrt::relu(ssc, name)(net);
             name = fmt::format("conv2d_{0}x{0}_{1}_g{2}", ksize, i+1, group_size);
-            net = conv2d_grouped(ssc, name).ngroups(ngroups).noutputs(num_outputs).
-                stride(stride).ksize(ksize)(net);
+            net = conv2d_grouped(ssc, name).ngroups(ngroups)
+                .noutputs(num_outputs).dilation(1)
+                .stride(stride).ksize(ksize)(net);
             // 1x1 convolution (except last layer).
             if (i != num_layers-1) {
                 name = fmt::format("conv2d_{0}x{0}_{1}_g{2}", 1, i+1, ngroups_11);
-                net = conv2d_grouped(ssc, name).ngroups(ngroups_11).noutputs(num_outputs).
-                    stride(1).ksize(1)(net);
+                net = conv2d_grouped(ssc, name).ngroups(ngroups_11)
+                    .noutputs(num_outputs).stride(1).ksize(1)(net);
             }
             stride = 1;
         }
@@ -185,7 +187,7 @@ public:
         // Block 1: grouped conv2d 3x3 (n / n-1).
         sc = m_scope.sub("block1");
         net = tfrt::concat_channels(sc)({net_n, net_n_1});
-        net = conv2d_stacked(net, sc, 3, 1, fsize*2, 2, 32, 3);
+        net = conv2d_stacked(net, sc, 3, 1, 2, fsize*2, 2, 32, 3);
         blocks.push_back( net );
         
         // Block 2: avg_pool_3x3 + id (n / n-1).
@@ -231,7 +233,7 @@ public:
         // Block 1: grouped conv2d 3x3 (n / n-1).
         sc = m_scope.sub("block1");
         net = tfrt::concat_channels(sc)({net_n, net_n_1});
-        net = conv2d_stacked(net, sc, 3, 2, fsize*2, 2, 32, 3);
+        net = conv2d_stacked(net, sc, 3, 2, 1, fsize*2, 2, 32, 3);
         blocks.push_back( net );
         
         // Block 2: max_pool_3x3 + id (n / n-1).
