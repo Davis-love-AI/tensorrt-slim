@@ -83,6 +83,7 @@ public:
         }
         // Number of channels different?
         if (int(fsize) != shape_n_1.c()) {
+            net = tfrt::relu(sc, "relu_n_1")(net);
             net = conv2d(sc, "1x1").noutputs(fsize).ksize(1)(net);
         }
         return net;
