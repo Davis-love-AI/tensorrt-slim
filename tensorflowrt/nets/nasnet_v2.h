@@ -35,7 +35,7 @@ typedef tfrt::convolution2d<
     tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
 typedef tfrt::convolution2d<
     tfrt::ActivationType::NONE, tfrt::PaddingType::VALID, true>  conv2d_valid;
-        
+
 typedef tfrt::max_pooling2d<tfrt::PaddingType::SAME>    max_pool2d;
 typedef tfrt::avg_pooling2d<tfrt::PaddingType::SAME>    avg_pool2d;
 typedef tfrt::concat_channels                           concat_channels;
@@ -55,7 +55,7 @@ public:
     {
         size_t fsize = this->filter_size();
         // ReLU + conv.
-        net = tfrt::relu(sc, "relu")(net);
+        // net = tfrt::relu(sc, "relu")(net);
         net = conv2d(sc, "1x1").noutputs(fsize).ksize(1)(net);
         return net;
     }
@@ -68,14 +68,15 @@ public:
         if (net_n_1 == nullptr) {
             size_t fsize = this->filter_size();
             // ReLU + conv.
-            auto net = tfrt::relu(sc, "relu_n_1")(net_n);
+            auto net = net_n;
+            // auto net = tfrt::relu(sc, "relu_n_1")(net_n);
             net = conv2d(sc, "1x1_n_1").noutputs(fsize).ksize(1)(net);
             return net;
         }
         size_t fsize = this->filter_size();
         auto shape_n = tfrt::dims_chw(net_n);
         auto shape_n_1 = tfrt::dims_chw(net_n_1);
-        
+
         // Approximation of the original implementation. TODO: FIX stride=2
         // First case: different HW shape.
         if (shape_n.h() != shape_n_1.h() || shape_n.w() != shape_n_1.w()) {
@@ -83,7 +84,7 @@ public:
         }
         // Number of channels different?
         if (int(fsize) != shape_n_1.c()) {
-            net = tfrt::relu(sc, "relu_n_1")(net);
+            // net = tfrt::relu(sc, "relu_n_1")(net);
             net = conv2d(sc, "1x1").noutputs(fsize).ksize(1)(net);
         }
         return net;
@@ -169,7 +170,7 @@ protected:
 class normal_cell : public base_cell
 {
 public:
-    normal_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) : 
+    normal_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) :
         base_cell(sc, num_filters, filter_scaling)
     {
     }
@@ -187,24 +188,25 @@ public:
         // Block 1: grouped conv2d 3x3 (n / n-1).
         sc = m_scope.sub("block1");
         net = tfrt::concat_channels(sc)({net_n, net_n_1});
-        net = conv2d_stacked(net, sc, 3, 1, 2, fsize*2, 2, 32, 3);
+        net = conv2d_stacked(net, sc, 3, 1, 1, fsize*2, 2, 32, 3);
         blocks.push_back( net );
-        
+
         // Block 2: avg_pool_3x3 + id (n / n-1).
         sc = m_scope.sub("block2");
         net_l = avg_pool2d(sc.sub("left")).ksize(3)(net_n);
-        net_r = this->identity(net_n_1, sc.sub("right"), 1, fsize, true);  
+        net_r = this->identity(net_n_1, sc.sub("right"), 1, fsize, true);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
-        
+
         // Block 3: avg_pool_3x3 (n-1 / n-1).
         sc = m_scope.sub("block3");
         net_l = avg_pool2d(sc.sub("left")).ksize(3)(net_n_1);
         net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
         blocks.push_back( net_l );
-        
+
         // Concat this big mess!
         blocks.push_back( net_n );
         net = tfrt::concat_channels(sc)(blocks);
+        net = tfrt::relu(sc, "relu_concat")(net);
         return net;
     }
 };
@@ -215,7 +217,7 @@ public:
 class reduction_cell : public base_cell
 {
 public:
-    reduction_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) : 
+    reduction_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) :
         base_cell(sc, num_filters, filter_scaling)
     {
     }
@@ -235,25 +237,26 @@ public:
         net = tfrt::concat_channels(sc)({net_n, net_n_1});
         net = conv2d_stacked(net, sc, 3, 2, 1, fsize*2, 2, 32, 3);
         blocks.push_back( net );
-        
+
         // Block 2: max_pool_3x3 + id (n / n-1).
         sc = m_scope.sub("block2");
         net_l = max_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
         blocks.push_back( net_l );
-        
+
         // Block 3: max_pool_3x3 (n-1 / n-1).
         sc = m_scope.sub("block3");
         net_l = max_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n_1);
         net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
         blocks.push_back( net_l );
-        
+
         // Block 2: max_pool_3x3 + id (n / n-1).
         sc = m_scope.sub("block4");
         net_l = avg_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
         blocks.push_back( net_l );
-        
+
         // Concat this big mess!
         net = tfrt::concat_channels(sc)(blocks);
+        net = tfrt::relu(sc, "relu_concat")(net);
         return net;
     }
 };
@@ -264,12 +267,12 @@ public:
 class net : public tfrt::imagenet_network
 {
 public:
-    net(std::string name, 
+    net(std::string name,
         float stem_multiplier, float filter_scaling_rate,
         size_t num_cells, size_t num_reduction_layers, size_t num_conv_filters,
-        bool skip_reduction_layer_input) : 
+        bool skip_reduction_layer_input) :
             tfrt::imagenet_network(name, 1000, true),
-            m_stem_multiplier{stem_multiplier}, 
+            m_stem_multiplier{stem_multiplier},
             m_filter_scaling_rate{filter_scaling_rate},
             m_num_cells{num_cells},
             m_num_reduction_layers{num_reduction_layers},
@@ -282,7 +285,7 @@ public:
         // Input + core.
         auto net = tfrt::input(sc)();
         net = this->core(net, sc);
-        
+
         // Logits?
         // auto ssc = sc.sub("Logits");
         // net = avg_pool2d(ssc, "AvgPool_1a_7x7").ksize({7, 7})(net);
@@ -315,7 +318,7 @@ public:
                 // Scope name + cell construction...
                 auto ssc = sc.sub( fmt::format("reduction_cell_{}", i) );
                 auto cell = reduction_cell(ssc, m_num_conv_filters, filter_scaling);
-                
+
                 // Apply!
                 net = cell(net, cell_outputs[cell_outputs.size()-2]);
                 cell_outputs.push_back(net);
@@ -406,7 +409,7 @@ class net : public nasnet_v2::net
 {
 public:
     /** NASNet mobile definition. */
-    net() : nasnet_v2::net("nasnet_v2_small", 1.0, 2.0, 12, 2, 48, false)
+    net() : nasnet_v2::net("nasnet_v2_small", 1.0, 2.0, 12, 2, 72, false)
     {}
 
     // stem_multiplier=1.0,
