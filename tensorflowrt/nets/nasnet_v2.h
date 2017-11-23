@@ -425,6 +425,32 @@ public:
     // total_training_steps=250000,
 };
 }
+
+/* ============================================================================
+ * NASNet medium.
+ * ========================================================================== */
+namespace nasnet_v2_medium
+{
+class net : public nasnet_v2::net
+{
+public:
+    /** NASNet mobile definition. */
+    net() : nasnet_v2::net("nasnet_v2_medium", 1.0, 2.0, 15, 2, 72, false)
+    {}
+
+    // stem_multiplier=1.0,
+    // dense_dropout_keep_prob=0.5,
+    // num_cells=12,
+    // filter_scaling_rate=2.0,
+    // drop_path_keep_prob=1.0,
+    // num_conv_filters=44,
+    // use_aux_head=1,
+    // num_reduction_layers=2,
+    // data_format='NHWC',
+    // skip_reduction_layer_input=0,
+    // total_training_steps=250000,
+};
+}
 /* ============================================================================
  * NASNet large.
  * ========================================================================== */
