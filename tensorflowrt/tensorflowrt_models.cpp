@@ -30,6 +30,7 @@ std::unique_ptr<tfrt::network>&& nets_factory(const std::string& name)
         // ImageNet classification.
         nets["inception1"] = std::make_unique<inception1::net>();
         nets["inception2"] = std::make_unique<inception2::net>();
+        nets["inception2_group"] = std::make_unique<inception2_group::net>();
 
         nets["resnet_v1_50"] = std::make_unique<resnet_v1_50::net>();
         nets["resnet_v1_101"] = std::make_unique<resnet_v1_101::net>();
