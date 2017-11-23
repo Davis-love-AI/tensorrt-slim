@@ -409,7 +409,7 @@ class net : public nasnet_v2::net
 {
 public:
     /** NASNet mobile definition. */
-    net() : nasnet_v2::net("nasnet_v2_small", 1.0, 2.0, 12, 2, 72, false)
+    net() : nasnet_v2::net("nasnet_v2_small", 1.0, 2.0, 12, 2, 48, false)
     {}
 
     // stem_multiplier=1.0,
