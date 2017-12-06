@@ -15,6 +15,7 @@
 // #include <fcntl.h>
 // #include <unistd.h>
 #include <memory>
+#include <stdexcept>
 
 #include "utils.h"
 #include "tensorflowrt_models.h"
@@ -57,6 +58,14 @@ std::unique_ptr<tfrt::network>&& nets_factory(const std::string& name)
         nets["seg_inception2_v1_5x5"] = std::make_unique<seg_inception2_v1_5x5::net>();
         nets["seg_inception2_logits_v1"] = std::make_unique<seg_inception2_logits_v1::net>();
         nets["seg_inception2_2x2"] = std::make_unique<seg_inception2_2x2::net>();
+    }
+    if (nets.find(name) == nets.end()) {
+        LOG(ERROR) << "NETWORK: can find network named '" << name << "'.";
+        std::cout << "Networks available:" << std::endl;
+        for (auto it = nets.begin(); it != nets.end(); ++it) {
+            std::cout << " * " << it->first << std::endl;
+        }
+        throw std::out_of_range("NETWORK: can find network.");
     }
     return std::move(nets.at(name));
 }
