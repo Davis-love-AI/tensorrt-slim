@@ -97,17 +97,18 @@ public:
     }
     /** Stack of separable convolutions. */
     nvinfer1::ITensor* sep_conv2d_stacked(nvinfer1::ITensor* net, tfrt::scope sc,
-        size_t ksize, size_t stride, size_t num_outputs, size_t num_layers) const
+        size_t ksize, size_t stride, //size_t ngroups_pw,
+        size_t num_outputs, size_t num_layers) const
     {
         auto ssc = sc.sub("stack");
         std::string name;
-        for (size_t i = 0 ; i < num_layers ; ++i) {
+        for (size_t i = 0 ; i < num_layers-1 ; ++i) {
             // ReLU + Separable conv.
-            name = fmt::format("relu_{}", i+1);
-            net = tfrt::relu(ssc, name)(net);
+            // name = fmt::format("relu_{}", i+1);
+            // net = tfrt::relu(ssc, name)(net);
             name = fmt::format("separable_{0}x{0}_{1}", ksize, i+1);
             net = separable_conv2d(ssc, name)
-                .group_size(1)
+                .dw_group_size(1)
                 .noutputs(num_outputs).stride(stride).ksize(ksize)(net);
             stride = 1;
         }

@@ -245,7 +245,7 @@ public:
     separable_convolution2d(
         const tfrt::scope& sc, const std::string& lname="SeparableConv2d") :
         convolution2d<ACT, PAD, BN>(sc, lname),
-        m_depth_multiplier{1}, m_group_size{1} {
+        m_depth_multiplier{1}, m_dw_group_size{1}, m_pw_ngroups{1} {
     }
     /** Add the layer to network graph, using operator(root).
      * 2D convolution + batch norm + activation.
@@ -259,7 +259,7 @@ public:
         separable_convolution2d dw_conv2d(*this);
         dw_conv2d.noutputs(in_channels * m_depth_multiplier);
         // Number of groups estimate.
-        int ngroups = std::ceil(float(in_channels) / float(m_group_size));
+        int ngroups = std::ceil(float(in_channels) / float(m_dw_group_size));
         // ngroups = 1;
         // TensorRT bug. Best group size???
         net = dw_conv2d.convolution(net, ngroups, "depthwise_weights", "depthwise_biases", "_dw");
@@ -271,7 +271,7 @@ public:
         // Pointwise convolution.
         separable_convolution2d pw_conv2d(*this);
         pw_conv2d.dilation({1, 1}).ksize({1, 1}).stride({1, 1});
-        net = pw_conv2d.convolution(net, 1, "pointwise_weights", "biases", "_pw");
+        net = pw_conv2d.convolution(net, m_pw_ngroups, "pointwise_weights", "biases", "_pw");
         net = pw_conv2d.batch_norm(net);
         net = pw_conv2d.activation(net);
         return this->mark_output(net);
@@ -285,21 +285,31 @@ public:
     int depthmul() const {
         return m_depth_multiplier;
     }
-    /** Named parameter: group size.
+    /** Named parameter: depthwise group size.
      */
-    separable_convolution2d& group_size(int group_size) {
-        m_group_size = group_size;
+    separable_convolution2d& dw_group_size(int group_size) {
+        m_dw_group_size = group_size;
         return *this;
     }
-    int group_size() const {
-        return m_group_size;
+    int dw_group_size() const {
+        return m_dw_group_size;
     }
-
+    /** Named parameter: pointwise number of groups.
+     */
+    separable_convolution2d& pw_ngroups(int ngroups) {
+        m_pw_ngroups = ngroups;
+        return *this;
+    }
+    int pw_ngroups() const {
+        return m_pw_ngroups;
+    }
 protected:
     // Depth multiplier.
     int  m_depth_multiplier;
-    // Group size.
-    int  m_group_size;
+    // Depthwise group size.
+    int  m_dw_group_size;
+    // Pointwise number of groups.
+    int  m_pw_ngroups;
 };
 
 /** Separable 2D convolution layer.

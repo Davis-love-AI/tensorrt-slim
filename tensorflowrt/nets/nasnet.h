@@ -107,7 +107,7 @@ public:
             net = tfrt::relu(ssc, name)(net);
             name = fmt::format("separable_{0}x{0}_{1}", ksize, i+1);
             net = separable_conv2d(ssc, name)
-                .group_size(1)
+                .dw_group_size(1)
                 .noutputs(num_outputs).stride(stride).ksize(ksize)(net);
             stride = 1;
         }

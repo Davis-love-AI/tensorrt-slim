@@ -47,7 +47,7 @@ inline nvinfer1::ITensor* block(nvinfer1::ITensor* net, tfrt::scope sc,
     size_t noutputs, size_t stride, size_t dilation, int group_size)
 {
     net = separable_conv2d(sc, "sep_conv2d")
-        .group_size(group_size)
+        .dw_group_size(group_size)
         .dilation(dilation).noutputs(noutputs)
         .stride(stride).ksize(3)(net);
     return net;
