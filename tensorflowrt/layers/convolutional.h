@@ -242,8 +242,10 @@ class separable_convolution2d : public convolution2d<ACT, PAD, BN>
 public:
     /** Constructor: declare the layer.
      */
-    separable_convolution2d(const tfrt::scope& sc, const std::string& lname="SeparableConv2d") :
-        convolution2d<ACT, PAD, BN>(sc, lname), m_depth_multiplier{1} {
+    separable_convolution2d(
+        const tfrt::scope& sc, const std::string& lname="SeparableConv2d") :
+        convolution2d<ACT, PAD, BN>(sc, lname),
+        m_depth_multiplier{1}, m_group_size{1} {
     }
     /** Add the layer to network graph, using operator(root).
      * 2D convolution + batch norm + activation.
@@ -252,13 +254,14 @@ public:
         auto inshape = static_cast<nvinfer1::DimsCHW&&>(net->getDimensions());
         LOG(INFO) << "LAYER 2D contrib separable convolution '" << this->m_scope.name() << "'. "
             << "Input shape: " << dims_str(inshape);
-        // Number of groups: input channel size.
-        int ngroups = dims_channels(inshape);
         // Depthwise convolution, with depth multiplier.
+        int in_channels = dims_channels(inshape);
         separable_convolution2d dw_conv2d(*this);
-        dw_conv2d.noutputs(ngroups * m_depth_multiplier);
-        // TODO: TensorRT bug. Replace group conv. by classic convolution.
-        ngroups = 1;
+        dw_conv2d.noutputs(in_channels * m_depth_multiplier);
+        // Number of groups estimate.
+        int ngroups = std::ceil(float(in_channels) / float(m_group_size));
+        // ngroups = 1;
+        // TensorRT bug. Best group size???
         net = dw_conv2d.convolution(net, ngroups, "depthwise_weights", "depthwise_biases", "_dw");
         // Pointwise convolution.
         separable_convolution2d pw_conv2d(*this);
@@ -277,10 +280,21 @@ public:
     int depthmul() const {
         return m_depth_multiplier;
     }
+    /** Named parameter: group size.
+     */
+    separable_convolution2d& group_size(int group_size) {
+        m_group_size = group_size;
+        return *this;
+    }
+    int group_size() const {
+        return m_group_size;
+    }
 
 protected:
     // Depth multiplier.
     int  m_depth_multiplier;
+    // Group size.
+    int  m_group_size;
 };
 
 /** Separable 2D convolution layer.
@@ -291,7 +305,8 @@ class separable_convolution2d_test : public convolution2d<ACT, PAD, BN>
 public:
     /** Constructor: declare the layer.
      */
-    separable_convolution2d_test(const tfrt::scope& sc, const std::string& lname="SeparableConv2d") :
+    separable_convolution2d_test(
+        const tfrt::scope& sc, const std::string& lname="SeparableConv2d") :
         convolution2d<ACT, PAD, BN>(sc, lname), m_depth_multiplier{1} {
     }
     /** Add the layer to network graph, using operator(root).
