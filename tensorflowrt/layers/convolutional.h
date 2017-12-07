@@ -266,7 +266,7 @@ public:
         // net = dw_conv2d.batch_norm(net);
         // Intermediate activation?
         if (IACT) {
-            net = dw_conv2d.activation(net);
+            net = dw_conv2d.activation(net, "_inter");
         }
         // Pointwise convolution.
         separable_convolution2d pw_conv2d(*this);

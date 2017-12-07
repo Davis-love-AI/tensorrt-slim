@@ -126,9 +126,9 @@ public:
      * Initialize kernel size and stride to {1, 1} values.
      */
     operation2d(const tfrt::scope& sc, const std::string& lname) :
-        layer(sc, lname), m_noutputs{0}, 
-        m_ksize{1, 1}, 
-        m_stride{1, 1}, 
+        layer(sc, lname), m_noutputs{0},
+        m_ksize{1, 1},
+        m_stride{1, 1},
         m_padding{0, 0},
         m_dilation{1, 1}
     {
@@ -285,10 +285,11 @@ protected:
     }
     /** Set up an activation operation.
      */
-    nvinfer1::ITensor* activation(nvinfer1::ITensor* input) {
+    nvinfer1::ITensor* activation(nvinfer1::ITensor* input, std::string suffix="") {
         LOG(INFO) << "OP activation. Type: " << ActivationName(ACT)
                 << " Input shape: " << dims_str(input->getDimensions());
         std::string aname = ActivationName(ACT);
+        aname += suffix;
         if(ACT != ActivationType::NONE && ACT != ActivationType::SOFTMAX) {
             nvinfer1::ActivationType kAct{nvinfer1::ActivationType(ACT)};
             // Generic activation layer...
