@@ -23,6 +23,7 @@
 #include "nets/inception2_group.h"
 
 #include "nets/nasnet.h"
+#include "nets/nasnet_v1b.h"
 #include "nets/nasnet_v2.h"
 
 #include "nets/resnet_v1.h"

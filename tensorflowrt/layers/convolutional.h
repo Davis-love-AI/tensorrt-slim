@@ -305,6 +305,66 @@ protected:
 /** Separable 2D convolution layer.
  */
 template <ActivationType ACT, PaddingType PAD, bool BN>
+class depthwise_convolution2d : public convolution2d<ACT, PAD, BN>
+{
+public:
+    /** Constructor: declare the layer.
+     */
+    depthwise_convolution2d(
+        const tfrt::scope& sc, const std::string& lname="DepthwiseConv2d") :
+        convolution2d<ACT, PAD, BN>(sc, lname),
+        m_depth_multiplier{1}, m_group_size{1} {
+    }
+    /** Add the layer to network graph, using operator(root).
+     * 2D convolution + batch norm + activation.
+     */
+    virtual nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
+        auto inshape = static_cast<nvinfer1::DimsCHW&&>(net->getDimensions());
+        LOG(INFO) << "LAYER 2D contrib depthwise convolution '" << this->m_scope.name() << "'. "
+            << "Input shape: " << dims_str(inshape);
+        // Depthwise convolution, with depth multiplier.
+        int in_channels = dims_channels(inshape);
+        depthwise_convolution2d dw_conv2d(*this);
+        dw_conv2d.noutputs(in_channels * m_depth_multiplier);
+        // Number of groups estimate.
+        int ngroups = std::ceil(float(in_channels) / float(m_group_size));
+        // ngroups = 1;
+        // TensorRT bug. Best group size???
+        net = dw_conv2d.convolution(net, ngroups, "depthwise_weights", "depthwise_biases", "_dw");
+        net = dw_conv2d.batch_norm(net);
+        net = dw_conv2d.activation(net);
+        return this->mark_output(net);
+    }
+    /** Named parameter: depth multiplier.
+     */
+    depthwise_convolution2d& depthmul(int depth_multiplier) {
+        m_depth_multiplier = depth_multiplier;
+        return *this;
+    }
+    int depthmul() const {
+        return m_depth_multiplier;
+    }
+    /** Named parameter: group size.
+     */
+    depthwise_convolution2d& group_size(int group_size) {
+        m_group_size = group_size;
+        return *this;
+    }
+    int group_size() const {
+        return m_group_size;
+    }
+
+protected:
+    // Depth multiplier.
+    int  m_depth_multiplier;
+    // Group size.
+    int  m_group_size;
+};
+
+
+/** Separable 2D convolution layer. TESTTNG
+ */
+template <ActivationType ACT, PaddingType PAD, bool BN>
 class separable_convolution2d_test : public convolution2d<ACT, PAD, BN>
 {
 public:
