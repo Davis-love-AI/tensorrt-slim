@@ -55,6 +55,8 @@ std::unique_ptr<tfrt::network>&& nets_factory(const std::string& name)
 
         nets["nasnet_v1b_mobile"] = std::make_unique<nasnet_v1b_mobile::net>();
         nets["nasnet_v1b_large"] = std::make_unique<nasnet_v1b_large::net>();
+        nets["nasnet_v1c_mobile"] = std::make_unique<nasnet_v1c_mobile::net>();
+        nets["nasnet_v1c_large"] = std::make_unique<nasnet_v1c_large::net>();
 
         nets["nasnet_v2_small"] = std::make_unique<nasnet_v2_small::net>();
         nets["nasnet_v2_medium"] = std::make_unique<nasnet_v2_medium::net>();
