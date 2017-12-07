@@ -147,6 +147,7 @@ public:
         net_n = this->base_cell_n(net_n, m_scope.sub("base_cell_n"));
         net_n_1 = this->reduce_n_1(net_n, net_n_1, m_scope.sub("reduce_n_1"));
         size_t fsize = this->filter_size();
+        blocks.push_back( net_n );
 
         // Block 1: sep. 5x5 + sep 3x3 (n / n-1).
         sc = m_scope.sub("comb_iter_1");
