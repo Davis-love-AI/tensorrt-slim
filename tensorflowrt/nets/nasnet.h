@@ -27,13 +27,13 @@ namespace nasnet
  */
 // typedef tfrt::separable_convolution2d_test<
 //     tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true> separable_conv2d;
-typedef tfrt::convolution2d<
-    tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true> separable_conv2d;
+typedef tfrt::separable_convolution2d<
+    tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true, false> separable_conv2d;
 typedef tfrt::convolution2d<
     tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
 typedef tfrt::convolution2d<
     tfrt::ActivationType::NONE, tfrt::PaddingType::VALID, true>  conv2d_valid;
-        
+
 typedef tfrt::max_pooling2d<tfrt::PaddingType::SAME>    max_pool2d;
 typedef tfrt::avg_pooling2d<tfrt::PaddingType::SAME>    avg_pool2d;
 typedef tfrt::concat_channels                           concat_channels;
@@ -69,7 +69,7 @@ public:
         size_t fsize = this->filter_size();
         auto shape_n = tfrt::dims_chw(net_n);
         auto shape_n_1 = tfrt::dims_chw(net_n_1);
-        
+
         // Approximation of the original implementation. TODO: FIX stride=2
         // First case: different HW shape.
         if (shape_n.h() != shape_n_1.h() || shape_n.w() != shape_n_1.w()) {
@@ -106,7 +106,9 @@ public:
             name = fmt::format("relu_{}", i+1);
             net = tfrt::relu(ssc, name)(net);
             name = fmt::format("separable_{0}x{0}_{1}", ksize, i+1);
-            net = separable_conv2d(ssc, name).noutputs(num_outputs).stride(stride).ksize(ksize)(net);
+            net = separable_conv2d(ssc, name)
+                .group_size(1)
+                .noutputs(num_outputs).stride(stride).ksize(ksize)(net);
             stride = 1;
         }
         return net;
@@ -131,7 +133,7 @@ protected:
 class normal_cell : public base_cell
 {
 public:
-    normal_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) : 
+    normal_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) :
         base_cell(sc, num_filters, filter_scaling)
     {
     }
@@ -157,20 +159,20 @@ public:
         net_l = this->sep_conv2d_stacked(net_n_1, sc.sub("left"), 5, 1, fsize, 2);
         net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 3, 1, fsize, 2);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
-        
+
         // Block 3: avg_pool_3x3 + id (n / n-1).
         sc = m_scope.sub("comb_iter_3");
         net_l = avg_pool2d(sc.sub("left")).ksize(3)(net_n);
         net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
-        net_r = this->identity(net_n_1, sc.sub("right"), 1, fsize, true);  
+        net_r = this->identity(net_n_1, sc.sub("right"), 1, fsize, true);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
-        
+
         // Block 4: avg_pool_3x3 + avg_pool_3x3 (n-1 / n-1).
         sc = m_scope.sub("comb_iter_4");
         net_l = avg_pool2d(sc.sub("left")).ksize(3)(net_n_1);
         net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
         net_r = avg_pool2d(sc.sub("right")).ksize(3)(net_n_1);
-        net_r = this->identity(net_r, sc.sub("right"), 1, fsize, false);  
+        net_r = this->identity(net_r, sc.sub("right"), 1, fsize, false);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
 
         // Block 5: separable_3x3_2 + id (n / n).
@@ -191,7 +193,7 @@ public:
 class reduction_cell : public base_cell
 {
 public:
-    reduction_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) : 
+    reduction_cell(tfrt::scope sc, size_t num_filters, float filter_scaling) :
         base_cell(sc, num_filters, filter_scaling)
     {
     }
@@ -218,19 +220,19 @@ public:
         net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
         net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 7, 2, fsize, 2);
         blocks_tmp.push_back( tfrt::add(sc)(net_l, net_r) );
-        
+
         // Block 3: avg_pool_3x3 + separable_5x5_2 (n / n-1).
         sc = m_scope.sub("comb_iter_3");
         net_l = avg_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
         net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
         net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 5, 2, fsize, 2);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
-        
+
         // Block 4: id + avg_pool_3x3 (tmp / tmp).
         sc = m_scope.sub("comb_iter_4");
         net_l = this->identity(blocks_tmp[1], sc.sub("left"), 1, fsize, false);
         net_r = avg_pool2d(sc.sub("right")).ksize(3)(blocks_tmp[0]);
-        net_r = this->identity(net_r, sc.sub("right"), 1, fsize, false);  
+        net_r = this->identity(net_r, sc.sub("right"), 1, fsize, false);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
 
         // Block 5: separable_3x3_2 + max_pool_3x3 (tmp / n).
@@ -251,12 +253,12 @@ public:
 class net : public tfrt::imagenet_network
 {
 public:
-    net(std::string name, 
+    net(std::string name,
         float stem_multiplier, float filter_scaling_rate,
         size_t num_cells, size_t num_reduction_layers, size_t num_conv_filters,
-        bool skip_reduction_layer_input) : 
+        bool skip_reduction_layer_input) :
             tfrt::imagenet_network(name, 1000, true),
-            m_stem_multiplier{stem_multiplier}, 
+            m_stem_multiplier{stem_multiplier},
             m_filter_scaling_rate{filter_scaling_rate},
             m_num_cells{num_cells},
             m_num_reduction_layers{num_reduction_layers},
@@ -269,7 +271,7 @@ public:
         // Input + core.
         auto net = tfrt::input(sc)();
         net = this->core(net, sc);
-        
+
         // Logits?
         // auto ssc = sc.sub("Logits");
         // net = avg_pool2d(ssc, "AvgPool_1a_7x7").ksize({7, 7})(net);
@@ -302,7 +304,7 @@ public:
                 // Scope name + cell construction...
                 auto ssc = sc.sub( fmt::format("reduction_cell_{}", i) );
                 auto cell = reduction_cell(ssc, m_num_conv_filters, filter_scaling);
-                
+
                 // Apply!
                 net = cell(net, cell_outputs[cell_outputs.size()-2]);
                 cell_outputs.push_back(net);
