@@ -55,7 +55,7 @@ public:
     {
         size_t fsize = this->filter_size();
         // ReLU + conv.
-        net = tfrt::relu(sc, "relu")(net);
+        // net = tfrt::relu(sc, "relu")(net);
         net = conv2d(sc, "1x1").noutputs(fsize).ksize(1)(net);
         return net;
     }
