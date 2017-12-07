@@ -156,7 +156,7 @@ public:
         size_t fsize = this->filter_size();
         blocks.push_back( net_n );
 
-        auto net_c1 = tfrt::concat_channels(sc.sub("c1"))({net_n_1, net_n});
+        auto net_c1 = tfrt::concat_channels(sc.sub("c1"))({net_n, net_n_1});
         // Average pooling...
         net = avg_pool2d(sc.sub("avg_pool2d")).ksize(3)(net_c1);
         blocks.push_back( net );
