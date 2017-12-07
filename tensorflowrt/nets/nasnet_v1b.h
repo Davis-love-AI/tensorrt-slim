@@ -29,6 +29,8 @@ namespace nasnet_v1b
 //     tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true> separable_conv2d;
 typedef tfrt::separable_convolution2d<
     tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true, false> separable_conv2d;
+typedef tfrt::depthwise_convolution2d<
+    tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true> depthwise_conv2d;
 typedef tfrt::convolution2d<
     tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
 typedef tfrt::convolution2d<
@@ -97,21 +99,24 @@ public:
     }
     /** Stack of separable convolutions. */
     nvinfer1::ITensor* sep_conv2d_stacked(nvinfer1::ITensor* net, tfrt::scope sc,
-        size_t ksize, size_t stride, //size_t ngroups_pw,
+        size_t ksize, size_t stride, size_t ngroups_pw,
         size_t num_outputs, size_t num_layers) const
     {
         auto ssc = sc.sub("stack");
         std::string name;
         for (size_t i = 0 ; i < num_layers-1 ; ++i) {
-            // ReLU + Separable conv.
-            // name = fmt::format("relu_{}", i+1);
-            // net = tfrt::relu(ssc, name)(net);
+            // Separable conv.
             name = fmt::format("separable_{0}x{0}_{1}", ksize, i+1);
             net = separable_conv2d(ssc, name)
-                .dw_group_size(1)
+                .dw_group_size(1).pw_ngroups(ngroups_pw)
                 .noutputs(num_outputs).stride(stride).ksize(ksize)(net);
+            name = fmt::format("relu_{}", i+1);
+            net = tfrt::relu(ssc, name)(net);
             stride = 1;
         }
+        name = fmt::format("separable_{0}x{0}_{1}", ksize, num_layers);
+        net = depthwise_conv2d(ssc, name)
+            .group_size(1).stride(stride).ksize(ksize)(net);
         return net;
     }
 public:
@@ -141,47 +146,29 @@ public:
     /** Operator: taking layers n and n-1. */
     nvinfer1::ITensor* operator()(nvinfer1::ITensor* net_n, nvinfer1::ITensor* net_n_1)
     {
-        nvinfer1::ITensor* net_l, *net_r, *net;
+        nvinfer1::ITensor* net_l, *net_r, *net, *net_5x5, *net_3x3;
         std::vector<nvinfer1::ITensor*> blocks;
         tfrt::scope sc{m_scope};
+
         // Basic cell + reduce n-1.
         net_n = this->base_cell_n(net_n, m_scope.sub("base_cell_n"));
         net_n_1 = this->reduce_n_1(net_n, net_n_1, m_scope.sub("reduce_n_1"));
         size_t fsize = this->filter_size();
         blocks.push_back( net_n );
 
-        // Block 1: sep. 5x5 + sep 3x3 (n / n-1).
-        sc = m_scope.sub("comb_iter_1");
-        net_l = this->sep_conv2d_stacked(net_n, sc.sub("left"), 5, 1, fsize, 2);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 3, 1, fsize, 2);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+        auto net_c1 = tfrt::concat_channels(sc.sub("c1"))({net_n_1, net_n});
+        // Average pooling...
+        net = avg_pool2d(sc.sub("avg_pool2d")).ksize(3)(net_c1);
+        blocks.push_back( net );
 
-        // Block 2: sep. 5x5 + sep 3x3 (n-1 / n-1).
-        sc = m_scope.sub("comb_iter_2");
-        net_l = this->sep_conv2d_stacked(net_n_1, sc.sub("left"), 5, 1, fsize, 2);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 3, 1, fsize, 2);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+        // 3x3 separable convolution blocks.
+        net_3x3 = tfrt::concat_channels(sc.sub("c2"))({net_n_1, net_c1});
+        net_3x3 = this->sep_conv2d_stacked(net_3x3, sc.sub("sep_3x3"), 3, 1, 3, fsize*3, 2);
 
-        // Block 3: avg_pool_3x3 + id (n / n-1).
-        sc = m_scope.sub("comb_iter_3");
-        net_l = avg_pool2d(sc.sub("left")).ksize(3)(net_n);
-        net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
-        net_r = this->identity(net_n_1, sc.sub("right"), 1, fsize, true);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
-
-        // Block 4: avg_pool_3x3 + avg_pool_3x3 (n-1 / n-1).
-        sc = m_scope.sub("comb_iter_4");
-        net_l = avg_pool2d(sc.sub("left")).ksize(3)(net_n_1);
-        net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
-        net_r = avg_pool2d(sc.sub("right")).ksize(3)(net_n_1);
-        net_r = this->identity(net_r, sc.sub("right"), 1, fsize, false);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
-
-        // Block 5: separable_3x3_2 + id (n / n).
-        sc = m_scope.sub("comb_iter_5");
-        net_l = this->sep_conv2d_stacked(net_n, sc.sub("left"), 3, 1, fsize, 2);
-        net_r = this->identity(net_n, sc.sub("right"), 1, fsize, true);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+        // 5x5 separable convolution blocks.
+        net_5x5 = this->sep_conv2d_stacked(net_c1, sc.sub("sep_5x5"), 5, 1, 2, fsize*2, 2);
+        net_5x5 = tfrt::concat_channels(sc.sub("c3"))({net_5x5, net_n});
+        blocks.push_back( tfrt::add(sc)(net_3x3, net_5x5) );
 
         // Concat this big mess!
         net = tfrt::concat_channels(sc)(blocks);
@@ -212,22 +199,22 @@ public:
 
         // Block 1: sep. 5x5 + sep 7x7 (n / n-1).
         sc = m_scope.sub("comb_iter_1");
-        net_l = this->sep_conv2d_stacked(net_n, sc.sub("left"), 5, 2, fsize, 2);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 7, 2, fsize, 2);
+        net_l = this->sep_conv2d_stacked(net_n, sc.sub("left"), 5, 2, 1, fsize, 2);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 7, 2, 1, fsize, 2);
         blocks_tmp.push_back( tfrt::add(sc)(net_l, net_r) );
 
         // Block 2: max_pool_3x3 + separable_7x7_2 (n / n-1).
         sc = m_scope.sub("comb_iter_2");
         net_l = max_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
         net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 7, 2, fsize, 2);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 7, 2, 1, fsize, 2);
         blocks_tmp.push_back( tfrt::add(sc)(net_l, net_r) );
 
         // Block 3: avg_pool_3x3 + separable_5x5_2 (n / n-1).
         sc = m_scope.sub("comb_iter_3");
         net_l = avg_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
         net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 5, 2, fsize, 2);
+        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 5, 2, 1, fsize, 2);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
 
         // Block 4: id + avg_pool_3x3 (tmp / tmp).
@@ -239,7 +226,7 @@ public:
 
         // Block 5: separable_3x3_2 + max_pool_3x3 (tmp / n).
         sc = m_scope.sub("comb_iter_5");
-        net_l = this->sep_conv2d_stacked(blocks_tmp[0], sc.sub("left"), 3, 1, fsize, 2);
+        net_l = this->sep_conv2d_stacked(blocks_tmp[0], sc.sub("left"), 3, 1, 1, fsize, 2);
         net_r = max_pool2d(sc.sub("right")).ksize(3).stride(2)(net_n);
         blocks.push_back( tfrt::add(sc)(net_l, net_r) );
 
@@ -393,11 +380,11 @@ protected:
  * ========================================================================== */
 namespace nasnet_v1b_mobile
 {
-class net : public nasnet::net
+class net : public nasnet_v1b::net
 {
 public:
     /** NASNet mobile definition. */
-    net() : nasnet::net("nasnet_v1b_mobile", 1.0, 2.0, 12, 2, 44, false)
+    net() : nasnet_v1b::net("nasnet_v1b_mobile", 1.0, 2.0, 12, 2, 44, false)
     {}
 
     // stem_multiplier=1.0,
@@ -418,11 +405,11 @@ public:
  * ========================================================================== */
 namespace nasnet_v1b_large
 {
-class net : public nasnet::net
+class net : public nasnet_v1b::net
 {
 public:
     /** NASNet mobile definition. */
-    net() : nasnet::net("nasnet_v1b_large", 3.0, 2.0, 18, 2, 168, true)
+    net() : nasnet_v1b::net("nasnet_v1b_large", 3.0, 2.0, 18, 2, 168, true)
     {}
     // stem_multiplier=3.0,
     // dense_dropout_keep_prob=0.5,
