@@ -26,16 +26,14 @@ namespace mobilenets
 {
 /** Arg scope for Inception v2: SAME padding + batch normalization + ReLU.
  */
-typedef tfrt::separable_convolution2d_test<
-    tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
-
+typedef tfrt::separable_convolution2d<
+    tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true, true> separable_conv2d;
 typedef tfrt::convolution2d<
-tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
+    tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
 typedef tfrt::convolution2d<
     tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d_none;
-// typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d;
 typedef tfrt::convolution2d<
-    tfrt::ActivationType::NONE, tfrt::PaddingType::VALID, true>  conv2d_valid;
+    tfrt::ActivationType::RELU, tfrt::PaddingType::VALID, true>  conv2d_valid;
 
 typedef tfrt::max_pooling2d<tfrt::PaddingType::SAME>    max_pool2d;
 typedef tfrt::avg_pooling2d<tfrt::PaddingType::SAME>    avg_pool2d;
@@ -46,49 +44,58 @@ typedef tfrt::concat_channels                           concat_channels;
 // ========================================================================== //
 /** Mobilenets block. */
 inline nvinfer1::ITensor* block(nvinfer1::ITensor* net, tfrt::scope sc,
-    size_t noutputs, size_t stride, size_t dilation=1)
+    size_t noutputs, size_t stride, size_t dilation, int group_size)
 {
-    net = separable_conv2d(sc, "sep_conv2d").dilation(dilation).noutputs(noutputs).stride(stride).ksize(3)(net);
+    net = separable_conv2d(sc, "sep_conv2d")
+        .group_size(group_size)
+        .dilation(dilation).noutputs(noutputs)
+        .stride(stride).ksize(3)(net);
     return net;
 }
-inline nvinfer1::ITensor* base(nvinfer1::ITensor* input, tfrt::scope sc)
+inline nvinfer1::ITensor* base(nvinfer1::ITensor* input, tfrt::scope sc, int group_size)
 {
     nvinfer1::ITensor* net{input};
     // First convolution.
     net = conv2d_valid(sc, "conv1").noutputs(32).ksize(3).stride(2)(net);
 
     // First series of blocks.
-    net = block(net, sc.sub("block2"), 64, 1);
-    net = block(net, sc.sub("block3"), 128, 2);
-    net = block(net, sc.sub("block4"), 128, 1);
-    net = block(net, sc.sub("block5"), 256, 2);
-    net = block(net, sc.sub("block6"), 256, 1);
-    net = block(net, sc.sub("block7"), 512, 2);
+    net = block(net, sc.sub("block2"), 64, 1, 1, group_size);
+    net = block(net, sc.sub("block3"), 128, 2, 1, group_size);
+    net = block(net, sc.sub("block4"), 128, 1, 1, group_size);
+    net = block(net, sc.sub("block5"), 256, 2, 1, group_size);
+    net = block(net, sc.sub("block6"), 256, 1, 1, group_size);
+    net = block(net, sc.sub("block7"), 512, 2, 1, group_size);
     // 5 Intermediate blocks.
     for (size_t i = 0 ; i < 5 ; ++i) {
         std::string name = fmt::format("block{}", i+8);
-        net = block(net, sc.sub(name), 512, 1, std::min(int(i+1), 3));
+        net = block(net, sc.sub(name), 512, 1, 1, group_size);
     }
     // Final parts.
-    net = block(net, sc.sub("block13"), 1024, 2);
-    net = block(net, sc.sub("block14"), 1024, 1);
+    net = block(net, sc.sub("block13"), 1024, 2, 1, group_size);
+    net = block(net, sc.sub("block14"), 1024, 1, 1, group_size);
     return net;
 }
 
 class net : public tfrt::imagenet_network
 {
 public:
-    net() : tfrt::imagenet_network("mobilenets", 1000, true) {
+    net(int group_size=1) :
+        tfrt::imagenet_network("mobilenets", 1000, true),
+        m_group_size{group_size}
+    {
     }
     virtual nvinfer1::ITensor* build(tfrt::scope sc) {
         auto net = tfrt::input(sc)();
         // Mobilenets base.
-        net = base(net, sc);
+        net = base(net, sc, m_group_size);
         // Classification.
         net = conv2d(sc, "logits").noutputs(1000).ksize({1, 1})(net);
         net = tfrt::softmax(sc, "Softmax")(net);
         return net;
     }
+private:
+    // Group size used in separable convolution.
+    int  m_group_size;
 };
 }
 

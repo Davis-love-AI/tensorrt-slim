@@ -236,7 +236,7 @@ protected:
 
 /** Separable 2D convolution layer.
  */
-template <ActivationType ACT, PaddingType PAD, bool BN>
+template <ActivationType ACT, PaddingType PAD, bool BN, bool IACT=false>
 class separable_convolution2d : public convolution2d<ACT, PAD, BN>
 {
 public:
@@ -263,6 +263,11 @@ public:
         // ngroups = 1;
         // TensorRT bug. Best group size???
         net = dw_conv2d.convolution(net, ngroups, "depthwise_weights", "depthwise_biases", "_dw");
+        // net = dw_conv2d.batch_norm(net);
+        // Intermediate activation?
+        if (IACT) {
+            net = dw_conv2d.activation(net);
+        }
         // Pointwise convolution.
         separable_convolution2d pw_conv2d(*this);
         pw_conv2d.dilation({1, 1}).ksize({1, 1}).stride({1, 1});
