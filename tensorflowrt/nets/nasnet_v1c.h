@@ -190,46 +190,30 @@ public:
     /** Operator: taking layers n and n-1. */
     nvinfer1::ITensor* operator()(nvinfer1::ITensor* net_n, nvinfer1::ITensor* net_n_1)
     {
-        nvinfer1::ITensor* net_l, *net_r, *net;
-        std::vector<nvinfer1::ITensor*> blocks, blocks_tmp;
+        nvinfer1::ITensor* net_l, *net_r, *net, *net_3x3;
+        std::vector<nvinfer1::ITensor*> blocks;
         tfrt::scope sc{m_scope};
+
         // Basic cell + reduce n-1.
         net_n = this->base_cell_n(net_n, m_scope.sub("base_cell_n"));
         net_n_1 = this->reduce_n_1(net_n, net_n_1, m_scope.sub("reduce_n_1"));
         size_t fsize = this->filter_size();
 
-        // Block 1: sep. 5x5 + sep 7x7 (n / n-1).
-        sc = m_scope.sub("comb_iter_1");
-        net_l = this->sep_conv2d_stacked(net_n, sc.sub("left"), 5, 1, 2, 1, fsize, 2);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 7, 1, 2, 1, fsize, 2);
-        blocks_tmp.push_back( tfrt::add(sc)(net_l, net_r) );
+        // blocks.push_back( net_n );
+        auto net_c1 = tfrt::concat_channels(sc.sub("c1"))({net_n, net_n_1});
+        // Average pooling...
+        net = max_pool2d(sc.sub("max_pool2d")).stride(2).ksize(3)(net_c1);
+        blocks.push_back( net );
+        net = avg_pool2d(sc.sub("avg_pool2d")).stride(2).ksize(3)(net_c1);
 
-        // Block 2: max_pool_3x3 + separable_7x7_2 (n / n-1).
-        sc = m_scope.sub("comb_iter_2");
-        net_l = max_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
-        net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 7, 1, 2, 1, fsize, 2);
-        blocks_tmp.push_back( tfrt::add(sc)(net_l, net_r) );
-
-        // Block 3: avg_pool_3x3 + separable_5x5_2 (n / n-1).
-        sc = m_scope.sub("comb_iter_3");
-        net_l = avg_pool2d(sc.sub("left")).ksize(3).stride(2)(net_n);
-        net_l = this->identity(net_l, sc.sub("left"), 1, fsize, false);
-        net_r = this->sep_conv2d_stacked(net_n_1, sc.sub("right"), 5, 1, 2, 1, fsize, 2);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
-
-        // Block 4: id + avg_pool_3x3 (tmp / tmp).
-        sc = m_scope.sub("comb_iter_4");
-        net_l = this->identity(blocks_tmp[1], sc.sub("left"), 1, fsize, false);
-        net_r = avg_pool2d(sc.sub("right")).ksize(3)(blocks_tmp[0]);
-        net_r = this->identity(net_r, sc.sub("right"), 1, fsize, false);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
-
-        // Block 5: separable_3x3_2 + max_pool_3x3 (tmp / n).
-        sc = m_scope.sub("comb_iter_5");
-        net_l = this->sep_conv2d_stacked(blocks_tmp[0], sc.sub("left"), 3, 1, 1, 1, fsize, 2);
-        net_r = max_pool2d(sc.sub("right")).ksize(3).stride(2)(net_n);
-        blocks.push_back( tfrt::add(sc)(net_l, net_r) );
+        // First 3x3 sep. conv2d.
+        net_3x3 = this->sep_conv2d_stacked(
+            net_c1, sc.sub("sep_3x3_1"), 3, 2, 2, 2, fsize*2, 2);
+        auto net_c2 = tfrt::concat_channels(sc.sub("c2"))({net_3x3, net});
+        // Second 3x3 sep. conv2d.
+        net_3x3 = this->sep_conv2d_stacked(
+            net_c2, sc.sub("sep_3x3_2"), 3, 1, 1, 4, fsize*4, 2);
+        blocks.push_back( net_3x3 );
 
         // Concat this big mess!
         net = tfrt::concat_channels(sc)(blocks);
