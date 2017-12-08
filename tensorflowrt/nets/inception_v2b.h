@@ -130,48 +130,77 @@ inline tensor_pair block_mixed_max(tensor_pair inputs, tfrt::scope sc,
                                    tfrt::map_tensor* end_points=nullptr)
 {
     tensor_pair outputs;
+    std::vector<nvinfer1::ITensor*>  block1, block2;
     {
         nvinfer1::ITensor* net{inputs.first};
         // Branch 0.
         auto ssc = sc.sub("Branch_0l");
-        auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B0/2).ksize({1, 1})(net);
+        auto branch01 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B0/4).ksize({1, 1})(net);
+        auto branch02 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B0/4).ksize({1, 1})(net);
+        block1.push_back(branch01);
+        block2.push_back(branch02);
         // Branch 1.
         ssc = sc.sub("Branch_1l");
-        auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10/2).ksize({1, 1})(net);
-        branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B11/2).ksize({3, 3})(branch1);
+        auto branch11 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B11/4).ksize({1, 1})(net);
+        auto branch12 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B11/4).ksize({1, 1})(net);
+        block1.push_back( dw_conv2d(ssc, "Conv2d_0b_3x3_1")
+            .ksize({3, 3})(branch11) );
+        block2.push_back( dw_conv2d(ssc, "Conv2d_0b_3x3_2")
+            .ksize({3, 3})(branch12) );
         // Branch 2.
         ssc = sc.sub("Branch_2l");
         auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20/2).ksize({1, 1})(net);
-        branch2 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
-        branch2 = conv2d(ssc, "Conv2d_0c_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
+        branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
+        auto branch21 = conv2d(ssc, "Conv2d_0b_1x1_1").noutputs(B21/4).ksize({1, 1})(branch2);
+        auto branch22 = conv2d(ssc, "Conv2d_0b_1x1_2").noutputs(B21/4).ksize({1, 1})(branch2);
+        block1.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_1")
+            .ksize({3, 3})(branch21) );
+        block2.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_2")
+            .ksize({3, 3})(branch22) );
         // Branch 2.
         ssc = sc.sub("Branch_3l");
         auto branch3 = max_pool2d(ssc, "MaxPool_0a_3x3").ksize({3, 3})(net);
-        branch3 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B3/2).ksize({1, 1})(branch3);
-        // Concat everything!
-        outputs.first = concat_channels(sc.sub("left"))({branch0, branch1, branch2, branch3});
+        block1.push_back( conv2d(ssc, "Conv2d_0b_1x1_1")
+            .noutputs(B3/4).ksize({1, 1})(branch3) );
+        block2.push_back( conv2d(ssc, "Conv2d_0b_1x1_2")
+            .noutputs(B3/4).ksize({1, 1})(branch3) );
     }
     {
         nvinfer1::ITensor* net{inputs.second};
         // Branch 0.
         auto ssc = sc.sub("Branch_0r");
-        auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B0/2).ksize({1, 1})(net);
+        auto branch01 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B0/4).ksize({1, 1})(net);
+        auto branch02 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B0/4).ksize({1, 1})(net);
+        block1.push_back(branch01);
+        block2.push_back(branch02);
         // Branch 1.
         ssc = sc.sub("Branch_1r");
-        auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10/2).ksize({1, 1})(net);
-        branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B11/2).ksize({3, 3})(branch1);
+        auto branch11 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B11/4).ksize({1, 1})(net);
+        auto branch12 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B11/4).ksize({1, 1})(net);
+        block1.push_back( dw_conv2d(ssc, "Conv2d_0b_3x3_1")
+            .ksize({3, 3})(branch11) );
+        block2.push_back( dw_conv2d(ssc, "Conv2d_0b_3x3_2")
+            .ksize({3, 3})(branch12) );
         // Branch 2.
         ssc = sc.sub("Branch_2r");
         auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20/2).ksize({1, 1})(net);
-        branch2 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
-        branch2 = conv2d(ssc, "Conv2d_0c_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
+        branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
+        auto branch21 = conv2d(ssc, "Conv2d_0b_1x1_1").noutputs(B21/4).ksize({1, 1})(branch2);
+        auto branch22 = conv2d(ssc, "Conv2d_0b_1x1_2").noutputs(B21/4).ksize({1, 1})(branch2);
+        block1.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_1")
+            .ksize({3, 3})(branch21) );
+        block2.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_2")
+            .ksize({3, 3})(branch22) );
         // Branch 2.
         ssc = sc.sub("Branch_3r");
         auto branch3 = max_pool2d(ssc, "MaxPool_0a_3x3").ksize({3, 3})(net);
-        branch3 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B3/2).ksize({1, 1})(branch3);
-        // Concat everything!
-        outputs.second = concat_channels(sc.sub("right"))({branch0, branch1, branch2, branch3});
+        block1.push_back( conv2d(ssc, "Conv2d_0b_1x1_1")
+            .noutputs(B3/4).ksize({1, 1})(branch3) );
+        block2.push_back( conv2d(ssc, "Conv2d_0b_1x1_2")
+            .noutputs(B3/4).ksize({1, 1})(branch3) );
     }
+    outputs.first = concat_channels(sc.sub("left"))(block1);
+    outputs.second = concat_channels(sc.sub("right"))(block2);
     return outputs;
 }
 /** Specific mixed block with stride 2 used in Inception v2.
@@ -181,40 +210,51 @@ inline tensor_pair block_mixed_s2(tensor_pair inputs, tfrt::scope sc,
                                   tfrt::map_tensor* end_points=nullptr)
 {
     tensor_pair outputs;
+    std::vector<nvinfer1::ITensor*>  block1, block2;
     {
         nvinfer1::ITensor* net{inputs.first};
         // Branch 0.
         auto ssc = sc.sub("Branch_0l");
-        auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B00/2).ksize({1, 1})(net);
-        branch0 = conv2d(ssc, "Conv2d_1a_3x3").noutputs(B01/2).ksize({3, 3}).stride({2, 2})(branch0);
-        // Branch 2.
+        auto branch01 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B01/4).ksize({1, 1})(net);
+        auto branch02 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B01/4).ksize({1, 1})(net);
+        block1.push_back( dw_conv2d(ssc, "Conv2d_1a_3x3_1").ksize(3).stride(2)(branch01) );
+        block2.push_back( dw_conv2d(ssc, "Conv2d_1a_3x3_2").ksize(3).stride(2)(branch02) );
+        // Branch 1.
         ssc = sc.sub("Branch_1l");
-        auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10/2).ksize({1, 1})(net);
-        branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B11/2).ksize({3, 3})(branch1);
-        branch1 = conv2d(ssc, "Conv2d_1a_3x3").noutputs(B11/2).ksize({3, 3}).stride({2, 2})(branch1);
+        auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10/2).ksize({1, 1})(net);
+        branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize({3, 3})(branch2);
+        auto branch21 = conv2d(ssc, "Conv2d_0b_1x1_1").noutputs(B11/4).ksize({1, 1})(branch2);
+        auto branch22 = conv2d(ssc, "Conv2d_0b_1x1_2").noutputs(B11/4).ksize({1, 1})(branch2);
+        block1.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_1").ksize(3).stride(2)(branch21) );
+        block2.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_2").ksize(3).stride(2)(branch22) );
         // Branch 2.
         ssc = sc.sub("Branch_2l");
-        auto branch2 = max_pool2d(ssc, "MaxPool_1a_3x3").ksize({3, 3}).stride({2, 2})(net);
-        // Concat everything!
-        outputs.first = concat_channels(sc.sub("left"))({branch0, branch1, branch2});
+        auto branch3 = max_pool2d(ssc, "MaxPool_1a_3x3").stride(2).ksize(3)(net);
+        block1.push_back( branch3 );
     }
     {
         nvinfer1::ITensor* net{inputs.second};
         // Branch 0.
         auto ssc = sc.sub("Branch_0r");
-        auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B00/2).ksize({1, 1})(net);
-        branch0 = conv2d(ssc, "Conv2d_1a_3x3").noutputs(B01/2).ksize({3, 3}).stride({2, 2})(branch0);
-        // Branch 2.
+        auto branch01 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B01/4).ksize({1, 1})(net);
+        auto branch02 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B01/4).ksize({1, 1})(net);
+        block1.push_back( dw_conv2d(ssc, "Conv2d_1a_3x3_1").ksize(3).stride(2)(branch01) );
+        block2.push_back( dw_conv2d(ssc, "Conv2d_1a_3x3_2").ksize(3).stride(2)(branch02) );
+        // Branch 1.
         ssc = sc.sub("Branch_1r");
-        auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10/2).ksize({1, 1})(net);
-        branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B11/2).ksize({3, 3})(branch1);
-        branch1 = conv2d(ssc, "Conv2d_1a_3x3").noutputs(B11/2).ksize({3, 3}).stride({2, 2})(branch1);
+        auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10/2).ksize({1, 1})(net);
+        branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize({3, 3})(branch2);
+        auto branch21 = conv2d(ssc, "Conv2d_0b_1x1_1").noutputs(B11/4).ksize({1, 1})(branch2);
+        auto branch22 = conv2d(ssc, "Conv2d_0b_1x1_2").noutputs(B11/4).ksize({1, 1})(branch2);
+        block1.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_1").ksize(3).stride(2)(branch21) );
+        block2.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_2").ksize(3).stride(2)(branch22) );
         // Branch 2.
         ssc = sc.sub("Branch_2r");
-        auto branch2 = max_pool2d(ssc, "MaxPool_1a_3x3").ksize({3, 3}).stride({2, 2})(net);
-        // Concat everything!
-        outputs.second = concat_channels(sc.sub("right"))({branch0, branch1, branch2});
+        auto branch3 = max_pool2d(ssc, "MaxPool_1a_3x3").stride(2).ksize(3)(net);
+        block2.push_back( branch3 );
     }
+    outputs.first = concat_channels(sc.sub("left"))(block1);
+    outputs.second = concat_channels(sc.sub("right"))(block2);
     return outputs;
 }
 
