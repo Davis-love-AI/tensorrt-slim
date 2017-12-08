@@ -77,11 +77,10 @@ inline tensor_pair block_mixed_avg(tensor_pair inputs, tfrt::scope sc,
             .ksize({3, 3})(branch22) );
         // Branch 2.
         ssc = sc.sub("Branch_3l");
-        auto branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(net);
-        block1.push_back( conv2d(ssc, "Conv2d_0b_1x1_1")
-            .noutputs(B3/4).ksize({1, 1})(branch3) );
-        block2.push_back( conv2d(ssc, "Conv2d_0b_1x1_2")
-            .noutputs(B3/4).ksize({1, 1})(branch3) );
+        auto branch31 = conv2d(ssc, "Conv2d_0b_1x1_1").noutputs(B3/4).ksize({1, 1})(net);
+        auto branch32 = conv2d(ssc, "Conv2d_0b_1x1_2").noutputs(B3/4).ksize({1, 1})(net);
+        block1.push_back( avg_pool2d(ssc, "AvgPool_0a_3x3_1").ksize({3, 3})(branch31) );
+        block2.push_back( avg_pool2d(ssc, "AvgPool_0a_3x3_2").ksize({3, 3})(branch32) );
     }
     {
         nvinfer1::ITensor* net{inputs.second};
@@ -111,11 +110,10 @@ inline tensor_pair block_mixed_avg(tensor_pair inputs, tfrt::scope sc,
             .ksize({3, 3})(branch22) );
         // Branch 2.
         ssc = sc.sub("Branch_3r");
-        auto branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(net);
-        block1.push_back( conv2d(ssc, "Conv2d_0b_1x1_1")
-            .noutputs(B3/4).ksize({1, 1})(branch3) );
-        block2.push_back( conv2d(ssc, "Conv2d_0b_1x1_2")
-            .noutputs(B3/4).ksize({1, 1})(branch3) );
+        auto branch31 = conv2d(ssc, "Conv2d_0b_1x1_1").noutputs(B3/4).ksize({1, 1})(net);
+        auto branch32 = conv2d(ssc, "Conv2d_0b_1x1_2").noutputs(B3/4).ksize({1, 1})(net);
+        block1.push_back( avg_pool2d(ssc, "AvgPool_0a_3x3_1").ksize({3, 3})(branch31) );
+        block2.push_back( avg_pool2d(ssc, "AvgPool_0a_3x3_2").ksize({3, 3})(branch32) );
     }
     outputs.first = concat_channels(sc.sub("left"))(block1);
     outputs.second = concat_channels(sc.sub("right"))(block2);
@@ -159,11 +157,10 @@ inline tensor_pair block_mixed_max(tensor_pair inputs, tfrt::scope sc,
             .ksize({3, 3})(branch22) );
         // Branch 2.
         ssc = sc.sub("Branch_3l");
-        auto branch3 = max_pool2d(ssc, "MaxPool_0a_3x3").ksize({3, 3})(net);
-        block1.push_back( conv2d(ssc, "Conv2d_0b_1x1_1")
-            .noutputs(B3/4).ksize({1, 1})(branch3) );
-        block2.push_back( conv2d(ssc, "Conv2d_0b_1x1_2")
-            .noutputs(B3/4).ksize({1, 1})(branch3) );
+        auto branch31 = conv2d(ssc, "Conv2d_0b_1x1_1").noutputs(B3/4).ksize({1, 1})(net);
+        auto branch32 = conv2d(ssc, "Conv2d_0b_1x1_2").noutputs(B3/4).ksize({1, 1})(net);
+        block1.push_back( avg_pool2d(ssc, "MaxPool_0a_3x3_1").ksize({3, 3})(branch31) );
+        block2.push_back( avg_pool2d(ssc, "MaxPool_0a_3x3_2").ksize({3, 3})(branch32) );
     }
     {
         nvinfer1::ITensor* net{inputs.second};
@@ -193,11 +190,10 @@ inline tensor_pair block_mixed_max(tensor_pair inputs, tfrt::scope sc,
             .ksize({3, 3})(branch22) );
         // Branch 2.
         ssc = sc.sub("Branch_3r");
-        auto branch3 = max_pool2d(ssc, "MaxPool_0a_3x3").ksize({3, 3})(net);
-        block1.push_back( conv2d(ssc, "Conv2d_0b_1x1_1")
-            .noutputs(B3/4).ksize({1, 1})(branch3) );
-        block2.push_back( conv2d(ssc, "Conv2d_0b_1x1_2")
-            .noutputs(B3/4).ksize({1, 1})(branch3) );
+        auto branch31 = conv2d(ssc, "Conv2d_0b_1x1_1").noutputs(B3/4).ksize({1, 1})(net);
+        auto branch32 = conv2d(ssc, "Conv2d_0b_1x1_2").noutputs(B3/4).ksize({1, 1})(net);
+        block1.push_back( avg_pool2d(ssc, "MaxPool_0a_3x3_1").ksize({3, 3})(branch31) );
+        block2.push_back( avg_pool2d(ssc, "MaxPool_0a_3x3_2").ksize({3, 3})(branch32) );
     }
     outputs.first = concat_channels(sc.sub("left"))(block1);
     outputs.second = concat_channels(sc.sub("right"))(block2);
