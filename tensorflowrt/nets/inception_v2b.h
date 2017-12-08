@@ -276,12 +276,16 @@ inline tensor_pair block2(nvinfer1::ITensor* net, tfrt::scope sc,
     net = max_pool2d(sc, "MaxPool_2a_3x3").ksize({3, 3}).stride({2, 2})(net);
     net = conv2d(sc, "Conv2d_2b_1x1").noutputs(64).ksize({1, 1})(net);
 
-    outputs.first = separable_conv2d(sc, "Conv2d_2c_3x3l")
-        .dw_group_size(1).depthmul(1)
-        .noutputs(192/2).ksize(3)(net);
-    outputs.second = separable_conv2d(sc, "Conv2d_2c_3x3r")
-        .dw_group_size(1).depthmul(1)
-        .noutputs(192/2).ksize(3)(net);
+    net = dw_conv2d(sc, "Conv2d_2c_3x3_dw").depthmul(2).ksize(3)(net);
+    outputs.first = conv2d(sc, "Conv2d_2c_1x1l").noutputs(192/2).ksize(1)(net);
+    outputs.second = conv2d(sc, "Conv2d_2c_1x1r").noutputs(192/2).ksize(1)(net);
+
+    // outputs.first = separable_conv2d(sc, "Conv2d_2c_3x3l")
+    //     .dw_group_size(1).depthmul(1)
+    //     .noutputs(192/2).ksize(3)(net);
+    // outputs.second = separable_conv2d(sc, "Conv2d_2c_3x3r")
+    //     .dw_group_size(1).depthmul(1)
+    //     .noutputs(192/2).ksize(3)(net);
     // outputs.first = conv2d(sc, "Conv2d_2c_3x3l").noutputs(192/2).ksize({3, 3})(net);
     // outputs.second = conv2d(sc, "Conv2d_2c_3x3r").noutputs(192/2).ksize({3, 3})(net);
     return outputs;
