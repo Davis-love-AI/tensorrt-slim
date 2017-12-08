@@ -29,7 +29,7 @@ typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingT
 typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
 // typedef tfrt::convolution2d_grouped<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
 typedef tfrt::depthwise_convolution2d<
-    tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true> depthwise_conv2d;
+    tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true> dw_conv2d;
 
 typedef tfrt::max_pooling2d<tfrt::PaddingType::SAME>    max_pool2d;
 typedef tfrt::avg_pooling2d<tfrt::PaddingType::SAME>    avg_pool2d;
@@ -53,44 +53,68 @@ inline tensor_pair block_mixed_avg(tensor_pair inputs, tfrt::scope sc,
         nvinfer1::ITensor* net{inputs.first};
         // Branch 0.
         auto ssc = sc.sub("Branch_0l");
-        auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B0/2).ksize({1, 1})(net);
+        auto branch01 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B0/4).ksize({1, 1})(net);
+        auto branch02 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B0/4).ksize({1, 1})(net);
+        block1.push_back(branch01);
+        block2.push_back(branch02);
         // Branch 1.
         ssc = sc.sub("Branch_1l");
         auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10/2).ksize({1, 1})(net);
-        branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B11/2).ksize({3, 3})(branch1);
+        block1.push_back( dw_conv2d(ssc, "Conv2d_0b_3x3_1")
+            .noutputs(B11/4).ksize({3, 3})(branch1) );
+        block2.push_back( dw_conv2d(ssc, "Conv2d_0b_3x3_2")
+            .noutputs(B11/4).ksize({3, 3})(branch1) );
         // Branch 2.
         ssc = sc.sub("Branch_2l");
         auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20/2).ksize({1, 1})(net);
-        branch2 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
-        branch2 = conv2d(ssc, "Conv2d_0c_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
+        branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
+        branch2 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B21/2).ksize({1, 1})(branch2);
+        block1.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_1")
+            .noutputs(B21/4).ksize({3, 3})(branch2) );
+        block2.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_2")
+            .noutputs(B21/4).ksize({3, 3})(branch2) );
         // Branch 2.
         ssc = sc.sub("Branch_3l");
         auto branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(net);
-        branch3 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B3/2).ksize({1, 1})(branch3);
-
-        outputs.first = concat_channels(sc.sub("left"))({branch0, branch1, branch2, branch3});
+        block1.push_back( conv2d(ssc, "Conv2d_0b_1x1_1")
+            .noutputs(B3/4).ksize({1, 1})(branch3) );
+        block2.push_back( conv2d(ssc, "Conv2d_0b_1x1_2")
+            .noutputs(B3/4).ksize({1, 1})(branch3) );
     }
     {
         nvinfer1::ITensor* net{inputs.second};
         // Branch 0.
         auto ssc = sc.sub("Branch_0r");
-        auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B0/2).ksize({1, 1})(net);
+        auto branch01 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B0/4).ksize({1, 1})(net);
+        auto branch02 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B0/4).ksize({1, 1})(net);
+        block1.push_back(branch01);
+        block2.push_back(branch02);
         // Branch 1.
         ssc = sc.sub("Branch_1r");
         auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10/2).ksize({1, 1})(net);
-        branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B11/2).ksize({3, 3})(branch1);
+        block1.push_back( dw_conv2d(ssc, "Conv2d_0b_3x3_1")
+            .noutputs(B11/4).ksize({3, 3})(branch1) );
+        block2.push_back( dw_conv2d(ssc, "Conv2d_0b_3x3_2")
+            .noutputs(B11/4).ksize({3, 3})(branch1) );
         // Branch 2.
         ssc = sc.sub("Branch_2r");
         auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20/2).ksize({1, 1})(net);
-        branch2 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
-        branch2 = conv2d(ssc, "Conv2d_0c_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
+        branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
+        branch2 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B21/2).ksize({1, 1})(branch2);
+        block1.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_1")
+            .noutputs(B21/4).ksize({3, 3})(branch2) );
+        block2.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_2")
+            .noutputs(B21/4).ksize({3, 3})(branch2) );
         // Branch 2.
         ssc = sc.sub("Branch_3r");
         auto branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(net);
-        branch3 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B3/2).ksize({1, 1})(branch3);
-
-        outputs.second = concat_channels(sc.sub("right"))({branch0, branch1, branch2, branch3});
+        block1.push_back( conv2d(ssc, "Conv2d_0b_1x1_1")
+            .noutputs(B3/4).ksize({1, 1})(branch3) );
+        block2.push_back( conv2d(ssc, "Conv2d_0b_1x1_2")
+            .noutputs(B3/4).ksize({1, 1})(branch3) );
     }
+    outputs.first = concat_channels(sc.sub("left"))(block1);
+    outputs.second = concat_channels(sc.sub("left"))(block2);
     return outputs;
 }
 
