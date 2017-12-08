@@ -29,11 +29,11 @@ std::unique_ptr<tfrt::network>&& nets_factory(const std::string& name)
     // Fill the map at first call!
     if (nets.empty()) {
         // ImageNet classification.
-        nets["inception1"] = std::make_unique<inception1::net>();
-        nets["inception2"] = std::make_unique<inception2::net>();
+        nets["inception_v1"] = std::make_unique<inception1::net>();
+        nets["inception_v2"] = std::make_unique<inception2::net>();
         nets["inception_v2b"] = std::make_unique<inception_v2b::net>();
-        nets["inception2_group"] = std::make_unique<inception2_group::net>();
-        nets["inception4"] = std::make_unique<inception4::net>();
+        nets["inception_v2_group"] = std::make_unique<inception2_group::net>();
+        nets["inception_v4"] = std::make_unique<inception4::net>();
 
         nets["resnet_v1_50"] = std::make_unique<resnet_v1_50::net>();
         nets["resnet_v1_101"] = std::make_unique<resnet_v1_101::net>();
