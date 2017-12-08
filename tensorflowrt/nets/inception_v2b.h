@@ -263,7 +263,7 @@ inline nvinfer1::ITensor* block1(nvinfer1::ITensor* net, tfrt::scope sc,
     int depthwise_multiplier = std::min(int(64 / 3), 8);
     // // 7x7 depthwise convolution.
     net = separable_conv2d(sc, "Conv2d_1a_7x7")
-        .dw_group_size(1)
+        .dw_group_size(1024)
         .depthmul(depthwise_multiplier)
         .noutputs(64).ksize({7, 7}).stride({2, 2})(net);
     // net = max_pool2d(sc, "MaxPool_1a_3x3").ksize({3, 3}).stride({2, 2})(net);
@@ -275,8 +275,15 @@ inline tensor_pair block2(nvinfer1::ITensor* net, tfrt::scope sc,
     tensor_pair outputs;
     net = max_pool2d(sc, "MaxPool_2a_3x3").ksize({3, 3}).stride({2, 2})(net);
     net = conv2d(sc, "Conv2d_2b_1x1").noutputs(64).ksize({1, 1})(net);
-    outputs.first = conv2d(sc, "Conv2d_2c_3x3l").noutputs(192/2).ksize({3, 3})(net);
-    outputs.second = conv2d(sc, "Conv2d_2c_3x3r").noutputs(192/2).ksize({3, 3})(net);
+
+    outputs.first = separable_conv2d(sc, "Conv2d_2c_3x3l")
+        .dw_group_size(1).depthmul(1)
+        .noutputs(192/2).ksize(3)(net);
+    outputs.second = separable_conv2d(sc, "Conv2d_2c_3x3r")
+        .dw_group_size(1).depthmul(1)
+        .noutputs(192/2).ksize(3)(net);
+    // outputs.first = conv2d(sc, "Conv2d_2c_3x3l").noutputs(192/2).ksize({3, 3})(net);
+    // outputs.second = conv2d(sc, "Conv2d_2c_3x3r").noutputs(192/2).ksize({3, 3})(net);
     return outputs;
 }
 inline tensor_pair block3(tensor_pair net, tfrt::scope sc,
