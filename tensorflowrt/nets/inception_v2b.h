@@ -263,7 +263,7 @@ inline nvinfer1::ITensor* block1(nvinfer1::ITensor* net, tfrt::scope sc,
     int depthwise_multiplier = std::min(int(64 / 3), 8);
     // // 7x7 depthwise convolution.
     net = separable_conv2d(sc, "Conv2d_1a_7x7")
-        .dw_group_size(1024)
+        .dw_group_size(1)
         .depthmul(depthwise_multiplier)
         .noutputs(64).ksize({7, 7}).stride({2, 2})(net);
     // net = max_pool2d(sc, "MaxPool_1a_3x3").ksize({3, 3}).stride({2, 2})(net);
