@@ -175,7 +175,7 @@ inline nvinfer1::ITensor* block_stem(nvinfer1::ITensor* input, tfrt::scope sc,
         auto branch0 = max_pool2d_valid(ssc, "MaxPool_0a_3x3").ksize({3, 3}).stride(2)(net);
         ssc = sc.sub("Mixed_3a").sub("Branch_1");
         auto branch1 = conv2d_valid(ssc, "Conv2d_0a_3x3").noutputs(96).ksize({3, 3}).stride(2)(net);
-        net = concat_channels(sc)({branch0, branch1});
+        net = concat_channels(sc.sub("Mixed_3a"))({branch0, branch1});
     }
     // 73 x 73 x 160
     {
@@ -189,7 +189,7 @@ inline nvinfer1::ITensor* block_stem(nvinfer1::ITensor* input, tfrt::scope sc,
         branch1 = conv2d(ssc, "Conv2d_0c_7x1").noutputs(64).ksize({7, 1})(branch1);
         branch1 = conv2d_valid(ssc, "Conv2d_1a_3x3").noutputs(96).ksize({3, 3})(branch1);
 
-        net = concat_channels(sc)({branch0, branch1});
+        net = concat_channels(sc.sub("Mixed_4a"))({branch0, branch1});
     }
     // 71 x 71 x 192
     {
@@ -197,7 +197,7 @@ inline nvinfer1::ITensor* block_stem(nvinfer1::ITensor* input, tfrt::scope sc,
         auto branch0 = conv2d_valid(ssc, "Conv2d_1a_3x3").noutputs(96).ksize({3, 3}).stride(2)(net);
         ssc = sc.sub("Mixed_5a").sub("Branch_1");
         auto branch1 = max_pool2d_valid(ssc, "MaxPool_1a_3x3").ksize({3, 3}).stride(2)(net);
-        net = concat_channels(sc)({branch0, branch1});
+        net = concat_channels(sc.sub("Mixed_5a"))({branch0, branch1});
     }
     // 35 x 35 x 384
     return tfrt::add_end_point(end_points, sc.name(), net);
@@ -239,13 +239,14 @@ inline nvinfer1::ITensor* inception4(nvinfer1::ITensor* input,
                                      int num_classes=1001)
 {
     nvinfer1::ITensor* net;
+    // sc = sc.sub("v4");
     // Construct backbone network.
-    net = base(input, sc);
+    net = base(input, sc.sub("v4"));
     // Logits end block.
     {
         typedef tfrt::avg_pooling2d<tfrt::PaddingType::VALID>  avg_pool2d;
         typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, false>  conv2d;
-        auto ssc = sc.sub("Logits");
+        auto ssc = sc.sub("v4").sub("Logits");
         net = avg_pool2d(ssc, "AvgPool_1a").ksize({7, 7})(net);
         net = conv2d(ssc, "Conv2d_1c_1x1").noutputs(num_classes).ksize({1, 1})(net);
     }
