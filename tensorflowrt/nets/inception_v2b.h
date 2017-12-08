@@ -53,8 +53,8 @@ inline tensor_pair block_mixed_avg(tensor_pair inputs, tfrt::scope sc,
         nvinfer1::ITensor* net{inputs.first};
         // Branch 0.
         auto ssc = sc.sub("Branch_0l");
-        auto branch01 = conv2d_gp(ssc, "Conv2d_0a_1x1_1").ngroups(2).noutputs(B0/4).ksize({1, 1})(net);
-        auto branch02 = conv2d_gp(ssc, "Conv2d_0a_1x1_2").ngroups(2).noutputs(B0/4).ksize({1, 1})(net);
+        auto branch01 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B0/4).ksize({1, 1})(net);
+        auto branch02 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B0/4).ksize({1, 1})(net);
         block1.push_back(branch01);
         block2.push_back(branch02);
         // Branch 1.
@@ -86,8 +86,8 @@ inline tensor_pair block_mixed_avg(tensor_pair inputs, tfrt::scope sc,
         nvinfer1::ITensor* net{inputs.second};
         // Branch 0.
         auto ssc = sc.sub("Branch_0r");
-        auto branch01 = conv2d_gp(ssc, "Conv2d_0a_1x1_1").ngroups(2).noutputs(B0/4).ksize({1, 1})(net);
-        auto branch02 = conv2d_gp(ssc, "Conv2d_0a_1x1_2").ngroups(2).noutputs(B0/4).ksize({1, 1})(net);
+        auto branch01 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B0/4).ksize({1, 1})(net);
+        auto branch02 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B0/4).ksize({1, 1})(net);
         block1.push_back(branch01);
         block2.push_back(branch02);
         // Branch 1.
