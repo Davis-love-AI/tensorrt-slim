@@ -20,6 +20,7 @@
 // ========================================================================== //
 #include "nets/inception1.h"
 #include "nets/inception2.h"
+#include "nets/inception_v2b.h"
 #include "nets/inception2_group.h"
 #include "nets/inception4.h"
 
