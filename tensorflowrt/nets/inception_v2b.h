@@ -26,7 +26,9 @@ namespace inception_v2b
 /** Arg scope for Inception v2: SAME padding + batch normalization + ReLU.
  */
 typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
-typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
+// typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
+typedef tfrt::convolution2d_grouped<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
+
 typedef tfrt::max_pooling2d<tfrt::PaddingType::SAME>    max_pool2d;
 typedef tfrt::avg_pooling2d<tfrt::PaddingType::SAME>    avg_pool2d;
 typedef tfrt::concat_channels                           concat_channels;
@@ -45,14 +47,14 @@ inline nvinfer1::ITensor* block_mixed_avg(nvinfer1::ITensor* input, tfrt::scope 
     nvinfer1::ITensor* net{input};
     // Branch 0.
     auto ssc = sc.sub("Branch_0");
-    auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B0).ksize({1, 1})(net);
+    auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").ngroups(2).noutputs(B0).ksize({1, 1})(net);
     // Branch 1.
     ssc = sc.sub("Branch_1");
-    auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10).ksize({1, 1})(net);
+    auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").ngroups(2).noutputs(B10).ksize({1, 1})(net);
     branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B11).ksize({3, 3})(branch1);
     // Branch 2.
     ssc = sc.sub("Branch_2");
-    auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20).ksize({1, 1})(net);
+    auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").ngroups(2).noutputs(B20).ksize({1, 1})(net);
     branch2 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21).ksize({3, 3})(branch2);
     branch2 = conv2d(ssc, "Conv2d_0c_3x3").noutputs(B21).ksize({3, 3})(branch2);
     // Branch 2.
