@@ -59,20 +59,22 @@ inline tensor_pair block_mixed_avg(tensor_pair inputs, tfrt::scope sc,
         block2.push_back(branch02);
         // Branch 1.
         ssc = sc.sub("Branch_1l");
-        auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10/2).ksize({1, 1})(net);
+        auto branch11 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B10/4).ksize({1, 1})(net);
+        auto branch12 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B10/4).ksize({1, 1})(net);
         block1.push_back( dw_conv2d(ssc, "Conv2d_0b_3x3_1")
-            .noutputs(B11/4).ksize({3, 3})(branch1) );
+            .ksize({3, 3})(branch11) );
         block2.push_back( dw_conv2d(ssc, "Conv2d_0b_3x3_2")
-            .noutputs(B11/4).ksize({3, 3})(branch1) );
+            .ksize({3, 3})(branch12) );
         // Branch 2.
         ssc = sc.sub("Branch_2l");
         auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20/2).ksize({1, 1})(net);
         branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
-        branch2 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B21/2).ksize({1, 1})(branch2);
+        auto branch21 = conv2d(ssc, "Conv2d_0b_1x1_1").noutputs(B21/4).ksize({1, 1})(branch2);
+        auto branch22 = conv2d(ssc, "Conv2d_0b_1x1_2").noutputs(B21/4).ksize({1, 1})(branch2);
         block1.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_1")
-            .noutputs(B21/4).ksize({3, 3})(branch2) );
+            .ksize({3, 3})(branch21) );
         block2.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_2")
-            .noutputs(B21/4).ksize({3, 3})(branch2) );
+            .ksize({3, 3})(branch22) );
         // Branch 2.
         ssc = sc.sub("Branch_3l");
         auto branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(net);
@@ -91,20 +93,22 @@ inline tensor_pair block_mixed_avg(tensor_pair inputs, tfrt::scope sc,
         block2.push_back(branch02);
         // Branch 1.
         ssc = sc.sub("Branch_1r");
-        auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10/2).ksize({1, 1})(net);
+        auto branch11 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B10/4).ksize({1, 1})(net);
+        auto branch12 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B10/4).ksize({1, 1})(net);
         block1.push_back( dw_conv2d(ssc, "Conv2d_0b_3x3_1")
-            .noutputs(B11/4).ksize({3, 3})(branch1) );
+            .ksize({3, 3})(branch11) );
         block2.push_back( dw_conv2d(ssc, "Conv2d_0b_3x3_2")
-            .noutputs(B11/4).ksize({3, 3})(branch1) );
+            .ksize({3, 3})(branch12) );
         // Branch 2.
         ssc = sc.sub("Branch_2r");
         auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20/2).ksize({1, 1})(net);
         branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
-        branch2 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B21/2).ksize({1, 1})(branch2);
+        auto branch21 = conv2d(ssc, "Conv2d_0b_1x1_1").noutputs(B21/4).ksize({1, 1})(branch2);
+        auto branch22 = conv2d(ssc, "Conv2d_0b_1x1_2").noutputs(B21/4).ksize({1, 1})(branch2);
         block1.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_1")
-            .noutputs(B21/4).ksize({3, 3})(branch2) );
+            .ksize({3, 3})(branch21) );
         block2.push_back( dw_conv2d(ssc, "Conv2d_0c_3x3_2")
-            .noutputs(B21/4).ksize({3, 3})(branch2) );
+            .ksize({3, 3})(branch22) );
         // Branch 2.
         ssc = sc.sub("Branch_3r");
         auto branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(net);
@@ -114,7 +118,7 @@ inline tensor_pair block_mixed_avg(tensor_pair inputs, tfrt::scope sc,
             .noutputs(B3/4).ksize({1, 1})(branch3) );
     }
     outputs.first = concat_channels(sc.sub("left"))(block1);
-    outputs.second = concat_channels(sc.sub("left"))(block2);
+    outputs.second = concat_channels(sc.sub("right"))(block2);
     return outputs;
 }
 
