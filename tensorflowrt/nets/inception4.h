@@ -247,7 +247,7 @@ inline nvinfer1::ITensor* inception4(nvinfer1::ITensor* input,
         typedef tfrt::avg_pooling2d<tfrt::PaddingType::VALID>  avg_pool2d;
         typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, false>  conv2d;
         auto ssc = sc.sub("v4").sub("Logits");
-        net = avg_pool2d(ssc, "AvgPool_1a").ksize({7, 7})(net);
+        net = avg_pool2d(ssc, "AvgPool_1a").ksize({5, 5})(net);
         net = conv2d(ssc, "Conv2d_1c_1x1").noutputs(num_classes).ksize({1, 1})(net);
     }
     net = tfrt::softmax(sc, "Softmax")(net);
