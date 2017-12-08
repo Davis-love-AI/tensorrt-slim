@@ -28,6 +28,8 @@ namespace inception_v2b
 typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
 typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
 // typedef tfrt::convolution2d_grouped<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
+typedef tfrt::depthwise_convolution2d<
+    tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true> depthwise_conv2d;
 
 typedef tfrt::max_pooling2d<tfrt::PaddingType::SAME>    max_pool2d;
 typedef tfrt::avg_pooling2d<tfrt::PaddingType::SAME>    avg_pool2d;
@@ -46,6 +48,7 @@ inline tensor_pair block_mixed_avg(tensor_pair inputs, tfrt::scope sc,
                                    tfrt::map_tensor* end_points=nullptr)
 {
     tensor_pair outputs;
+    std::vector<nvinfer1::ITensor*>  block1, block2;
     {
         nvinfer1::ITensor* net{inputs.first};
         // Branch 0.
