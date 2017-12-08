@@ -44,6 +44,79 @@ typedef std::pair<nvinfer1::ITensor*, nvinfer1::ITensor*>  tensor_pair;
  * Average pooling version.
  */
 template <int B0, int B10, int B11, int B20, int B21, int B3>
+inline tensor_pair block_mixed_avg_full(tensor_pair inputs, tfrt::scope sc,
+                                        tfrt::map_tensor* end_points=nullptr)
+{
+    tensor_pair outputs;
+    std::vector<nvinfer1::ITensor*>  block1, block2;
+    {
+        nvinfer1::ITensor* net{inputs.first};
+        // Branch 0.
+        auto ssc = sc.sub("Branch_0l");
+        auto branch01 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B0/4).ksize({1, 1})(net);
+        auto branch02 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B0/4).ksize({1, 1})(net);
+        block1.push_back(branch01);
+        block2.push_back(branch02);
+        // Branch 1.
+        ssc = sc.sub("Branch_1l");
+        auto branch11 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B10/2).ksize({1, 1})(net);
+        // auto branch12 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B10/4).ksize({1, 1})(net);
+        block1.push_back( conv2d(ssc, "Conv2d_0b_3x3_1").noutputs(B11/4)
+            .ksize({3, 3})(branch11) );
+        block2.push_back( conv2d(ssc, "Conv2d_0b_3x3_2").noutputs(B11/4)
+            .ksize({3, 3})(branch11) );
+        // Branch 2.
+        ssc = sc.sub("Branch_2l");
+        auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20/2).ksize({1, 1})(net);
+        branch2 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
+        block1.push_back( conv2d(ssc, "Conv2d_0c_3x3_1").noutputs(B21/4)
+            .ksize({3, 3})(branch2) );
+        block2.push_back( conv2d(ssc, "Conv2d_0c_3x3_2").noutputs(B21/4)
+            .ksize({3, 3})(branch2) );
+        // Branch 2.
+        ssc = sc.sub("Branch_3l");
+        auto branch31 = conv2d(ssc, "Conv2d_0b_1x1_1").noutputs(B3/4).ksize({1, 1})(net);
+        auto branch32 = conv2d(ssc, "Conv2d_0b_1x1_2").noutputs(B3/4).ksize({1, 1})(net);
+        block1.push_back( avg_pool2d(ssc, "AvgPool_0a_3x3_1").ksize({3, 3})(branch31) );
+        block2.push_back( avg_pool2d(ssc, "AvgPool_0a_3x3_2").ksize({3, 3})(branch32) );
+    }
+    {
+        nvinfer1::ITensor* net{inputs.second};
+        // Branch 0.
+        auto ssc = sc.sub("Branch_0r");
+        auto branch01 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B0/4).ksize({1, 1})(net);
+        auto branch02 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B0/4).ksize({1, 1})(net);
+        block1.push_back(branch01);
+        block2.push_back(branch02);
+        // Branch 1.
+        ssc = sc.sub("Branch_1r");
+        auto branch11 = conv2d(ssc, "Conv2d_0a_1x1_1").noutputs(B10/2).ksize({1, 1})(net);
+        // auto branch12 = conv2d(ssc, "Conv2d_0a_1x1_2").noutputs(B10/4).ksize({1, 1})(net);
+        block1.push_back( conv2d(ssc, "Conv2d_0b_3x3_1").noutputs(B11/4)
+            .ksize({3, 3})(branch11) );
+        block2.push_back( conv2d(ssc, "Conv2d_0b_3x3_2").noutputs(B11/4)
+            .ksize({3, 3})(branch11) );
+        // Branch 2.
+        ssc = sc.sub("Branch_2r");
+        auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20/2).ksize({1, 1})(net);
+        branch2 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21/2).ksize({3, 3})(branch2);
+        block1.push_back( conv2d(ssc, "Conv2d_0c_3x3_1").noutputs(B21/4)
+            .ksize({3, 3})(branch2) );
+        block2.push_back( conv2d(ssc, "Conv2d_0c_3x3_2").noutputs(B21/4)
+            .ksize({3, 3})(branch2) );
+        // Branch 2.
+        ssc = sc.sub("Branch_3r");
+        auto branch31 = conv2d(ssc, "Conv2d_0b_1x1_1").noutputs(B3/4).ksize({1, 1})(net);
+        auto branch32 = conv2d(ssc, "Conv2d_0b_1x1_2").noutputs(B3/4).ksize({1, 1})(net);
+        block1.push_back( avg_pool2d(ssc, "AvgPool_0a_3x3_1").ksize({3, 3})(branch31) );
+        block2.push_back( avg_pool2d(ssc, "AvgPool_0a_3x3_2").ksize({3, 3})(branch32) );
+    }
+    outputs.first = concat_channels(sc.sub("left"))(block1);
+    outputs.second = concat_channels(sc.sub("right"))(block2);
+    return outputs;
+}
+
+template <int B0, int B10, int B11, int B20, int B21, int B3>
 inline tensor_pair block_mixed_avg(tensor_pair inputs, tfrt::scope sc,
                                    tfrt::map_tensor* end_points=nullptr)
 {
