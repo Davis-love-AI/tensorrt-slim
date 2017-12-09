@@ -138,6 +138,7 @@ public:
      */
     shuffle(const tfrt::scope& sc, const std::string& lname="Shuffle") :
         layer(sc, lname),
+        m_use_default(3, true),
         m_first_perm{{0, 1, 2, 3, 4, 5, 6, 7}},
         m_second_perm{{0, 1, 2, 3, 4, 5, 6, 7}},
         m_reshape{nvinfer1::DimsCHW{0, 0, 0}}
@@ -150,9 +151,15 @@ public:
         auto layer = this->m_scope.network()->addShuffle(*net);
         CHECK_NOTNULL(layer);
         // Transpose + reshape.
-        layer->setFirstTranspose(m_first_perm);
-        layer->setReshapeDimensions(m_reshape);
-        layer->setSecondTranspose(m_second_perm);
+        if (!m_use_default[0]) {
+            layer->setFirstTranspose(m_first_perm);
+        }
+        if (!m_use_default[1]) {
+            layer->setReshapeDimensions(m_reshape);
+        }
+        if (!m_use_default[2]) {
+            layer->setSecondTranspose(m_second_perm);
+        }
         // Layer options.
         layer->setName(this->m_scope.name().c_str());
         net = layer->getOutput(0);
@@ -163,28 +170,33 @@ public:
     /** Named parameter: permutation and reshape.
      */
     shuffle& first(nvinfer1::Permutation first_perm) {
+        m_use_default[0] = false;
         m_first_perm = first_perm;
         return *this;
     }
     nvinfer1::Permutation first() const {
         return m_first_perm;
     }
-    shuffle& second(nvinfer1::Permutation second_perm) {
-        m_second_perm = second_perm;
-        return *this;
-    }
-    nvinfer1::Permutation second() const {
-        return m_second_perm;
-    }
     shuffle& reshape(nvinfer1::Dims reshape) {
+        m_use_default[1] = false;
         m_reshape = reshape;
         return *this;
     }
     nvinfer1::Dims reshape() const {
         return m_reshape;
     }
+    shuffle& second(nvinfer1::Permutation second_perm) {
+        m_use_default[2] = false;
+        m_second_perm = second_perm;
+        return *this;
+    }
+    nvinfer1::Permutation second() const {
+        return m_second_perm;
+    }
 
 protected:
+    /** Use default parameters. */
+    std::vector<bool>  m_use_default;
     /** First permutation. */
     nvinfer1::Permutation  m_first_perm;
     /** Second permutation. */
