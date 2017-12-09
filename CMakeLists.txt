@@ -99,6 +99,10 @@ MACRO(BUILD_COPY_HEADERS DIRS_LIST)
     endforeach(HEADER_DIR)
 ENDMACRO(BUILD_COPY_HEADERS)
 
+# TFRT include
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tensorflowrt)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/util)
+
 # Build NVXIO dependency.
 add_subdirectory(nvxio)
 # 3rd party libraries rules (install, ...)

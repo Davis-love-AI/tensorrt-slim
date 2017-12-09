@@ -147,7 +147,7 @@ public:
     /** Operator: taking layers n and n-1. */
     nvinfer1::ITensor* operator()(nvinfer1::ITensor* net_n, nvinfer1::ITensor* net_n_1)
     {
-        nvinfer1::ITensor* net_l, *net_r, *net, *net_3x3;
+        nvinfer1::ITensor *net, *net_3x3;
         std::vector<nvinfer1::ITensor*> blocks;
         tfrt::scope sc{m_scope};
 
@@ -190,7 +190,7 @@ public:
     /** Operator: taking layers n and n-1. */
     nvinfer1::ITensor* operator()(nvinfer1::ITensor* net_n, nvinfer1::ITensor* net_n_1)
     {
-        nvinfer1::ITensor* net_l, *net_r, *net, *net_3x3;
+        nvinfer1::ITensor *net, *net_3x3;
         std::vector<nvinfer1::ITensor*> blocks;
         tfrt::scope sc{m_scope};
 

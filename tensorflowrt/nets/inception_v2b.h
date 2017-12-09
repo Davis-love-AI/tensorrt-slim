@@ -334,7 +334,7 @@ inline tensor_pair block_mixed_s2(tensor_pair inputs, tfrt::scope sc,
 inline nvinfer1::ITensor* block1(nvinfer1::ITensor* net, tfrt::scope sc,
                                  tfrt::map_tensor* end_points=nullptr)
 {
-    int depthwise_multiplier = std::min(int(64 / 3), 8);
+    // int depthwise_multiplier = std::min(int(64 / 3), 8);
     // // 7x7 depthwise convolution.
     // net = separable_conv2d(sc, "Conv2d_1a_7x7")
     //     .dw_group_size(1024)

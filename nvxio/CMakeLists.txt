@@ -8,6 +8,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCUDA_API_PER_THREAD_DEFAULT_STREAM -DU
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_OPENCV=1")
 
 # Build NVXIO
+include_directories(include)
 cuda_add_library(nvxio STATIC ${NVXIO_SRCS})
 target_link_libraries(nvxio ${GSTREAMER_LIBRARIES} ${GSTREAMER_APP_LIBRARIES} ${GSTREAMER_PBUTILS_LIBRARIES} glib-2.0 gobject-2.0 freetype glfw3 GL Xrandr Xi Xxf86vm X11 visionworks)
 # Copy NVXIO headers

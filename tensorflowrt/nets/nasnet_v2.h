@@ -224,7 +224,7 @@ public:
     /** Operator: taking layers n and n-1. */
     nvinfer1::ITensor* operator()(nvinfer1::ITensor* net_n, nvinfer1::ITensor* net_n_1)
     {
-        nvinfer1::ITensor* net_l, *net_r, *net;
+        nvinfer1::ITensor* net_l, *net;
         std::vector<nvinfer1::ITensor*> blocks, blocks_tmp;
         tfrt::scope sc{m_scope};
         // Basic cell + reduce n-1.
