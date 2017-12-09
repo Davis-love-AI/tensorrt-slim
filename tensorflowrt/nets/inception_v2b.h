@@ -27,6 +27,7 @@ namespace inception_v2b
  */
 typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
 typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
+typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d_none;
 typedef tfrt::convolution2d_grouped<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d_gp;
 typedef tfrt::depthwise_convolution2d<
     tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true> dw_conv2d;
