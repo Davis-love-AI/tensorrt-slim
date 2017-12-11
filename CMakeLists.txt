@@ -102,6 +102,7 @@ ENDMACRO(BUILD_COPY_HEADERS)
 # TF-RT include
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tensorflowrt)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/util)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules)
 
 # Build NVXIO dependency.
 add_subdirectory(nvxio)
