@@ -101,6 +101,20 @@ python export_tfrt_ssd_inception2_v0.py \
 
 # Running some basic tests
 
+### Caffe models benchmark
+
+Using the official sample for benchmarking Caffe files:
+```bash
+./x86_64/bin/trt_giexec \
+    --deploy=../data/caffe/googlenet.prototxt \
+    --output=prob \
+    --iterations=10 \
+    --avgRuns=10 \
+    --workspace=32 \
+    --batch=2 \
+    --verbose=true
+```
+
 ### Benchmark a network
 
 We can benchmark quite precisely a network using TensorRT, getting profiling time
