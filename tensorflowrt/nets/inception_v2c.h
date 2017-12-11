@@ -31,9 +31,29 @@ typedef tfrt::max_pooling2d<tfrt::PaddingType::SAME>    max_pool2d;
 typedef tfrt::avg_pooling2d<tfrt::PaddingType::SAME>    avg_pool2d;
 typedef tfrt::concat_channels                           concat_channels;
 
+/** Reshape layers.
+ */
+inline nvinfer1::ITensor* channel_to_hw(
+    nvinfer1::ITensor* net, tfrt::scope sc, int factor=2)
+{
+    auto s = tfrt::dims_chw(net);
+    s.c() = s.c() / factor;
+    s.h() = s.h() * factor;
+    net = tfrt::shuffle(sc, "channel_to_hw").reshape(s)(net);
+    return net;
+}
+inline nvinfer1::ITensor* hw_to_channel(
+    nvinfer1::ITensor* net, tfrt::scope sc, int factor=2)
+{
+    auto s = tfrt::dims_chw(net);
+    s.c() = s.c() * factor;
+    s.h() = s.h() / factor;
+    net = tfrt::shuffle(sc, "hw_to_channel").reshape(s)(net);
+    return net;
+}
 
 /* ============================================================================
- * Inception2 main mixed blocks.
+ * Inception V2C main mixed blocks.
  * ========================================================================== */
 /** Major mixed block used in Inception v2 (4 branches).
  * Average pooling version.
@@ -43,22 +63,27 @@ inline nvinfer1::ITensor* block_mixed_avg(nvinfer1::ITensor* input, tfrt::scope 
                                           tfrt::map_tensor* end_points=nullptr)
 {
     nvinfer1::ITensor* net{input};
+    net = channel_to_hw(net, sc, 2);
     // Branch 0.
     auto ssc = sc.sub("Branch_0");
     auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B0).ksize({1, 1})(net);
+    branch0 = hw_to_channel(branch0, ssc, 2);
     // Branch 1.
     ssc = sc.sub("Branch_1");
     auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10).ksize({1, 1})(net);
+    branch1 = hw_to_channel(branch1, ssc, 2);
     branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B11).ksize({3, 3})(branch1);
     // Branch 2.
     ssc = sc.sub("Branch_2");
     auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20).ksize({1, 1})(net);
+    branch2 = hw_to_channel(branch2, ssc, 2);
     branch2 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21).ksize({3, 3})(branch2);
     branch2 = conv2d(ssc, "Conv2d_0c_3x3").noutputs(B21).ksize({3, 3})(branch2);
     // Branch 2.
     ssc = sc.sub("Branch_3");
-    auto branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(net);
-    branch3 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B3).ksize({1, 1})(branch3);
+    auto branch3 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B3).ksize({1, 1})(net);
+    branch3 = hw_to_channel(branch3, ssc, 2);
+    branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(branch3);
     // Concat everything!
     net = concat_channels(sc)({branch0, branch1, branch2, branch3});
     return tfrt::add_end_point(end_points, sc.name(), net);

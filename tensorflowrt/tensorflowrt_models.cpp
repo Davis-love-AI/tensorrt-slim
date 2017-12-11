@@ -32,7 +32,9 @@ std::unique_ptr<tfrt::network>&& nets_factory(const std::string& name)
         nets["inception_v1"] = std::make_unique<inception1::net>();
         nets["inception_v2"] = std::make_unique<inception2::net>();
         nets["inception_v2b"] = std::make_unique<inception_v2b::net>();
+        nets["inception_v2c"] = std::make_unique<inception_v2c::net>();
         nets["inception_v2_group"] = std::make_unique<inception2_group::net>();
+
         nets["inception_v4"] = std::make_unique<inception4::net>();
 
         nets["resnet_v1_50"] = std::make_unique<resnet_v1_50::net>();

@@ -147,7 +147,9 @@ public:
     /** Add the layer to network graph, using operator(root).
      */
     nvinfer1::ITensor* operator()(nvinfer1::ITensor* net) {
-        LOG(INFO) << "LAYER shuffle '" << this->m_scope.name() << "'.";
+        LOG(INFO) << "LAYER shuffle '" << this->m_scope.name() << "'. "
+            << "Input shape: " << dims_str(net->getDimensions()) << ". "
+            << "Reshape: " << dims_str(m_reshape);
         auto layer = this->m_scope.network()->addShuffle(*net);
         CHECK_NOTNULL(layer);
         // Transpose + reshape.
