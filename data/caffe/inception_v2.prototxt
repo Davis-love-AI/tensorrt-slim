@@ -3025,11 +3025,11 @@ layer {
   bottom: "ch_concat_5b_chconcat"
   top: "global_pool"
   pooling_param {
-     global_pooling : true
-     pool: AVE
+    pool: AVE
+    kernel_size: 7
+    stride: 1
   }
 }
-
 layer {
   name: "fc1"
   type: "InnerProduct"
@@ -3044,7 +3044,7 @@ layer {
     decay_mult: 0
   }
   inner_product_param {
-    num_output: 21841
+    num_output: 1001
     weight_filler {
       type: "xavier"
     }
