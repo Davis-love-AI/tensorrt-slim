@@ -32,6 +32,7 @@ set(
 	-gencode arch=compute_52,code=sm_52
 	-gencode arch=compute_53,code=sm_53
 	-gencode arch=compute_62,code=sm_62
+	-gencode arch=compute_70,code=sm_70
 )
 
 # Main CXX flags
