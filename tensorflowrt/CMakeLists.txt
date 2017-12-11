@@ -28,5 +28,11 @@ target_link_libraries(tensorflowrt nvinfer visionworks ${PROTOBUF_LIBRARY} glog 
 
 # Installation targets...
 install(TARGETS tensorflowrt DESTINATION lib)
+install(DIRECTORY ./
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY ./
+    DESTINATION include
+    FILES_MATCHING PATTERN "*.hpp")
 # install (FILES MathFunctions.h DESTINATION include)
 

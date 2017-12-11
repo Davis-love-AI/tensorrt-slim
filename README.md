@@ -107,8 +107,8 @@ We can benchmark quite precisely a network using TensorRT, getting profiling tim
 for every layer. It gives a good overview on the bottlenecks in the network and which parts to improve.
 ```bask
 GLOG_logtostderr=1 ./tfrt_giexec \
-    --modelName=inception2 \
-    --modelFile=../data/networks/inception_v2_fused.tfrt16 \
+    --modelName=inception_v2 \
+    --modelFile=../data/networks/inception_v2_fused.tfrt32 \
     --batch=2 \
     --iterations=10 \
     --avgRuns=10 \
@@ -120,8 +120,8 @@ GLOG_logtostderr=1 ./tfrt_giexec \
 
 ```bask
 GLOG_logtostderr=1 ./tfrt_benchmark \
-    --network=inception2 \
-    --network_pb=../data/networks/inception_v2_fused.tfrt16 \
+    --network=inception_v2 \
+    --network_pb=../data/networks/inception_v2_fused.tfrt32 \
     --batch_size=2 \
     --workspace=32 \
     --height=256 \
