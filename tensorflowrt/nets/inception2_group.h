@@ -21,7 +21,7 @@
 #include <NvInfer.h>
 #include "../tensorflowrt.h"
 
-#define GROUP_SIZE 32 
+#define GROUP_SIZE 32
 
 namespace inception2_group
 {
@@ -190,7 +190,7 @@ inline nvinfer1::ITensor* inception2(nvinfer1::ITensor* input,
 {
     nvinfer1::ITensor* net;
     // Construct backbone network.
-    net = base(input, sc);
+    net = base(input, sc.sub("g"));
     // Logits end block.
     {
         typedef tfrt::avg_pooling2d<tfrt::PaddingType::VALID>  avg_pool2d;
