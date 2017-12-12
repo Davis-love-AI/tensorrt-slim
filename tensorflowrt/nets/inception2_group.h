@@ -146,8 +146,8 @@ inline nvinfer1::ITensor* block3(nvinfer1::ITensor* net, tfrt::scope sc,
 {
     // Mixed block 3b and 3c.
     net = max_pool2d(sc, "MaxPool_3a_3x3").ksize({3, 3}).stride({2, 2})(net);
-    net = block_mixed_avg<64, 64, 64, 66, 96, 32>(net, sc.sub("Mix_3b"), 1024, end_points);
-    net = block_mixed_avg<64, 66, 96, 66, 96, 64>(net, sc.sub("Mix_3c"), 1024, end_points);
+    net = block_mixed_avg<64, 64, 64, 66, 96, 32>(net, sc.sub("Mix_3b"), 32, end_points);
+    net = block_mixed_avg<64, 66, 96, 66, 96, 64>(net, sc.sub("Mix_3c"), 32, end_points);
     return net;
 }
 inline nvinfer1::ITensor* block4(nvinfer1::ITensor* net, tfrt::scope sc,
@@ -155,10 +155,10 @@ inline nvinfer1::ITensor* block4(nvinfer1::ITensor* net, tfrt::scope sc,
 {
     // Mixed blocks 4a to 4e.
     net = block_mixed_s2<130, 160, 66, 96>(net, sc.sub("Mix_4a"));
-    net = block_mixed_avg<224, 66, 96, 96, 128, 128>(net, sc.sub("Mix_4b"), 32, end_points);
-    net = block_mixed_avg<192, 96, 128, 96, 128, 128>(net, sc.sub("Mix_4c"), 32, end_points);
-    net = block_mixed_avg<160, 130, 160, 130, 160, 96>(net, sc.sub("Mix_4d"), 32, end_points);
-    net = block_mixed_avg<96, 132, 192, 162, 192, 96>(net, sc.sub("Mix_4e"), 32, end_points);
+    net = block_mixed_avg<224, 66, 96, 96, 128, 128>(net, sc.sub("Mix_4b"), 1024, end_points);
+    net = block_mixed_avg<192, 96, 128, 96, 128, 128>(net, sc.sub("Mix_4c"), 1024, end_points);
+    net = block_mixed_avg<160, 130, 160, 130, 160, 96>(net, sc.sub("Mix_4d"), 1024, end_points);
+    net = block_mixed_avg<96, 132, 192, 162, 192, 96>(net, sc.sub("Mix_4e"), 1024, end_points);
     return net;
 }
 inline nvinfer1::ITensor* block5(nvinfer1::ITensor* net, tfrt::scope sc,
@@ -166,8 +166,8 @@ inline nvinfer1::ITensor* block5(nvinfer1::ITensor* net, tfrt::scope sc,
 {
     // Mixed blocks 5a to 5c.
     net = block_mixed_s2<132, 192, 192, 256>(net, sc.sub("Mix_5a"));
-    net = block_mixed_avg<352, 200, 320, 161, 224, 128>(net, sc.sub("Mix_5b"), 32, end_points);
-    net = block_mixed_max<352, 200, 320, 196, 224, 128>(net, sc.sub("Mix_5c"), 32, end_points);
+    net = block_mixed_avg<352, 200, 320, 161, 224, 128>(net, sc.sub("Mix_5b"), 1024, end_points);
+    net = block_mixed_max<352, 200, 320, 196, 224, 128>(net, sc.sub("Mix_5c"), 1024, end_points);
     return net;
 }
 
