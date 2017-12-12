@@ -52,12 +52,12 @@ inline nvinfer1::ITensor* block_mixed_avg(nvinfer1::ITensor* input, tfrt::scope 
     // Branch 1.
     ssc = sc.sub("Branch_1");
     auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10).ksize({1, 1})(net);
-    branch1 = conv2d(ssc, "Conv2d_0b_3x3").ngroups(B11 / group_size).noutputs(B11).ksize({3, 3})(branch1);
+    branch1 = conv2d(ssc, "Conv2d_0b_3x3").ngroups(std::max(1, int(B11 / group_size))).noutputs(B11).ksize({3, 3})(branch1);
     // Branch 2.
     ssc = sc.sub("Branch_2");
     auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20).ksize({1, 1})(net);
-    branch2 = conv2d(ssc, "Conv2d_0b_3x3").ngroups(B21 / group_size).noutputs(B21).ksize({3, 3})(branch2);
-    branch2 = conv2d(ssc, "Conv2d_0c_3x3").ngroups(B21 / group_size).noutputs(B21).ksize({3, 3})(branch2);
+    branch2 = conv2d(ssc, "Conv2d_0b_3x3").ngroups(std::max(1, int(B21 / group_size))).noutputs(B21).ksize({3, 3})(branch2);
+    branch2 = conv2d(ssc, "Conv2d_0c_3x3").ngroups(std::max(1, int(B21 / group_size))).noutputs(B21).ksize({3, 3})(branch2);
     // Branch 2.
     ssc = sc.sub("Branch_3");
     auto branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(net);
