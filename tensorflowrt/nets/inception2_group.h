@@ -155,10 +155,10 @@ inline nvinfer1::ITensor* block4(nvinfer1::ITensor* net, tfrt::scope sc,
 {
     // Mixed blocks 4a to 4e.
     net = block_mixed_s2<130, 160, 66, 96>(net, sc.sub("Mix_4a"));
-    net = block_mixed_avg<224, 66, 96, 96, 128, 128>(net, sc.sub("Mix_4b"), 1024, end_points);
-    net = block_mixed_avg<192, 96, 128, 96, 128, 128>(net, sc.sub("Mix_4c"), 1024, end_points);
-    net = block_mixed_avg<160, 130, 160, 130, 160, 96>(net, sc.sub("Mix_4d"), 1024, end_points);
-    net = block_mixed_avg<96, 132, 192, 162, 192, 96>(net, sc.sub("Mix_4e"), 1024, end_points);
+    net = block_mixed_avg<224, 66, 96, 96, 128, 128>(net, sc.sub("Mix_4b"), 32, end_points);
+    net = block_mixed_avg<192, 96, 128, 96, 128, 128>(net, sc.sub("Mix_4c"), 32, end_points);
+    net = block_mixed_avg<160, 130, 160, 130, 160, 96>(net, sc.sub("Mix_4d"), 32, end_points);
+    net = block_mixed_avg<96, 132, 192, 162, 192, 96>(net, sc.sub("Mix_4e"), 32, end_points);
     return net;
 }
 inline nvinfer1::ITensor* block5(nvinfer1::ITensor* net, tfrt::scope sc,
