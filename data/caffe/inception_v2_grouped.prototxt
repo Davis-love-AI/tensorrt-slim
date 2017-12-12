@@ -598,7 +598,6 @@ layer {
   }
   convolution_param {
     num_output: 66
-    group: 3
     pad: 0
     kernel_size: 1
     stride: 1
