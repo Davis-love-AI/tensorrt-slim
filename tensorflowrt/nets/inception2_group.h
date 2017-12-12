@@ -42,6 +42,7 @@ typedef tfrt::concat_channels                           concat_channels;
  */
 template <int B0, int B10, int B11, int B20, int B21, int B3>
 inline nvinfer1::ITensor* block_mixed_avg(nvinfer1::ITensor* input, tfrt::scope sc,
+                                          size_t group_size,
                                           tfrt::map_tensor* end_points=nullptr)
 {
     nvinfer1::ITensor* net{input};
@@ -51,12 +52,12 @@ inline nvinfer1::ITensor* block_mixed_avg(nvinfer1::ITensor* input, tfrt::scope 
     // Branch 1.
     ssc = sc.sub("Branch_1");
     auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10).ksize({1, 1})(net);
-    branch1 = conv2d(ssc, "Conv2d_0b_3x3").ngroups(B11 / GROUP_SIZE).noutputs(B11).ksize({3, 3})(branch1);
+    branch1 = conv2d(ssc, "Conv2d_0b_3x3").ngroups(B11 / group_size).noutputs(B11).ksize({3, 3})(branch1);
     // Branch 2.
     ssc = sc.sub("Branch_2");
     auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20).ksize({1, 1})(net);
-    branch2 = conv2d(ssc, "Conv2d_0b_3x3").ngroups(B21 / GROUP_SIZE).noutputs(B21).ksize({3, 3})(branch2);
-    branch2 = conv2d(ssc, "Conv2d_0c_3x3").ngroups(B21 / GROUP_SIZE).noutputs(B21).ksize({3, 3})(branch2);
+    branch2 = conv2d(ssc, "Conv2d_0b_3x3").ngroups(B21 / group_size).noutputs(B21).ksize({3, 3})(branch2);
+    branch2 = conv2d(ssc, "Conv2d_0c_3x3").ngroups(B21 / group_size).noutputs(B21).ksize({3, 3})(branch2);
     // Branch 2.
     ssc = sc.sub("Branch_3");
     auto branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(net);
@@ -70,6 +71,7 @@ inline nvinfer1::ITensor* block_mixed_avg(nvinfer1::ITensor* input, tfrt::scope 
  */
 template <int B0, int B10, int B11, int B20, int B21, int B3>
 inline nvinfer1::ITensor* block_mixed_max(nvinfer1::ITensor* input, tfrt::scope sc,
+                                          size_t group_size,
                                           tfrt::map_tensor* end_points=nullptr)
 {
     nvinfer1::ITensor* net{input};
@@ -79,12 +81,12 @@ inline nvinfer1::ITensor* block_mixed_max(nvinfer1::ITensor* input, tfrt::scope 
     // Branch 1.
     ssc = sc.sub("Branch_1");
     auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10).ksize({1, 1})(net);
-    branch1 = conv2d(ssc, "Conv2d_0b_3x3").ngroups(B11 / GROUP_SIZE).noutputs(B11).ksize({3, 3})(branch1);
+    branch1 = conv2d(ssc, "Conv2d_0b_3x3").ngroups(B11 / group_size).noutputs(B11).ksize({3, 3})(branch1);
     // Branch 2.
     ssc = sc.sub("Branch_2");
     auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20).ksize({1, 1})(net);
-    branch2 = conv2d(ssc, "Conv2d_0b_3x3").ngroups(B21 / GROUP_SIZE).noutputs(B21).ksize({3, 3})(branch2);
-    branch2 = conv2d(ssc, "Conv2d_0c_3x3").ngroups(B21 / GROUP_SIZE).noutputs(B21).ksize({3, 3})(branch2);
+    branch2 = conv2d(ssc, "Conv2d_0b_3x3").ngroups(B21 / group_size).noutputs(B21).ksize({3, 3})(branch2);
+    branch2 = conv2d(ssc, "Conv2d_0c_3x3").ngroups(B21 / group_size).noutputs(B21).ksize({3, 3})(branch2);
     // Branch 2.
     ssc = sc.sub("Branch_3");
     auto branch3 = max_pool2d(ssc, "MaxPool_0a_3x3").ksize({3, 3})(net);
@@ -97,7 +99,7 @@ inline nvinfer1::ITensor* block_mixed_max(nvinfer1::ITensor* input, tfrt::scope 
  */
 template <int B00, int B01, int B10, int B11>
 inline nvinfer1::ITensor* block_mixed_s2(nvinfer1::ITensor* input, tfrt::scope sc,
-                                          tfrt::map_tensor* end_points=nullptr)
+                                         tfrt::map_tensor* end_points=nullptr)
 {
     nvinfer1::ITensor* net{input};
     // Branch 0.
@@ -144,8 +146,8 @@ inline nvinfer1::ITensor* block3(nvinfer1::ITensor* net, tfrt::scope sc,
 {
     // Mixed block 3b and 3c.
     net = max_pool2d(sc, "MaxPool_3a_3x3").ksize({3, 3}).stride({2, 2})(net);
-    net = block_mixed_avg<64, 64, 64, 66, 96, 32>(net, sc.sub("Mix_3b"), end_points);
-    net = block_mixed_avg<64, 66, 96, 66, 96, 64>(net, sc.sub("Mix_3c"), end_points);
+    net = block_mixed_avg<64, 64, 64, 66, 96, 32>(net, sc.sub("Mix_3b"), 32, end_points);
+    net = block_mixed_avg<64, 66, 96, 66, 96, 64>(net, sc.sub("Mix_3c"), 32, end_points);
     return net;
 }
 inline nvinfer1::ITensor* block4(nvinfer1::ITensor* net, tfrt::scope sc,
@@ -153,10 +155,10 @@ inline nvinfer1::ITensor* block4(nvinfer1::ITensor* net, tfrt::scope sc,
 {
     // Mixed blocks 4a to 4e.
     net = block_mixed_s2<130, 160, 66, 96>(net, sc.sub("Mix_4a"));
-    net = block_mixed_avg<224, 66, 96, 96, 128, 128>(net, sc.sub("Mix_4b"), end_points);
-    net = block_mixed_avg<192, 96, 128, 96, 128, 128>(net, sc.sub("Mix_4c"), end_points);
-    net = block_mixed_avg<160, 130, 160, 130, 160, 96>(net, sc.sub("Mix_4d"), end_points);
-    net = block_mixed_avg<96, 132, 192, 162, 192, 96>(net, sc.sub("Mix_4e"), end_points);
+    net = block_mixed_avg<224, 66, 96, 96, 128, 128>(net, sc.sub("Mix_4b"), 32, end_points);
+    net = block_mixed_avg<192, 96, 128, 96, 128, 128>(net, sc.sub("Mix_4c"), 32, end_points);
+    net = block_mixed_avg<160, 130, 160, 130, 160, 96>(net, sc.sub("Mix_4d"), 32, end_points);
+    net = block_mixed_avg<96, 132, 192, 162, 192, 96>(net, sc.sub("Mix_4e"), 32, end_points);
     return net;
 }
 inline nvinfer1::ITensor* block5(nvinfer1::ITensor* net, tfrt::scope sc,
@@ -164,8 +166,8 @@ inline nvinfer1::ITensor* block5(nvinfer1::ITensor* net, tfrt::scope sc,
 {
     // Mixed blocks 5a to 5c.
     net = block_mixed_s2<132, 192, 192, 256>(net, sc.sub("Mix_5a"));
-    net = block_mixed_avg<352, 200, 320, 161, 224, 128>(net, sc.sub("Mix_5b"), end_points);
-    net = block_mixed_max<352, 200, 320, 196, 224, 128>(net, sc.sub("Mix_5c"), end_points);
+    net = block_mixed_avg<352, 200, 320, 161, 224, 128>(net, sc.sub("Mix_5b"), 32, end_points);
+    net = block_mixed_max<352, 200, 320, 196, 224, 128>(net, sc.sub("Mix_5c"), 32, end_points);
     return net;
 }
 
