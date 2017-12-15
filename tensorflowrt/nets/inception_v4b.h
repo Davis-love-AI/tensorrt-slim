@@ -77,13 +77,13 @@ inline nvinfer1::ITensor* block_reduc_a(
     nvinfer1::ITensor* net{input};
     // Branch 0.
     auto ssc = sc.sub("Branch_0");
-    auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(384).ksize(1)(net);
+    auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(366).ksize(1)(net);
     branch0 = dw_conv2d_valid(ssc, "Conv2d_0b_3x3").ksize(3).stride(2)(branch0);
     // Branch 1.
     ssc = sc.sub("Branch_1");
     auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(192).ksize(1)(net);
     branch1 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize(3)(branch1);
-    branch1 = conv2d_none(ssc, "Conv2d_0b_1x1").noutputs(256).ksize(1)(branch1);
+    branch1 = conv2d_none(ssc, "Conv2d_0b_1x1").noutputs(258).ksize(1)(branch1);
     branch1 = dw_conv2d_valid(ssc, "Conv2d_0c_3x3").ksize(3).stride(2)(branch1);
     // Branch 2.
     ssc = sc.sub("Branch_2");
