@@ -204,7 +204,7 @@ inline nvinfer1::ITensor* block_stem(nvinfer1::ITensor* input, tfrt::scope sc,
     {
         auto ssc = sc.sub("Mixed_5a").sub("Branch_0");
         auto branch0 = conv2d_gp(ssc, "Conv2d_0a_1x1").noutputs(96).ksize(1)(net);
-        branch0 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize(3).stride(2)(branch0);
+        branch0 = dw_conv2d_valid(ssc, "Conv2d_0b_3x3").ksize(3).stride(2)(branch0);
 
         ssc = sc.sub("Mixed_5a").sub("Branch_1");
         auto branch1 = max_pool2d_valid(ssc, "MaxPool_1a_3x3").ksize({3, 3}).stride(2)(net);
