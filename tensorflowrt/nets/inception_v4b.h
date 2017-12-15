@@ -28,6 +28,14 @@ namespace inception_v4b
  */
 typedef tfrt::separable_convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, false> separable_conv2d;
 typedef tfrt::convolution2d<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d;
+typedef tfrt::convolution2d<tfrt::ActivationType::NONE, tfrt::PaddingType::SAME, true>  conv2d_none;
+typedef tfrt::convolution2d_grouped<tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true>  conv2d_gp;
+
+typedef tfrt::depthwise_convolution2d<
+    tfrt::ActivationType::RELU, tfrt::PaddingType::SAME, true> dw_conv2d;
+typedef tfrt::depthwise_convolution2d<
+    tfrt::ActivationType::RELU, tfrt::PaddingType::VALID, true> dw_conv2d_valid;
+
 typedef tfrt::max_pooling2d<tfrt::PaddingType::SAME>    max_pool2d;
 typedef tfrt::avg_pooling2d<tfrt::PaddingType::SAME>    avg_pool2d;
 typedef tfrt::concat_channels                           concat_channels;
@@ -44,20 +52,21 @@ inline nvinfer1::ITensor* block_a(nvinfer1::ITensor* input, tfrt::scope sc,
     nvinfer1::ITensor* net{input};
     // Branch 0.
     auto ssc = sc.sub("Branch_0");
-    auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(96).ksize({1, 1})(net);
+    auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(96).ksize(1)(net);
     // Branch 1.
     ssc = sc.sub("Branch_1");
-    auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(64).ksize({1, 1})(net);
-    branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(96).ksize({3, 3})(branch1);
+    auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(96).ksize(1)(net);
+    branch1 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize(3)(branch1);
     // Branch 2.
     ssc = sc.sub("Branch_2");
-    auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(64).ksize({1, 1})(net);
-    branch2 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(96).ksize({3, 3})(branch2);
-    branch2 = conv2d(ssc, "Conv2d_0c_3x3").noutputs(96).ksize({3, 3})(branch2);
-    // Branch 2.
+    auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(64).ksize(1)(net);
+    branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize(3)(branch2);
+    branch2 = conv2d_none(ssc, "Conv2d_0b_1x1").noutputs(96).ksize(1)(branch2);
+    branch2 = dw_conv2d(ssc, "Conv2d_0c_3x3").ksize(3)(branch2);
+    // Branch 3.
     ssc = sc.sub("Branch_3");
-    auto branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(net);
-    branch3 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(96).ksize({1, 1})(branch3);
+    auto branch3 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(96).ksize(1)(net);
+    branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize(3)(branch3);
     // Concat everything!
     net = concat_channels(sc)({branch0, branch1, branch2, branch3});
     return tfrt::add_end_point(end_points, sc.name(), net);
@@ -68,15 +77,17 @@ inline nvinfer1::ITensor* block_reduc_a(
     nvinfer1::ITensor* net{input};
     // Branch 0.
     auto ssc = sc.sub("Branch_0");
-    auto branch0 = conv2d_valid(ssc, "Conv2d_1a_3x3").noutputs(384).ksize({3, 3}).stride(2)(net);
+    auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(384).ksize(1)(net);
+    branch0 = dw_conv2d_valid(ssc, "Conv2d_0b_3x3").ksize(3).stride(2)(branch0);
     // Branch 1.
     ssc = sc.sub("Branch_1");
-    auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(192).ksize({1, 1})(net);
-    branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(224).ksize({3, 3})(branch1);
-    branch1 = conv2d_valid(ssc, "Conv2d_1a_3x3").noutputs(256).ksize({3, 3}).stride(2)(branch1);
+    auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(192).ksize(1)(net);
+    branch1 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize(3)(branch1);
+    branch1 = conv2d_none(ssc, "Conv2d_0b_1x1").noutputs(256).ksize(1)(branch1);
+    branch1 = dw_conv2d_valid(ssc, "Conv2d_0c_3x3").ksize(3).stride(2)(branch1);
     // Branch 2.
     ssc = sc.sub("Branch_2");
-    auto branch2 = max_pool2d_valid(ssc, "MaxPool_1a_3x3").ksize({3, 3}).stride(2)(net);
+    auto branch2 = max_pool2d_valid(ssc, "MaxPool_1a_3x3").ksize(3).stride(2)(net);
     // Concat everything!
     net = concat_channels(sc)({branch0, branch1, branch2});
     return tfrt::add_end_point(end_points, sc.name(), net);
