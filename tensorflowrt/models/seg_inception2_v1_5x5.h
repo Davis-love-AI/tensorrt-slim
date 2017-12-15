@@ -20,7 +20,7 @@
 
 #include "robik_classes.h"
 #include "../tensorflowrt.h"
-#include "../nets/inception2.h"
+#include "../nets/inception_v2.h"
 
 namespace seg_inception2_v1_5x5
 {
@@ -44,7 +44,7 @@ inline nvinfer1::ITensor* seg_inception2_extra_feature(
     net = conv2d_transpose(sc, "tconv1x1_bilinear")
         .noutputs(num_outputs).ksize({2, 2}).stride({2, 2}).padding({0, 0})(net);
     // net = tfrt::bilinear2d(sc, "interpolation_bilinear")(net);
-        
+
     // 3x3 convolution to smooth out the result...
     net = conv2d(sc, "conv3x3_5x5").noutputs(num_outputs).ksize({5, 5})(net);
     // Additional side feature to add.

@@ -19,7 +19,7 @@
 #include <NvInfer.h>
 
 #include "../tensorflowrt.h"
-#include "../nets/inception2.h"
+#include "../nets/inception_v2.h"
 
 namespace seg_inception2_2x2
 {

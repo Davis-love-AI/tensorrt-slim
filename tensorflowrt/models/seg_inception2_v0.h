@@ -19,7 +19,7 @@
 #include <NvInfer.h>
 
 #include "../tensorflowrt.h"
-#include "../nets/inception2.h"
+#include "../nets/inception_v2.h"
 #include "robik_classes.h"
 
 namespace seg_inception2_v0
@@ -39,7 +39,7 @@ typedef tfrt::convolution2d_transpose<tfrt::ActivationType::RELU, tfrt::PaddingT
 /** Additional feature layer.
  */
 inline nvinfer1::ITensor* seg_inception2_extra_feature(
-    nvinfer1::ITensor* net, nvinfer1::ITensor* net_side, tfrt::scope sc, 
+    nvinfer1::ITensor* net, nvinfer1::ITensor* net_side, tfrt::scope sc,
     int num_outputs, tfrt::map_tensor* end_points=nullptr)
 {
     LOG(INFO) << "BLOCK SEG inception2 extra-features '" << sc.name() << "'. "
@@ -116,7 +116,7 @@ public:
          sc.network()->setDeconvolutionOutputDimensionsFormula(&m_deconv2d_formula);
          // sc.network()->setConvolutionOutputDimensionsFormula(&tf_out_formula);
          // sc.network()->setPoolingOutputDimensionsFormula(&tf_out_formula);
- 
+
 
         // Build the Inception2 base.
         net = inception2_base(net, sc.sub("inception2_base"), &end_points);

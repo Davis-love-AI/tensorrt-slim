@@ -15,9 +15,9 @@
 #ifndef TFRT_NETWORKS
 #define TFRT_NETWORKS
 
-#include "nets/inception1.h"
-#include "nets/inception2.h"
-#include "nets/inception2_group.h"
+#include "nets/inception_v1.h"
+#include "nets/inception_v2.h"
+#include "nets/inception_v2_group.h"
 
 #include "nets/resnet_v1.h"
 #include "nets/resnet_v3.h"

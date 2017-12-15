@@ -20,7 +20,7 @@
 
 #include "robik_classes.h"
 #include "../tensorflowrt.h"
-#include "../nets/inception2.h"
+#include "../nets/inception_v2.h"
 
 namespace seg_inception2_logits_v1
 {
