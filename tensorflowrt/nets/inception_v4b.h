@@ -189,21 +189,23 @@ inline nvinfer1::ITensor* block_stem(nvinfer1::ITensor* input, tfrt::scope sc,
     // 73 x 73 x 160
     {
         auto ssc = sc.sub("Mixed_4a").sub("Branch_0");
-        auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(64).ksize({1, 1})(net);
-        branch0 = conv2d_valid(ssc, "Conv2d_1a_3x3").noutputs(96).ksize({3, 3})(branch0);
+        auto branch0 = conv2d_gp(ssc, "Conv2d_0a_1x1").noutputs(96).ksize(1)(net);
+        branch0 = dw_conv2d_valid(ssc, "Conv2d_0b_3x3").ksize(3)(branch0);
 
         ssc = sc.sub("Mixed_4a").sub("Branch_1");
-        auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(64).ksize({1, 1})(net);
-        branch1 = conv2d(ssc, "Conv2d_0b_1x7").noutputs(64).ksize({1, 7})(branch1);
-        branch1 = conv2d(ssc, "Conv2d_0c_7x1").noutputs(64).ksize({7, 1})(branch1);
-        branch1 = conv2d_valid(ssc, "Conv2d_1a_3x3").noutputs(96).ksize({3, 3})(branch1);
+        auto branch1 = conv2d_gp(ssc, "Conv2d_0a_1x1").ngroups(3).noutputs(64).ksize(1)(net);
+        branch1 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize(3).dilation(2)(branch1);
+        branch1 = conv2d_none(ssc, "Conv2d_0b_1x1").noutputs(96).ksize(1)(branch1);
+        branch1 = dw_conv2d_valid(ssc, "Conv2d_0c_3x3").ksize(3).dilation(2)(branch1);
 
         net = concat_channels(sc.sub("Mixed_4a"))({branch0, branch1});
     }
     // 71 x 71 x 192
     {
         auto ssc = sc.sub("Mixed_5a").sub("Branch_0");
-        auto branch0 = conv2d_valid(ssc, "Conv2d_1a_3x3").noutputs(96).ksize({3, 3}).stride(2)(net);
+        auto branch0 = conv2d_gp(ssc, "Conv2d_0a_1x1").noutputs(96).ksize(1)(net);
+        branch0 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize(3).stride(2)(branch0);
+
         ssc = sc.sub("Mixed_5a").sub("Branch_1");
         auto branch1 = max_pool2d_valid(ssc, "MaxPool_1a_3x3").ksize({3, 3}).stride(2)(net);
         net = concat_channels(sc.sub("Mixed_5a"))({branch0, branch1});
