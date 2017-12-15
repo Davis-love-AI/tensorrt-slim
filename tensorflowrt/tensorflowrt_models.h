@@ -25,6 +25,7 @@
 #include "nets/inception_v2_group.h"
 
 #include "nets/inception_v4.h"
+#include "nets/inception_v4b.h"
 
 #include "nets/nasnet.h"
 #include "nets/nasnet_v1b.h"
