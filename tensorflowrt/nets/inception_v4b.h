@@ -146,22 +146,22 @@ inline nvinfer1::ITensor* block_c(nvinfer1::ITensor* input, tfrt::scope sc,
     nvinfer1::ITensor* net{input};
     // Branch 0.
     auto ssc = sc.sub("Branch_0");
-    auto branch0 = conv2d_gp(ssc, "Conv2d_0a_1x1").ngroups(2).noutputs(256).ksize(1)(net);
+    auto branch0 = conv2d_gp(ssc, "Conv2d_0a_1x1").ngroups(4).noutputs(256).ksize(1)(net);
     // Branch 1.
     ssc = sc.sub("Branch_1");
-    auto branch1 = conv2d_gp(ssc, "Conv2d_0a_1x1").ngroups(2).noutputs(384).ksize(1)(net);
+    auto branch1 = conv2d_gp(ssc, "Conv2d_0a_1x1").ngroups(4).noutputs(384).ksize(1)(net);
     branch1 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize(3)(branch1);
     branch1 = conv2d(ssc, "Conv2d_0c_1x1").noutputs(512).ksize(1)(branch1);
     branch1 = dw_conv2d(ssc, "Conv2d_0d_3x3").ksize(3).dilation(2)(branch1);
     // Branch 2.
     ssc = sc.sub("Branch_2");
-    auto branch2 = conv2d_gp(ssc, "Conv2d_0a_1x1").ngroups(2).noutputs(384).ksize(1)(net);
+    auto branch2 = conv2d_gp(ssc, "Conv2d_0a_1x1").ngroups(4).noutputs(384).ksize(1)(net);
     branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize(3).dilation(3)(branch2);
     branch2 = conv2d_none(ssc, "Conv2d_0b_1x1").noutputs(512).ksize(1)(branch2);
     branch2 = dw_conv2d(ssc, "Conv2d_0c_3x3").ksize(3).dilation(2)(branch2);
     // Branch 3.
     ssc = sc.sub("Branch_3");
-    auto branch3 = conv2d_gp(ssc, "Conv2d_0b_1x1").ngroups(2).noutputs(256).ksize(1)(net);
+    auto branch3 = conv2d_gp(ssc, "Conv2d_0b_1x1").ngroups(4).noutputs(256).ksize(1)(net);
     branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize(3)(branch3);
     // Concat everything!
     net = concat_channels(sc)({branch0, branch1, branch2, branch3});
