@@ -196,7 +196,7 @@ inline nvinfer1::ITensor* block_stem(nvinfer1::ITensor* input, tfrt::scope sc,
         auto branch1 = conv2d_gp(ssc, "Conv2d_0a_1x1").ngroups(3).noutputs(64).ksize(1)(net);
         branch1 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize(3).dilation(2)(branch1);
         branch1 = conv2d_none(ssc, "Conv2d_0b_1x1").noutputs(96).ksize(1)(branch1);
-        branch1 = dw_conv2d_valid(ssc, "Conv2d_0c_3x3").ksize(3).dilation(2)(branch1);
+        branch1 = dw_conv2d_valid(ssc, "Conv2d_0c_3x3").ksize(3)(branch1);
 
         net = concat_channels(sc.sub("Mixed_4a"))({branch0, branch1});
     }
