@@ -164,11 +164,11 @@ public:
         blocks.push_back( net );
         // First 3x3 sep. conv2d.
         net_3x3 = this->sep_conv2d_stacked(
-            net_c1, sc.sub("sep_3x3_1"), 3, 2, 1, 2, fsize*2, 2);
+            net_c1, sc.sub("sep_3x3_1"), 3, 2, 1, 1, fsize*2, 2);
         blocks.push_back( net_3x3 );
         // Second 3x3 sep. conv2d.
         net_3x3 = this->sep_conv2d_stacked(
-            net_c1, sc.sub("sep_3x3_2"), 3, 1, 1, 2, fsize*3, 2);
+            net_c1, sc.sub("sep_3x3_2"), 3, 1, 1, 1, fsize*3, 2);
         blocks.push_back( net_3x3 );
 
         // Concat this big mess!
