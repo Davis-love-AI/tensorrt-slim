@@ -69,22 +69,22 @@ inline nvinfer1::ITensor* block_mixed_avg(nvinfer1::ITensor* input, tfrt::scope 
                                           tfrt::map_tensor* end_points=nullptr)
 {
     nvinfer1::ITensor* net{input};
-    // net = channel_to_hw(net, sc, 2);
+    net = channel_to_hw(net, sc, 2);
     // Branch 0.
     auto ssc = sc.sub("Branch_0");
     auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B0).ksize({1, 1})(net);
-    // branch0 = hw_to_channel(branch0, ssc, 2);
+    branch0 = hw_to_channel(branch0, ssc, 2);
     // Branch 1.
     ssc = sc.sub("Branch_1");
     auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10).ksize({1, 1})(net);
-    // branch1 = hw_to_channel(branch1, ssc, 2);
+    branch1 = hw_to_channel(branch1, ssc, 2);
     // branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B11).ksize({3, 3})(branch1);
     branch1 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize({3, 3}).noutputs(B10)(branch1);
 
     // Branch 2.
     ssc = sc.sub("Branch_2");
     auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20).ksize({1, 1})(net);
-    // branch2 = hw_to_channel(branch2, ssc, 2);
+    branch2 = hw_to_channel(branch2, ssc, 2);
     // branch2 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21).ksize({3, 3})(branch2);
     // branch2 = conv2d(ssc, "Conv2d_0c_3x3").noutputs(B21).ksize({3, 3})(branch2);
     branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21).ksize({3, 3})(branch2);
@@ -94,7 +94,7 @@ inline nvinfer1::ITensor* block_mixed_avg(nvinfer1::ITensor* input, tfrt::scope 
     // Branch 2.
     ssc = sc.sub("Branch_3");
     auto branch3 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B3).ksize({1, 1})(net);
-    // branch3 = hw_to_channel(branch3, ssc, 2);
+    branch3 = hw_to_channel(branch3, ssc, 2);
     branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(branch3);
 
     // Concat everything!
