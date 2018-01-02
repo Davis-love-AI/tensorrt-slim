@@ -158,17 +158,17 @@ public:
 
         blocks.push_back( net_n );
         auto net_c1 = tfrt::concat_channels(sc.sub("c1"))({net_n, net_n_1});
+
         // Average pooling...
         net = avg_pool2d(sc.sub("avg_pool2d")).ksize(3)(net_c1);
         blocks.push_back( net );
-
         // First 3x3 sep. conv2d.
         net_3x3 = this->sep_conv2d_stacked(
             net_c1, sc.sub("sep_3x3_1"), 3, 2, 1, 2, fsize*2, 2);
-        auto net_c2 = tfrt::concat_channels(sc.sub("c2"))({net_3x3, net_c1});
+        blocks.push_back( net_3x3 );
         // Second 3x3 sep. conv2d.
         net_3x3 = this->sep_conv2d_stacked(
-            net_c2, sc.sub("sep_3x3_2"), 3, 1, 1, 4, fsize*4, 2);
+            net_c1, sc.sub("sep_3x3_2"), 3, 1, 1, 2, fsize*3, 2);
         blocks.push_back( net_3x3 );
 
         // Concat this big mess!
