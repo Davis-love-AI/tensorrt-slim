@@ -13,15 +13,15 @@
 # from Robik AI Ltd.
 # =========================================================================== */
 
-#ifndef TFRT_INCEPTION_V2C_H
-#define TFRT_INCEPTION_V2C_H
+#ifndef TFRT_INCEPTION_V2D_H
+#define TFRT_INCEPTION_V2D_H
 
 #include <map>
 
 #include <NvInfer.h>
 #include "../tensorflowrt.h"
 
-namespace inception_v2c
+namespace inception_v2d
 {
 /** Arg scope for Inception v2: SAME padding + batch normalization + ReLU.
  */
@@ -67,10 +67,12 @@ inline nvinfer1::ITensor* hw_to_channel(
  * Average pooling version.
  */
 template <int B0, int B10, int B11, int B20, int B21, int B3>
-inline nvinfer1::ITensor* block_mixed_avg(nvinfer1::ITensor* input, tfrt::scope sc,
-                                          tfrt::map_tensor* end_points=nullptr)
+inline nvinfer1::ITensor* block_mixed_avg(
+    nvinfer1::ITensor* input, tfrt::scope sc,
+    tfrt::map_tensor* end_points=nullptr, int factor_in=1, int factor_out=1)
 {
     int factor = 1;
+    // nvinfer1::DimsHW factors = {factor, factor};
     int alpha = factor * factor;
 
     nvinfer1::ITensor* net{input};
@@ -110,8 +112,9 @@ inline nvinfer1::ITensor* block_mixed_avg(nvinfer1::ITensor* input, tfrt::scope 
  * Max pooling version.
  */
 template <int B0, int B10, int B11, int B20, int B21, int B3>
-inline nvinfer1::ITensor* block_mixed_max(nvinfer1::ITensor* input, tfrt::scope sc,
-                                          tfrt::map_tensor* end_points=nullptr)
+inline nvinfer1::ITensor* block_mixed_max(
+    nvinfer1::ITensor* input, tfrt::scope sc,
+    tfrt::map_tensor* end_points=nullptr, int factor_in=1, int factor_out=1)
 {
     nvinfer1::ITensor* net{input};
     // net = channel_to_hw(net, sc, 2);
@@ -244,7 +247,7 @@ inline nvinfer1::ITensor* base(nvinfer1::ITensor* input, tfrt::scope sc,
     net = block5(net, sc, end_points);
     return net;
 }
-inline nvinfer1::ITensor* inception_v2c(nvinfer1::ITensor* input,
+inline nvinfer1::ITensor* inception_v2d(nvinfer1::ITensor* input,
                                         tfrt::scope sc,
                                         int num_classes=1001)
 {
@@ -270,14 +273,14 @@ class net : public tfrt::imagenet_network
 {
 public:
     /** Constructor with default name.  */
-    net() : tfrt::imagenet_network("InceptionV2C", 1000, true) {}
+    net() : tfrt::imagenet_network("InceptionV2D", 1000, true) {}
 
     /** Inception2 building method. Take a network scope and do the work!
      */
     virtual nvinfer1::ITensor* build(tfrt::scope sc) {
         auto net = tfrt::input(sc)();
         // auto net = tfrt::input(sc).shape({64, 112, 112})();
-        net = inception_v2c(net, sc, 1001);
+        net = inception_v2d(net, sc, 1001);
         return net;
     }
 };

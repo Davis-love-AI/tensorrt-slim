@@ -22,6 +22,7 @@
 #include "nets/inception_v2.h"
 #include "nets/inception_v2b.h"
 #include "nets/inception_v2c.h"
+#include "nets/inception_v2d.h"
 #include "nets/inception_v2_group.h"
 
 #include "nets/inception_v4.h"
