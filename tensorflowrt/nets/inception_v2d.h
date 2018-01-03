@@ -69,43 +69,41 @@ inline nvinfer1::ITensor* hw_to_channel(
 template <int B0, int B10, int B11, int B20, int B21, int B3>
 inline nvinfer1::ITensor* block_mixed_avg(
     nvinfer1::ITensor* input, tfrt::scope sc,
-    tfrt::map_tensor* end_points=nullptr, int factor_in=1, int factor_out=1)
+    tfrt::map_tensor* end_points=nullptr,
+    int factor_in=1, int factor_out=1, int rescale=1)
 {
-    int factor = 1;
-    // nvinfer1::DimsHW factors = {factor, factor};
-    int alpha = factor * factor;
-
     nvinfer1::ITensor* net{input};
-    // net = channel_to_hw(net, sc, factor, factor);
+    // Resize input channel => height
+    if (factor_in > 1) {
+        net = channel_to_hw(net, sc, {factor_in, 1});
+    }
     // Branch 0.
     auto ssc = sc.sub("Branch_0");
-    auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B0 / alpha).ksize({1, 1})(net);
-    // branch0 = hw_to_channel(branch0, ssc, factor, factor);
+    auto branch0 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B0 / rescale).ksize({1, 1})(net);
+
     // Branch 1.
     ssc = sc.sub("Branch_1");
-    auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10 / alpha).ksize({1, 1})(net);
-    // branch1 = hw_to_channel(branch1, ssc, factor, factor);
-    // branch1 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B11).ksize({3, 3})(branch1);
-    branch1 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize({3, 3}).noutputs(B10)(branch1);
+    auto branch1 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B10 / rescale).ksize({1, 1})(net);
+    branch1 = dw_conv2d(ssc, "Conv2d_0b_3x3").ksize({3, 3}).noutputs(B10 / rescale)(branch1);
 
     // Branch 2.
     ssc = sc.sub("Branch_2");
-    auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20 / alpha).ksize({1, 1})(net);
-    // branch2 = hw_to_channel(branch2, ssc, factor, factor);
-    // branch2 = conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21).ksize({3, 3})(branch2);
-    // branch2 = conv2d(ssc, "Conv2d_0c_3x3").noutputs(B21).ksize({3, 3})(branch2);
-    branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21).ksize({3, 3})(branch2);
-    branch2 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B21).ksize({1, 1})(branch2);
+    auto branch2 = conv2d(ssc, "Conv2d_0a_1x1").noutputs(B20 / rescale).ksize({1, 1})(net);
+    branch2 = dw_conv2d(ssc, "Conv2d_0b_3x3").noutputs(B21 / rescale).ksize({3, 3})(branch2);
+    branch2 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B21 / rescale).ksize({1, 1})(branch2);
     branch2 = dw_conv2d(ssc, "Conv2d_0c_3x3").ksize({3, 3})(branch2);
 
     // Branch 2.
     ssc = sc.sub("Branch_3");
-    auto branch3 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B3 / alpha).ksize({1, 1})(net);
-    // branch3 = hw_to_channel(branch3, ssc, factor, factor);
+    auto branch3 = conv2d(ssc, "Conv2d_0b_1x1").noutputs(B3 / rescale).ksize({1, 1})(net);
     branch3 = avg_pool2d(ssc, "AvgPool_0a_3x3").ksize({3, 3})(branch3);
 
     // Concat everything!
     net = concat_channels(sc)({branch0, branch1, branch2, branch3});
+    // Resize output height => channel
+    if (factor_out > 1) {
+        net = hw_to_channel(net, sc, {factor_out, 1});
+    }
     return tfrt::add_end_point(end_points, sc.name(), net);
 }
 /** Major mixed block used in Inception v2 (4 branches).
