@@ -1,18 +1,22 @@
 message("-- Install 3rd party libraries to ${CMAKE_INSTALL_PREFIX}")
 
+# fmt
 add_subdirectory(fmt)
+install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/fmt/fmt
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/include
+    FILES_MATCHING PATTERN "*.h")
 
 # Eigen install.
 INSTALL(
-    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/eigen/Eigen 
+    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/eigen/Eigen
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 INSTALL(
-    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/eigen/unsupported 
+    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/eigen/unsupported
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 
 # GLFW
 INSTALL(
-    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/glfw3/include/GLFW 
+    DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/glfw3/include/GLFW
     DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
 INSTALL(
     FILES ${CMAKE_CURRENT_LIST_DIR}/glfw3/lib/libglfw3.a
