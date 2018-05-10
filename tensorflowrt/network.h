@@ -22,7 +22,8 @@
 #include <unsupported/Eigen/CXX11/Tensor>
 // #include <cuda_runtime_api.h>
 #include <NvInfer.h>
-#include <VX/vx.h>
+
+// #include <VX/vx.h>
 
 #include "utils.h"
 #include "types.h"
@@ -176,6 +177,8 @@ public:
     void inference(const tfrt::nchw<float>::tensor& tensor);
     /** Inference on a single RGBA image. */
     void inference(float* rgba, uint32_t height, uint32_t width);
+
+    #ifdef VX_VERSION_MAJOR
     /** Inference on a single VX image.
      * Input image is supposed to be in RGBA, uint8 format.
      */
@@ -199,6 +202,7 @@ public:
      * and copied before returning.
     */
     void inference_async(vx_image img1, vx_image img2, cudaStream_t stream);
+    #endif
     
     
 protected:

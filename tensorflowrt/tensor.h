@@ -18,11 +18,11 @@
 #include <glog/logging.h>
 #include <Eigen/Dense>
 
-#include <VX/vx.h>
-#include <VX/vxu.h>
-#include <NVX/nvx.h>
+// #include <VX/vx.h>
+// #include <VX/vxu.h>
+// #include <NVX/nvx.h>
+// #include <NVX/nvxcu.h>
 
-#include <NVX/nvxcu.h>
 #include <NvInfer.h>
 
 #include "ros/ros.h"
@@ -205,6 +205,7 @@ public:
     T* cpu_ptr(size_t batch_idx, size_t channel_idx) const {
         return (cpu + batch_idx*shape.c()*shape.h()*shape.w() + channel_idx*shape.h()*shape.w());
     }
+    #ifdef VX_VERSION_MAJOR
     /** Convert to NVX-CUDA image plane. */
     nvxcu_pitch_linear_image_t nvxcu_image(size_t b_idx, size_t c_idx)
     {
@@ -217,6 +218,7 @@ public:
         image.planes[0].pitch_in_bytes = shape.w();
         return image;
     }
+    #endif
 
 public:
     // Tensor name, shape and size.

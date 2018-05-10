@@ -31,8 +31,9 @@ set(
 	-gencode arch=compute_50,code=sm_50
 	-gencode arch=compute_52,code=sm_52
 	-gencode arch=compute_53,code=sm_53
+	-gencode arch=compute_61,code=sm_61
 	-gencode arch=compute_62,code=sm_62
-	-gencode arch=compute_70,code=sm_70
+	# -gencode arch=compute_70,code=sm_70
 )
 
 # Main CXX flags
@@ -106,16 +107,15 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/util)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/modules)
 
 # Build NVXIO dependency.
-add_subdirectory(nvxio)
+# add_subdirectory(nvxio)
 # 3rd party libraries rules (install, ...)
 add_subdirectory(3rdparty)
 
 # Build TensorFlowRT library and modules.
 add_subdirectory(tensorflowrt)
-add_subdirectory(modules)
+# add_subdirectory(modules)
 add_subdirectory(util)
 
 # Build tools and demos...
 add_subdirectory(tools)
-add_subdirectory(demos)
 

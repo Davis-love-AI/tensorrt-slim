@@ -17,9 +17,9 @@
 
 #include <glog/logging.h>
 
-#include <VX/vx.h>
-#include <VX/vxu.h>
-#include <NVX/nvx.h>
+// #include <VX/vx.h>
+// #include <VX/vxu.h>
+// #include <NVX/nvx.h>
 #include <NvInfer.h>
 
 #include "cuda/cudaMappedMemory.h"
@@ -102,6 +102,7 @@ inline nvinfer1::DimsNCHW dims_nchw(nvinfer1::ITensor* input)
 /** NVX CUDA image input patch. Automatic map at construction, and unmap at destruction.
  * RAII spirit: probably not the fastest implementation, but easy to use.
  */
+#ifdef VX_VERSION_MAJOR
 struct nvx_image_patch
 {
     // Map id.
@@ -206,6 +207,7 @@ private:
     nvx_image_tensor(const nvx_image_tensor&);
     nvx_image_tensor(nvx_image_tensor&&);
 };
+#endif
 
 }
 

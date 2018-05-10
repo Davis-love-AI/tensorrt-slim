@@ -25,10 +25,10 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include <google/protobuf/text_format.h>
 
-#include <VX/vx.h>
-#include <VX/vxu.h>
-#include <NVX/nvx.h>
-#include <OVX/UtilityOVX.hpp>
+// #include <VX/vx.h>
+// #include <VX/vxu.h>
+// #include <NVX/nvx.h>
+// #include <OVX/UtilityOVX.hpp>
 
 #include "types.h"
 #include "scope.h"
@@ -739,6 +739,8 @@ void network::inference(float* rgba, uint32_t height, uint32_t width)
     size_t num_batches = 1;
     m_nv_context->execute(num_batches, (void**)m_cached_bindings.data());
 }
+
+#ifdef VX_VERSION_MAJOR
 void network::inference(vx_image image)
 {
     DLOG(INFO) << "Inference (batch 1) on the neural network:"  << this->name();
@@ -870,5 +872,6 @@ void network::inference_async(vx_image img1, vx_image img2, cudaStream_t stream)
     cudaEventSynchronize(net_input_copy);
     cudaEventDestroy(net_input_copy); 
 }
+#endif
 
 }

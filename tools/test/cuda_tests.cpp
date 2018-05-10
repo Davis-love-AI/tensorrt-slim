@@ -21,10 +21,10 @@
 
 #include <half.hpp>
 
-#include <VX/vx.h>
-#include <VX/vxu.h>
-#include <NVX/nvx.h>
-#include <OVX/UtilityOVX.hpp>
+// #include <VX/vx.h>
+// #include <VX/vxu.h>
+// #include <NVX/nvx.h>
+// #include <OVX/UtilityOVX.hpp>
 
 #include <tensorflowrt.h>
 #include <tensorflowrt_nets.h>
